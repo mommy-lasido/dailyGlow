@@ -1,0 +1,36 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+
+# editor / os
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# test
+coverage/
+
+# obsidian vault (not part of the app)
+dailyGlow/
