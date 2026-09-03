@@ -1,5 +1,34 @@
 -- 로컬 개발용 시드 데이터. `supabase db reset` 시 자동 적용.
 
+-- ── 개발용 테스트 계정 (test@dailyglow.dev / test1234) ──────────
+-- auth.users + auth.identities 를 직접 넣는다. handle_new_user 트리거가 profiles 를 생성.
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  raw_app_meta_data, raw_user_meta_data, is_super_admin,
+  confirmation_token, recovery_token, email_change_token_new, email_change
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-000000000a11',
+  'authenticated', 'authenticated',
+  'test@dailyglow.dev', crypt('test1234', gen_salt('bf')),
+  now(), now(), now(),
+  '{"provider":"email","providers":["email"]}', '{"display_name":"테스트"}', false,
+  '', '', '', ''
+);
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+values (
+  '00000000-0000-0000-0000-000000000a11',
+  '00000000-0000-0000-0000-000000000a11',
+  '{"sub":"00000000-0000-0000-0000-000000000a11","email":"test@dailyglow.dev"}',
+  'email', now(), now(), now()
+);
+
+
 insert into public.subjects (slug, title, sort_order) values
   ('hangul',  '한글', 1),
   ('korean',  '국어', 2),

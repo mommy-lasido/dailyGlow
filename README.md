@@ -48,6 +48,17 @@ pnpm db:types
 pnpm dev              # http://localhost:5173
 ```
 
+### 로컬 환경 정보
+
+| 항목 | 값 |
+|------|-----|
+| API URL | `http://127.0.0.1:54321` |
+| Studio (DB GUI) | `http://127.0.0.1:54323` |
+| Mailpit (메일 확인) | `http://127.0.0.1:54324` |
+| 테스트 계정 | `test@dailyglow.dev` / `test1234` (seed.sql, `db:reset` 시 재생성) |
+
+`.env.local` 의 `VITE_SUPABASE_ANON_KEY` 는 `pnpm db:start` 또는 `supabase status` 출력의 `ANON_KEY` 값을 사용한다.
+
 ## 스크립트
 
 | 명령 | 설명 |
