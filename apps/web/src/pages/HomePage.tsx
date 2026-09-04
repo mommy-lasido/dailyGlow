@@ -21,7 +21,11 @@ export function HomePage() {
   const profile = useProfile((s) => s.profile);
   const levels = useProfile((s) => s.levels);
 
-  const { data: lessons } = useQuery({
+  const {
+    data: lessons,
+    isPending: lessonsPending,
+    isError: lessonsError,
+  } = useQuery({
     queryKey: ['activity-catalog'],
     queryFn: async (): Promise<LessonGateRow[]> => {
       const { data, error } = await supabase
@@ -95,7 +99,13 @@ export function HomePage() {
       </Card>
 
       <section className="flex flex-col gap-4">
-        {activities.length === 0 ? (
+        {lessonsPending ? (
+          <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
+        ) : lessonsError ? (
+          <Card className="text-center text-lg text-slate-500">
+            지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.
+          </Card>
+        ) : activities.length === 0 ? (
           <Card className="text-center text-lg text-slate-500">
             아직 준비된 공부가 없어요. 설정에서 학년과 단계를 확인해 주세요.
           </Card>
