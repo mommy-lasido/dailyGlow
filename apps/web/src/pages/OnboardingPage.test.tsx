@@ -27,7 +27,13 @@ describe('OnboardingPage', () => {
     // 타이머는 진짜로 두어야 waitFor 가 동작한다.
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-09-04T09:00:00'));
-    useProfile.setState({ profile: profile(), levels: {}, status: 'ready' });
+    useProfile.setState({
+      profile: profile(),
+      levels: {},
+      status: 'ready',
+      save: vi.fn().mockResolvedValue({}),
+      initializeSubjectLevels: vi.fn().mockResolvedValue({}),
+    });
   });
 
   afterEach(() => {
@@ -82,5 +88,43 @@ describe('OnboardingPage', () => {
     expect(patch.grade).toBe('g3');
     expect(patch.birth_date).toBe('2018-05-10');
     expect(patch.onboarded_at).toBeTruthy();
+  });
+
+  it('저장이 끝나면 고른 읽기 수준으로 과목 초기 레벨을 제안한다', async () => {
+    const initializeSubjectLevels = vi.fn().mockResolvedValue({});
+    useProfile.setState({ initializeSubjectLevels });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'learning' } });
+    fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
+
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('learning'));
+  });
+
+  it('읽기 수준을 고르지 않았으면 null 로 넘긴다', async () => {
+    const initializeSubjectLevels = vi.fn().mockResolvedValue({});
+    useProfile.setState({ initializeSubjectLevels });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
+    fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
+
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith(null));
+  });
+
+  it('초기 레벨 제안이 실패하면 오류를 보여주고 홈으로 보내지 않는다', async () => {
+    useProfile.setState({
+      initializeSubjectLevels: vi
+        .fn()
+        .mockResolvedValue({ error: '지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.' }),
+    });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
+    fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
+
+    await screen.findByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.');
+    expect(screen.getByRole('button', { name: /시작하기/ })).toBeInTheDocument();
   });
 });

@@ -23,6 +23,7 @@ const fieldClass =
 export function OnboardingPage() {
   const profile = useProfile((s) => s.profile);
   const save = useProfile((s) => s.save);
+  const initializeSubjectLevels = useProfile((s) => s.initializeSubjectLevels);
   const navigate = useNavigate();
 
   const [name, setName] = useState(profile?.display_name ?? '');
@@ -63,9 +64,19 @@ export function OnboardingPage() {
       daily_goal_minutes: goal,
       onboarded_at: new Date().toISOString(),
     });
-    setBusy(false);
     if (res.error) {
+      setBusy(false);
       setError(res.error);
+      return;
+    }
+
+    // 과목별 시작 레벨을 여기서 제안해 둔다. 이게 없으면 한글이 1단계로 취급돼
+    // 4단계부터 열리는 낱말 읽기가 홈에서 통째로 빠진다.
+    // 실패하면 홈으로 보내지 않는다 — 카드가 비어 있는 이유를 아무도 알 수 없게 된다.
+    const levelRes = await initializeSubjectLevels(readingLevel || null);
+    setBusy(false);
+    if (levelRes.error) {
+      setError(levelRes.error);
       return;
     }
     navigate('/', { replace: true });

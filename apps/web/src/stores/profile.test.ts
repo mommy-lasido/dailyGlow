@@ -107,6 +107,87 @@ describe('useProfile 스토어', () => {
     });
   });
 
+  describe('initializeSubjectLevels', () => {
+    beforeEach(() => {
+      h.responses['subjects'] = {
+        data: [
+          { id: 'subj-hangul', slug: 'hangul' },
+          { id: 'subj-math', slug: 'math' },
+        ],
+        error: null,
+      };
+    });
+
+    it('한글은 읽기 수준에서 뽑은 단계로, 나머지 과목은 1단계로 채운다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['profile_subject_levels:upsert'] = { error: null };
+
+      const res = await useProfile.getState().initializeSubjectLevels('learning');
+
+      expect(res.error).toBeUndefined();
+      expect(useProfile.getState().levels).toEqual({
+        'subj-hangul': { level: 4, locked: false },
+        'subj-math': { level: 1, locked: false },
+      });
+    });
+
+    it('이미 레벨이 있는 과목은 건드리지 않는다', async () => {
+      useProfile.setState({
+        profile: baseProfile(),
+        levels: { 'subj-hangul': { level: 12, locked: true } },
+        status: 'ready',
+      });
+      h.responses['profile_subject_levels:upsert'] = { error: null };
+
+      await useProfile.getState().initializeSubjectLevels('pre_reader');
+
+      expect(useProfile.getState().levels).toEqual({
+        'subj-hangul': { level: 12, locked: true },
+        'subj-math': { level: 1, locked: false },
+      });
+    });
+
+    it('채울 과목이 하나도 없으면 아무것도 쓰지 않는다', async () => {
+      useProfile.setState({
+        profile: baseProfile(),
+        levels: {
+          'subj-hangul': { level: 12, locked: true },
+          'subj-math': { level: 3, locked: false },
+        },
+        status: 'ready',
+      });
+      h.responses['profile_subject_levels:upsert'] = { error: { message: '불려서는 안 된다' } };
+
+      const res = await useProfile.getState().initializeSubjectLevels('learning');
+
+      expect(res.error).toBeUndefined();
+      expect(useProfile.getState().levels['subj-hangul']).toEqual({ level: 12, locked: true });
+    });
+
+    it('쓰기에 실패하면 한국어 오류를 돌려주고 로컬 levels 를 그대로 둔다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['profile_subject_levels:upsert'] = {
+        error: { message: 'new row violates row-level security policy' },
+      };
+
+      const res = await useProfile.getState().initializeSubjectLevels('learning');
+
+      expect(res.error).toBe('권한이 없어요. 로그아웃했다가 다시 들어와 주세요.');
+      expect(res.error).not.toContain('row-level');
+      expect(useProfile.getState().levels).toEqual({});
+    });
+
+    it('과목 목록 조회가 실패하면 오류를 돌려준다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['subjects'] = { data: null, error: { message: 'boom' } };
+
+      const res = await useProfile.getState().initializeSubjectLevels('learning');
+
+      expect(res.error).toBeTruthy();
+      expect(useProfile.getState().levels).toEqual({});
+    });
+  });
+
   describe('setSubjectLevel', () => {
     it('upsert 가 실패하면 로컬 levels 를 그대로 둔다', async () => {
       useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
