@@ -122,7 +122,7 @@ describe('OnboardingPage', () => {
     expect(patch.onboarded_at).toBeTruthy();
   });
 
-  it('저장이 끝나면 고른 읽기 수준으로 과목 초기 레벨을 제안한다', async () => {
+  it('저장이 끝나면 고른 읽기 수준과 한글 단계로 과목 초기 레벨을 제안한다', async () => {
     const initializeSubjectLevels = vi.fn().mockResolvedValue({});
     useProfile.setState({ initializeSubjectLevels });
     renderPage();
@@ -131,7 +131,8 @@ describe('OnboardingPage', () => {
     fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'learning' } });
     fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
 
-    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('learning'));
+    // learning 을 고르면 단계 고르기가 나타나고, 4단계로 시작한다.
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('learning', 4));
   });
 
   it('읽기 수준을 고르지 않았으면 null 로 넘긴다', async () => {
@@ -158,6 +159,52 @@ describe('OnboardingPage', () => {
 
     await screen.findByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.');
     expect(screen.getByRole('button', { name: /시작하기/ })).toBeInTheDocument();
+  });
+
+  it('배우는 중·아직 못 읽음 이면 한글 단계 고르기가 나타나고, 다 읽음 이면 나타나지 않는다', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'pre_reader' } });
+    expect(screen.getByLabelText('지금 배우는 한글 단계')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'learning' } });
+    expect(screen.getByLabelText('지금 배우는 한글 단계')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'fluent' } });
+    expect(screen.queryByLabelText('지금 배우는 한글 단계')).toBeNull();
+  });
+
+  it('한글 단계 고르기는 배우는 중이면 4단계, 아직 못 읽음이면 1단계로 시작하고 읽기 수준이 바뀌면 다시 뽑는다', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'learning' } });
+    expect(
+      (screen.getByLabelText('지금 배우는 한글 단계') as HTMLSelectElement).value,
+    ).toBe('4');
+
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'pre_reader' } });
+    expect(
+      (screen.getByLabelText('지금 배우는 한글 단계') as HTMLSelectElement).value,
+    ).toBe('1');
+  });
+
+  it('한글 단계를 직접 고르면 그 값으로 과목 초기 레벨을 제안한다', async () => {
+    const initializeSubjectLevels = vi.fn().mockResolvedValue({});
+    useProfile.setState({ initializeSubjectLevels });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'learning' } });
+    fireEvent.change(screen.getByLabelText('지금 배우는 한글 단계'), { target: { value: '7' } });
+    fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
+
+    // 추천값(4)이 아니라 부모가 고른 7이 들어가야 한다.
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('learning', 7));
+  });
+
+  it('한글 읽기를 묻지 않는 학년이면 한글 단계 고르기도 보이지 않는다', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('학년'), { target: { value: 'g2' } });
+    expect(screen.queryByLabelText('한글 읽기')).toBeNull();
+    expect(screen.queryByLabelText('지금 배우는 한글 단계')).toBeNull();
   });
 
   it('초2 부터는 한글 읽기를 묻지 않는다', () => {

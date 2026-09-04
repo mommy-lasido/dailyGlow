@@ -64,8 +64,14 @@ interface ProfileState {
   /**
    * 아직 레벨이 없는 과목에 시작 레벨을 채워 넣는다. 온보딩 저장 직후에 부른다.
    * 이미 값이 있는 과목은 건드리지 않는다 — 부모가 정한 값을 덮어쓰면 안 된다.
+   *
+   * hangulStage 를 주면 한글 시작 단계로 그 값을 그대로 쓴다 — 온보딩에서 부모가
+   * 단계를 직접 골랐을 때다. 안 주면 읽기 수준에서 뽑은 추천 단계로 채운다.
    */
-  initializeSubjectLevels: (readingLevel: ReadingLevel | null) => Promise<{ error?: string }>;
+  initializeSubjectLevels: (
+    readingLevel: ReadingLevel | null,
+    hangulStage?: number,
+  ) => Promise<{ error?: string }>;
   setSubjectLevel: (
     subjectId: string,
     level: number,
@@ -133,7 +139,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
     return {};
   },
 
-  initializeSubjectLevels: async (readingLevel) => {
+  initializeSubjectLevels: async (readingLevel, hangulStage) => {
     const current = get().profile;
     if (!current) return { error: '프로필이 없습니다.' };
 
@@ -149,8 +155,9 @@ export const useProfile = create<ProfileState>((set, get) => ({
     const rows = missing.map((s) => ({
       profile_id: current.id,
       subject_id: s.id,
-      // 한글은 읽기 수준에서 뽑은 단계, 나머지 과목은 1단계부터.
-      level: s.slug === 'hangul' ? recommendHangulStage(readingLevel) : 1,
+      // 한글은 부모가 직접 고른 단계가 있으면 그 값, 없으면 읽기 수준에서 뽑은 단계.
+      // 나머지 과목은 1단계부터.
+      level: s.slug === 'hangul' ? (hangulStage ?? recommendHangulStage(readingLevel)) : 1,
       locked: false,
       updated_at: now,
     }));

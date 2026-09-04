@@ -5,10 +5,7 @@ import { Button, Card } from '@dailyglow/ui';
 import {
   BIRTH_DATE_MIN,
   DAILY_GOAL_OPTIONS,
-  HANGUL_BOOKS,
-  HANGUL_STAGES,
   hangulStage,
-  hangulStageOptionLabel,
   GENDER_LABEL,
   GRADES,
   GRADE_LABEL,
@@ -21,6 +18,7 @@ import {
   type Grade,
   type ReadingLevel,
 } from '@dailyglow/utils';
+import { HangulStagePicker } from '@/components/HangulStagePicker';
 import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
 
@@ -277,26 +275,12 @@ export function SettingsPage() {
 
                   {isHangul ? (
                     <>
-                      {/* 맨 숫자 35개는 부모에게 아무것도 알려주지 않는다.
-                          권으로 묶고 무엇을 배우는지 함께 적는다. */}
-                      <select
+                      <HangulStagePicker
                         aria-label={`${s.title} 단계`}
                         className="min-h-touch max-w-full rounded-xl border-2 border-glow-100 px-3 text-lg"
                         value={current.level}
-                        onChange={(e) =>
-                          void onChangeLevel(s.id, Number(e.target.value), current.locked)
-                        }
-                      >
-                        {HANGUL_BOOKS.map((b) => (
-                          <optgroup key={b.book} label={`${b.book}권 · ${b.shortTitle}`}>
-                            {HANGUL_STAGES.filter((x) => x.book === b.book).map((x) => (
-                              <option key={x.stage} value={x.stage}>
-                                {hangulStageOptionLabel(x)}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
+                        onChange={(level) => void onChangeLevel(s.id, level, current.locked)}
+                      />
 
                       <label className="flex items-center gap-2 text-sm text-slate-600">
                         <input

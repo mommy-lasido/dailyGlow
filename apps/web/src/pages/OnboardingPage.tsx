@@ -13,6 +13,7 @@ import {
   joinName,
   recommendDailyGoalMinutes,
   recommendGrade,
+  recommendHangulStage,
   recommendReadingLevel,
   splitName,
   toISODate,
@@ -20,6 +21,7 @@ import {
   type Grade,
   type ReadingLevel,
 } from '@dailyglow/utils';
+import { HangulStagePicker } from '@/components/HangulStagePicker';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 
@@ -41,6 +43,7 @@ export function OnboardingPage() {
   const [birthDate, setBirthDate] = useState('');
   const [grade, setGrade] = useState<Grade | ''>('');
   const [readingLevel, setReadingLevel] = useState<ReadingLevel | ''>('');
+  const [hangulStageValue, setHangulStageValue] = useState<number>(1);
   const [goal, setGoal] = useState<number>(10);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +98,25 @@ export function OnboardingPage() {
   // 묻지 않은 학년은 한글을 뗀 것으로 본다.
   const effectiveReadingLevel: ReadingLevel | '' = asksReadingLevel ? readingLevel : 'fluent';
 
+  /**
+   * 한글 단계 직접 고르기를 보여줄지.
+   *
+   * "배우는 중"·"아직 못 읽음" 은 지금 몇 단계인지가 아이마다 다 달라 4단계로
+   * 뭉뚱그리면 틀리기 쉽다. "다 읽음"(fluent) 은 이미 교재를 뗀 아이라 단계를
+   * 물을 필요가 없다. 학년으로 아예 묻지 않는 경우도 마찬가지로 숨긴다.
+   */
+  const showHangulStagePicker =
+    asksReadingLevel && (readingLevel === 'pre_reader' || readingLevel === 'learning');
+
+  /**
+   * 읽기 수준이 바뀌면 한글 단계 추천값도 다시 뽑는다.
+   * 생일이 바뀌면 학년 추천값을 다시 채우는 것과 같은 규칙 — 예측 가능한 편이
+   * 영리한 것보다 낫다. 부모가 이미 직접 고른 단계가 있어도 여기서 덮어쓴다.
+   */
+  useEffect(() => {
+    setHangulStageValue(recommendHangulStage(readingLevel || null));
+  }, [readingLevel]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     submittedHere.current = true;
@@ -118,8 +140,11 @@ export function OnboardingPage() {
 
     // 과목별 시작 레벨을 여기서 제안해 둔다. 이게 없으면 한글이 1단계로 취급돼
     // 4단계부터 열리는 낱말 읽기가 홈에서 통째로 빠진다.
+    // 부모가 단계를 직접 골랐으면(showHangulStagePicker) 그 값을 그대로 쓴다.
     // 실패하면 홈으로 보내지 않는다 — 카드가 비어 있는 이유를 아무도 알 수 없게 된다.
-    const levelRes = await initializeSubjectLevels(effectiveReadingLevel || null);
+    const levelRes = showHangulStagePicker
+      ? await initializeSubjectLevels(effectiveReadingLevel || null, hangulStageValue)
+      : await initializeSubjectLevels(effectiveReadingLevel || null);
     setBusy(false);
     if (levelRes.error) {
       setError(levelRes.error);
@@ -233,6 +258,23 @@ export function OnboardingPage() {
                 ))}
               </select>
             </label>
+          ) : null}
+
+          {/* 도움말 <span> 은 <label> 밖에 둔다 — 안에 넣으면 label 텍스트가 바뀐다. */}
+          {showHangulStagePicker ? (
+            <div className="flex flex-col gap-1">
+              <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+                지금 배우는 한글 단계
+                <HangulStagePicker
+                  className={fieldClass}
+                  value={hangulStageValue}
+                  onChange={setHangulStageValue}
+                />
+              </label>
+              <span className="text-xs font-normal text-slate-400">
+                집에서 쓰는 교재의 단계에 맞춰주세요. 나중에 설정에서 바꿀 수 있어요.
+              </span>
+            </div>
           ) : null}
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
