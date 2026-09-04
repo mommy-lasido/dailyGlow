@@ -38,6 +38,7 @@ export function SettingsPage() {
   const [readingLevel, setReadingLevel] = useState<ReadingLevel | ''>('');
   const [goal, setGoal] = useState(10);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -62,7 +63,8 @@ export function SettingsPage() {
   });
 
   async function onSaveProfile() {
-    await save({
+    setError(null);
+    const res = await save({
       display_name: name.trim(),
       gender: gender || null,
       birth_date: birthDate || null,
@@ -70,6 +72,10 @@ export function SettingsPage() {
       reading_level: readingLevel || null,
       daily_goal_minutes: goal,
     });
+    if (res.error) {
+      setError(res.error);
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -160,6 +166,8 @@ export function SettingsPage() {
             ))}
           </select>
         </label>
+
+        {error ? <p className="text-sm font-bold text-red-500">{error}</p> : null}
 
         <div className="flex items-center gap-3">
           <Button onClick={() => void onSaveProfile()}>프로필 저장</Button>
