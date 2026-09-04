@@ -128,8 +128,8 @@ export function HomePage() {
                   <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
                     {a.title}
                   </h2>
-                  {/* 이름만으로는 "글자 읽기" 와 "낱말 읽기" 가 구분되지 않는다.
-                      제목 바로 밑에 예를 보여주되, 제목보다 눈에 띄지 않게 흐리게. */}
+                  {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
+                      예를 보여준다. 제목보다 눈에 띄지 않게 흐리게. 없으면 아무것도 그리지 않는다. */}
                   {a.hint ? (
                     <p className={`text-slate-500 ${isPreReader ? 'text-xl' : 'text-base'}`}>
                       {a.hint}

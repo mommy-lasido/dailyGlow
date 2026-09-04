@@ -158,7 +158,19 @@ describe('HomePage', () => {
 
   it('config.hint 가 있으면 제목 밑에 예시를 보여준다', async () => {
     catalog.response = { data: [lessonRow({ config: { hint: '3 + 2 = ?' } })], error: null };
-    renderHome();
+    const { container } = renderHome();
     expect(await screen.findByText('3 + 2 = ?')).toBeInTheDocument();
+    // 예시 줄 + 과목 이름 = 카드 안 <p> 두 줄.
+    expect(container.querySelectorAll('a p')).toHaveLength(2);
+  });
+
+  it('config.hint 가 없으면 예시 줄 없이 제목만 보여준다', async () => {
+    catalog.response = { data: [lessonRow({ config: {} })], error: null };
+    const { container } = renderHome();
+    expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
+    // 카드 안 <p> 는 과목 이름 한 줄뿐 — 예시 자리에 빈 요소가 남지 않는다.
+    const paragraphs = container.querySelectorAll('a p');
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]).toHaveTextContent('수학');
   });
 });

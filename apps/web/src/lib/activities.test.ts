@@ -7,7 +7,7 @@ const MATH = 'subj-math';
 function row(over: Partial<LessonGateRow>): LessonGateRow {
   return {
     id: 'l1',
-    title: '글자 읽기',
+    title: '자음모음 배우기',
     activity_kind: 'letter_cards',
     subject_id: HANGUL,
     subject_slug: 'hangul',
@@ -70,7 +70,7 @@ describe('selectActivities', () => {
 
 describe('activityHint', () => {
   it('config.hint 를 꺼내온다', () => {
-    expect(activityHint({ hint: '가 갸 거 겨' })).toBe('가 갸 거 겨');
+    expect(activityHint({ hint: '고기, 나비' })).toBe('고기, 나비');
   });
 
   it('hint 가 없거나 문자열이 아니면 null', () => {
@@ -83,8 +83,8 @@ describe('activityHint', () => {
 
 describe('selectActivities · hint', () => {
   it('활동 카드에 예시 문구를 실어 보낸다', () => {
-    const rows = [row({ id: 'letters', config: { hint: '가 갸 거 겨' } })];
-    expect(selectActivities(rows, 'preschool', {})[0]!.hint).toBe('가 갸 거 겨');
+    const rows = [row({ id: 'words', config: { hint: '고기, 나비' } })];
+    expect(selectActivities(rows, 'preschool', {})[0]!.hint).toBe('고기, 나비');
   });
 
   it('예시가 없는 활동은 hint 가 null 이다', () => {

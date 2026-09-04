@@ -30,7 +30,8 @@ export interface ActivityCard {
   emoji: string;
   /**
    * 카드 제목 밑에 붙일 한 줄 예시. config.hint 가 없으면 null.
-   * "글자 읽기" 와 "낱말 읽기" 처럼 이름만으로는 구분이 안 되는 활동을 위해 있다.
+   * 지금은 "낱말 읽기" 에만 붙는다 — 제목만으로는 "자음모음 배우기" 와
+   * 하는 일이 잘 구분되지 않아서. 나머지 카드는 제목만으로 충분하다.
    */
   hint: string | null;
 }

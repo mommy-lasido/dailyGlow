@@ -78,7 +78,7 @@ pnpm dev              # http://localhost:5173
 - [ ] 문제 유형별 렌더러 / 채점기 (`LessonPage` 의 자리표시자 대체)
 - [ ] 오프라인 콘텐츠 프리페치 (lessons/problems → Dexie)
 - [ ] `wrong_type_stats` ↔ Dexie `typeStats` 동기화
-- [ ] Phase 2: 활동 렌더러 (맞춤법 · 글자/낱말/문장 읽기 · 더하기) + 한글 35단계 시스템
+- [ ] Phase 2: 활동 렌더러 (맞춤법 · 자음모음 배우기 · 낱말/문장 읽기 · 더하기) + 한글 35단계 시스템
 - [ ] Phase 3: 100칸 계산 + 인쇄
 - [ ] Phase 4: 사진 채점 (Edge Function, `ANTHROPIC_API_KEY` 필요)
 ```
