@@ -251,6 +251,21 @@ describe('SettingsPage', () => {
     await screen.findByText('아직 등록된 과목이 없어요.');
   });
 
+  it('이름을 비우면 저장 버튼이 잠기고, 내용이 있으면 풀린다', () => {
+    renderPage();
+    const button = screen.getByRole('button', { name: /프로필 저장/ });
+    expect(button).toBeEnabled();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '' } });
+    expect(button).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '   ' } });
+    expect(button).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
+    expect(button).toBeEnabled();
+  });
+
   it('저장하는 동안에는 저장 버튼을 다시 누를 수 없다', async () => {
     let release: (v: unknown) => void = () => {};
     const save = vi.fn().mockReturnValue(new Promise((r) => (release = r)));

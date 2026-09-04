@@ -233,8 +233,12 @@ export function SettingsPage() {
         {error ? <p className="text-sm font-bold text-red-500">{error}</p> : null}
 
         <div className="flex items-center gap-3">
-          {/* 저장하는 동안 잠근다 — 두 번 누르면 저장이 두 번 나간다. */}
-          <Button disabled={saving} onClick={() => void onSaveProfile()}>
+          {/* 저장하는 동안 잠근다 — 두 번 누르면 저장이 두 번 나간다.
+              이름이 비어 있으면(공백만 있어도) 저장을 막는다 — 온보딩과 같은 규칙. */}
+          <Button
+            disabled={saving || givenName.trim().length === 0}
+            onClick={() => void onSaveProfile()}
+          >
             {saving ? '저장하는 중…' : '프로필 저장'}
           </Button>
           {saved ? <span className="text-sm font-bold text-green-600">저장했어요</span> : null}

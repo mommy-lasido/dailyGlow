@@ -96,6 +96,13 @@ describe('HomePage', () => {
     expect(screen.getByTestId('greeting')).toHaveTextContent('라윤아');
   });
 
+  it('given_name 이 빈 문자열이면 display_name 으로 부른다', () => {
+    useProfile.setState({ profile: profile({ display_name: '정라윤', given_name: '' }) });
+    renderHome();
+    // 빈 이름 + 호격 조사만 남지 않고, 온전한 이름으로 부른다.
+    expect(screen.getByTestId('greeting')).toHaveTextContent('정라윤');
+  });
+
   it('받침이 없는 이름에는 야 를 붙인다', () => {
     useProfile.setState({
       profile: profile({ display_name: '김지호', given_name: '지호' }),

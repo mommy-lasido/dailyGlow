@@ -70,8 +70,8 @@ export function HomePage() {
   const grade = (profile?.grade as Grade | null) ?? null;
   const activities = selectActivities(lessons ?? [], grade, levels);
   const isPreReader = profile?.reading_level === 'pre_reader';
-  // 부를 때는 성을 뺀 이름으로. given_name 이 없는 예전 행은 온전한 이름으로 대신한다.
-  const callName = profile?.given_name ?? profile?.display_name ?? '친구';
+  // 부를 때는 성을 뺀 이름으로. given_name 이 비었거나(빈 문자열 포함) 없는 예전 행은 온전한 이름으로 대신한다.
+  const callName = profile?.given_name || profile?.display_name || '친구';
 
   return (
     <div className="flex flex-col gap-6">
