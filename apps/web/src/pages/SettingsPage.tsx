@@ -5,6 +5,10 @@ import { Button, Card } from '@dailyglow/ui';
 import {
   BIRTH_DATE_MIN,
   DAILY_GOAL_OPTIONS,
+  HANGUL_BOOKS,
+  HANGUL_STAGES,
+  hangulStage,
+  hangulStageOptionLabel,
   GENDER_LABEL,
   GRADES,
   GRADE_LABEL,
@@ -240,8 +244,8 @@ export function SettingsPage() {
       <Card className="flex flex-col gap-4">
         <h2 className="text-xl font-bold text-slate-700">과목별 단계</h2>
         <p className="text-sm text-slate-400">
-          한글은 &lsquo;기적의 한글 학습&rsquo; 단계(1~35)예요. &lsquo;여기서 멈춰&rsquo;를 켜면
-          아이가 잘해도 다음 단계로 넘어가지 않아요.
+          한글은 &lsquo;기적의 한글 학습&rsquo;(길벗스쿨) 5권 35단계를 그대로 따라가요.
+          &lsquo;여기서 멈춰&rsquo;를 켜면 아이가 잘해도 다음 단계로 넘어가지 않아요.
         </p>
 
         {subjectsPending ? (
@@ -255,39 +259,73 @@ export function SettingsPage() {
         ) : (
           subjects.map((s) => {
             const current = levels[s.id] ?? { level: 1, locked: false };
-            const max = s.slug === 'hangul' ? 35 : 10;
             const levelError = levelErrors[s.id];
+            // 한글만 단계에 뜻이 있다. 국어·영어·수학의 1~10 은 아직 아무것도
+            // 가리키지 않는 자리표시자라, 골라도 달라지는 게 없는 드롭다운을
+            // 보여주느니 안 보여주는 편이 낫다. 스토어 동작과 DB 행은 그대로 둔다.
+            const isHangul = s.slug === 'hangul';
+            const stage = hangulStage(current.level);
+
             return (
               <div key={s.id} className="flex flex-col gap-2 border-t border-glow-100 pt-4">
                 <div className="flex flex-wrap items-center gap-4">
                   <span className="w-16 font-bold text-slate-700">{s.title}</span>
 
-                  <select
-                    aria-label={`${s.title} 단계`}
-                    className="min-h-touch rounded-xl border-2 border-glow-100 px-3 text-lg"
-                    value={current.level}
-                    onChange={(e) =>
-                      void onChangeLevel(s.id, Number(e.target.value), current.locked)
-                    }
-                  >
-                    {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        {n}단계
-                      </option>
-                    ))}
-                  </select>
+                  {isHangul ? (
+                    <>
+                      {/* 맨 숫자 35개는 부모에게 아무것도 알려주지 않는다.
+                          권으로 묶고 무엇을 배우는지 함께 적는다. */}
+                      <select
+                        aria-label={`${s.title} 단계`}
+                        className="min-h-touch max-w-full rounded-xl border-2 border-glow-100 px-3 text-lg"
+                        value={current.level}
+                        onChange={(e) =>
+                          void onChangeLevel(s.id, Number(e.target.value), current.locked)
+                        }
+                      >
+                        {HANGUL_BOOKS.map((b) => (
+                          <optgroup key={b.book} label={`${b.book}권 · ${b.shortTitle}`}>
+                            {HANGUL_STAGES.filter((x) => x.book === b.book).map((x) => (
+                              <option key={x.stage} value={x.stage}>
+                                {hangulStageOptionLabel(x)}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
 
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
-                    <input
-                      type="checkbox"
-                      aria-label={`${s.title} 여기서 멈춰`}
-                      className="h-6 w-6"
-                      checked={current.locked}
-                      onChange={(e) => void onChangeLevel(s.id, current.level, e.target.checked)}
-                    />
-                    여기서 멈춰
-                  </label>
+                      <label className="flex items-center gap-2 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          aria-label={`${s.title} 여기서 멈춰`}
+                          className="h-6 w-6"
+                          checked={current.locked}
+                          onChange={(e) =>
+                            void onChangeLevel(s.id, current.level, e.target.checked)
+                          }
+                        />
+                        여기서 멈춰
+                      </label>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-400">
+                      단계는 이 과목의 활동이 준비되면 열려요.
+                    </p>
+                  )}
                 </div>
+
+                {/* 지금 고른 단계에서 무엇을 배우는지. 부모가 어디에 맞출지 정하려면
+                    숫자가 아니라 내용이 보여야 한다. */}
+                {isHangul && stage ? (
+                  <div className="rounded-xl bg-glow-50 px-4 py-3">
+                    <p className="text-sm font-bold text-slate-700">
+                      {stage.stage}단계 · {stage.label}
+                    </p>
+                    {stage.examples ? (
+                      <p className="mt-1 text-base text-slate-600">{stage.examples}</p>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {levelError ? (
                   <p className="text-sm font-bold text-red-500">{levelError}</p>

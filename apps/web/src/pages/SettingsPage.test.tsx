@@ -195,6 +195,56 @@ describe('SettingsPage', () => {
     expect(screen.queryByLabelText('한글 단계')).toBeNull();
   });
 
+  it('한글 단계 선택지에 무엇을 배우는지와 예시가 함께 적힌다', async () => {
+    renderPage();
+    await screen.findByText('한글');
+    const select = screen.getByLabelText('한글 단계') as HTMLSelectElement;
+    const labels = Array.from(select.options).map((o) => o.text);
+    expect(labels).toContain("4단계 · 기본 자음 'ㄷ' (다, 댜, 더, 뎌…)");
+    expect(labels).toContain("26단계 · 복잡한 모음 'ㅚ, ㅙ' (쇠, 죄, 돼지, 횃불…)");
+    // 예시가 없는 단계는 빈 괄호를 남기지 않는다.
+    expect(labels).toContain('34단계 · 한글을 예쁘게 쓰는 순서 1');
+    expect(labels).toHaveLength(35);
+  });
+
+  it('선택지를 권별로 묶어 보여준다', async () => {
+    renderPage();
+    await screen.findByText('한글');
+    const select = screen.getByLabelText('한글 단계') as HTMLSelectElement;
+    const groups = Array.from(select.querySelectorAll('optgroup')).map((g) => g.label);
+    expect(groups).toEqual([
+      '1권 · 기본자 학습 1',
+      '2권 · 기본자 학습 2',
+      '3권 · 받침 학습',
+      '4권 · 복잡한 모음 학습',
+      '5권 · 쌍자음과 예쁘게 쓰기',
+    ]);
+  });
+
+  it('지금 고른 단계에서 무엇을 배우는지 밑에 적어준다', async () => {
+    renderPage();
+    await screen.findByText('한글');
+    // 시윤은 4단계 — 기본 자음 'ㄷ'
+    expect(screen.getByText("4단계 · 기본 자음 'ㄷ'")).toBeInTheDocument();
+    expect(screen.getByText('다, 댜, 더, 뎌…')).toBeInTheDocument();
+  });
+
+  it('한글이 아닌 과목에는 단계 조절을 보여주지 않는다', async () => {
+    h.subjects = {
+      data: [
+        { id: 'subj-hangul', slug: 'hangul', title: '한글', sort_order: 1 },
+        { id: 'subj-math', slug: 'math', title: '수학', sort_order: 4 },
+      ],
+      error: null,
+    };
+    renderPage();
+    await screen.findByText('수학');
+    expect(screen.getByLabelText('한글 단계')).toBeInTheDocument();
+    expect(screen.queryByLabelText('수학 단계')).toBeNull();
+    expect(screen.queryByLabelText('수학 여기서 멈춰')).toBeNull();
+    expect(screen.getByText('단계는 이 과목의 활동이 준비되면 열려요.')).toBeInTheDocument();
+  });
+
   it('과목이 하나도 없으면 비었다고 알려준다', async () => {
     h.subjects = { data: [], error: null };
     renderPage();
