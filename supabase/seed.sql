@@ -61,12 +61,12 @@ insert into public.lessons
   (subject_id, slug, title, level, sort_order, activity_kind, subject_level, min_grade, max_grade, config)
 select s.id, v.slug, v.title, v.level, v.sort_order, v.activity_kind, v.subject_level, v.min_grade, v.max_grade, v.config
 from (values
-  -- config.hint: 홈 화면 카드 제목 밑에 붙는 한 줄 예시.
-  -- "낱말 읽기" 에만 남긴다 — 제목만으로는 "자음모음 배우기" 와 달리
-  -- 통낱말을 읽는 활동이라는 게 잘 드러나지 않아서 실제 예를 보여준다.
+  -- 홈 화면 카드는 제목만 보여준다. 제목 밑 한 줄 설명(config.hint)은
+  -- "자음모음 배우기" 로 이름을 바꾼 뒤로는 어느 카드에도 필요하지 않아 전부 뺐다.
+  -- 렌더링 코드는 남아 있으므로, 나중에 필요하면 config 에 hint 를 넣기만 하면 된다.
   -- 나머지 카드는 제목만으로 충분하다.
   ('hangul', 'letter-cards',  '자음모음 배우기', 1, 1, 'letter_cards',  1,  0, 1, '{}'::jsonb),
-  ('hangul', 'word-cards',    '낱말 읽기',      1, 2, 'word_cards',    4,  0, 1, '{"hint":"고기, 나비"}'::jsonb),
+  ('hangul', 'word-cards',    '낱말 읽기',      1, 2, 'word_cards',    4,  0, 1, '{}'::jsonb),
   ('hangul', 'reading-cards', '문장 읽기',      1, 3, 'reading_cards', 14, 0, 1, '{}'::jsonb),
   ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',     14, 0, 1, '{}'::jsonb),
   ('korean', 'spelling',      '맞춤법 탐험대',  1, 1, 'choice_quiz',   1,  1, 6, '{}'::jsonb),
