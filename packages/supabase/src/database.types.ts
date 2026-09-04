@@ -84,27 +84,42 @@ export type Database = {
       }
       lessons: {
         Row: {
+          activity_kind: string
+          config: Json
           id: string
           level: number
+          max_grade: number
+          min_grade: number
           slug: string
           sort_order: number
           subject_id: string
+          subject_level: number
           title: string
         }
         Insert: {
+          activity_kind?: string
+          config?: Json
           id?: string
           level?: number
+          max_grade?: number
+          min_grade?: number
           slug: string
           sort_order?: number
           subject_id: string
+          subject_level?: number
           title: string
         }
         Update: {
+          activity_kind?: string
+          config?: Json
           id?: string
           level?: number
+          max_grade?: number
+          min_grade?: number
           slug?: string
           sort_order?: number
           subject_id?: string
+          subject_level?: number
           title?: string
         }
         Relationships: [
@@ -119,7 +134,7 @@ export type Database = {
       }
       problems: {
         Row: {
-          answer: Json
+          answer: Json | null
           difficulty: number
           id: string
           lesson_id: string
@@ -127,7 +142,7 @@ export type Database = {
           type_id: string
         }
         Insert: {
-          answer: Json
+          answer?: Json | null
           difficulty?: number
           id?: string
           lesson_id: string
@@ -135,7 +150,7 @@ export type Database = {
           type_id: string
         }
         Update: {
-          answer?: Json
+          answer?: Json | null
           difficulty?: number
           id?: string
           lesson_id?: string
@@ -152,29 +167,83 @@ export type Database = {
           },
         ]
       }
+      profile_subject_levels: {
+        Row: {
+          level: number
+          locked: boolean
+          profile_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          level?: number
+          locked?: boolean
+          profile_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          level?: number
+          locked?: boolean
+          profile_id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_subject_levels_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_subject_levels_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_key: string | null
-          birth_year: number | null
+          birth_date: string | null
           created_at: string
+          daily_goal_minutes: number
           display_name: string
+          gender: string | null
+          grade: string | null
           id: string
+          onboarded_at: string | null
+          reading_level: string | null
           total_xp: number
         }
         Insert: {
           avatar_key?: string | null
-          birth_year?: number | null
+          birth_date?: string | null
           created_at?: string
+          daily_goal_minutes?: number
           display_name: string
+          gender?: string | null
+          grade?: string | null
           id: string
+          onboarded_at?: string | null
+          reading_level?: string | null
           total_xp?: number
         }
         Update: {
           avatar_key?: string | null
-          birth_year?: number | null
+          birth_date?: string | null
           created_at?: string
+          daily_goal_minutes?: number
           display_name?: string
+          gender?: string | null
+          grade?: string | null
           id?: string
+          onboarded_at?: string | null
+          reading_level?: string | null
           total_xp?: number
         }
         Relationships: []
@@ -214,6 +283,60 @@ export type Database = {
           },
           {
             foreignKeyName: "progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          activity_kind: string
+          correct_count: number | null
+          created_at: string
+          duration_sec: number | null
+          id: string
+          lesson_id: string | null
+          meta: Json
+          mode: string
+          profile_id: string
+          total_count: number | null
+        }
+        Insert: {
+          activity_kind: string
+          correct_count?: number | null
+          created_at?: string
+          duration_sec?: number | null
+          id?: string
+          lesson_id?: string | null
+          meta?: Json
+          mode?: string
+          profile_id: string
+          total_count?: number | null
+        }
+        Update: {
+          activity_kind?: string
+          correct_count?: number | null
+          created_at?: string
+          duration_sec?: number | null
+          id?: string
+          lesson_id?: string | null
+          meta?: Json
+          mode?: string
+          profile_id?: string
+          total_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
