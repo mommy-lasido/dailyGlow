@@ -68,6 +68,28 @@ describe('OnboardingPage', () => {
     expect((screen.getByLabelText('학년') as HTMLSelectElement).value).toBe('g3');
   });
 
+  it('성과 이름을 따로 저장한다 — display_name 은 성+이름, given_name 은 이름', async () => {
+    const save = vi.fn().mockResolvedValue({});
+    useProfile.setState({ save });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('성'), { target: { value: '정' } });
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '라윤' } });
+    fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
+
+    await waitFor(() => expect(save).toHaveBeenCalled());
+    const patch = save.mock.calls[0]![0];
+    expect(patch.display_name).toBe('정라윤');
+    expect(patch.given_name).toBe('라윤');
+  });
+
+  it('저장된 성과 이름을 두 칸으로 나눠 채운다', () => {
+    useProfile.setState({ profile: profile({ display_name: '남궁라윤', given_name: '라윤' }) });
+    renderPage();
+    expect((screen.getByLabelText('성') as HTMLInputElement).value).toBe('남궁');
+    expect((screen.getByLabelText('이름') as HTMLInputElement).value).toBe('라윤');
+  });
+
   it('생일 입력에 min/max 가 있어 여섯 자리 연도를 막는다', () => {
     renderPage();
     const input = screen.getByLabelText('생일') as HTMLInputElement;
@@ -94,6 +116,7 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(save).toHaveBeenCalled());
     const patch = save.mock.calls[0]![0];
     expect(patch.display_name).toBe('라윤');
+    expect(patch.given_name).toBe('라윤');
     expect(patch.grade).toBe('g3');
     expect(patch.birth_date).toBe('2018-05-10');
     expect(patch.onboarded_at).toBeTruthy();

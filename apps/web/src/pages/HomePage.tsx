@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, ProgressBar } from '@dailyglow/ui';
-import { GRADE_LABEL, type Grade } from '@dailyglow/utils';
+import { GRADE_LABEL, vocativeParticle, type Grade } from '@dailyglow/utils';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
@@ -69,6 +69,8 @@ export function HomePage() {
   const grade = (profile?.grade as Grade | null) ?? null;
   const activities = selectActivities(lessons ?? [], grade, levels);
   const isPreReader = profile?.reading_level === 'pre_reader';
+  // 부를 때는 성을 뺀 이름으로. given_name 이 없는 예전 행은 온전한 이름으로 대신한다.
+  const callName = profile?.given_name ?? profile?.display_name ?? '친구';
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,8 +81,8 @@ export function HomePage() {
             data-testid="greeting"
             className={`font-bold text-glow-600 ${greetingClass(profile?.reading_level ?? null)}`}
           >
-            {profile?.display_name ?? '친구'}
-            {isPreReader ? '! 🌈' : '아 👋'}
+            {callName}
+            {isPreReader ? '! 🌈' : `${vocativeParticle(callName)} 👋`}
           </h1>
           {grade ? <p className="mt-1 text-sm text-slate-400">{GRADE_LABEL[grade]}</p> : null}
         </div>

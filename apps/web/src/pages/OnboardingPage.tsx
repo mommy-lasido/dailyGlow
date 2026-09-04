@@ -9,9 +9,11 @@ import {
   GRADE_LABEL,
   READING_LEVELS,
   READING_LEVEL_LABEL,
+  joinName,
   recommendDailyGoalMinutes,
   recommendGrade,
   recommendReadingLevel,
+  splitName,
   toISODate,
   type Gender,
   type Grade,
@@ -30,7 +32,10 @@ export function OnboardingPage() {
   const signOut = useAuth((s) => s.signOut);
   const navigate = useNavigate();
 
-  const [name, setName] = useState(profile?.display_name ?? '');
+  // 성과 이름을 따로 받는다. 프로필에는 온전한 이름(display_name)을 저장하지만,
+  // 홈 화면에서는 이름(given_name)만 불러야 "안녕, 라윤아" 가 된다.
+  const [familyName, setFamilyName] = useState('');
+  const [givenName, setGivenName] = useState('');
   const [gender, setGender] = useState<Gender | ''>('');
   const [birthDate, setBirthDate] = useState('');
   const [grade, setGrade] = useState<Grade | ''>('');
@@ -49,7 +54,9 @@ export function OnboardingPage() {
    */
   useEffect(() => {
     if (!profile) return;
-    setName(profile.display_name ?? '');
+    const parts = splitName(profile.display_name, profile.given_name);
+    setFamilyName(parts.familyName);
+    setGivenName(parts.givenName);
     setGender((profile.gender as Gender | null) ?? '');
     setBirthDate(profile.birth_date ?? '');
     setGrade((profile.grade as Grade | null) ?? '');
@@ -79,7 +86,8 @@ export function OnboardingPage() {
     setBusy(true);
     setError(null);
     const res = await save({
-      display_name: name.trim(),
+      display_name: joinName(familyName, givenName),
+      given_name: givenName.trim(),
       gender: gender || null,
       birth_date: birthDate || null,
       grade: grade || null,
@@ -118,15 +126,33 @@ export function OnboardingPage() {
         </p>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
-            이름
-            <input
-              className={fieldClass}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </label>
+          {/* 도움말 <span> 은 <label> 밖에 둔다 — 안에 넣으면 label 텍스트가 "성" 이 아니게 된다. */}
+          <div className="flex flex-col gap-1">
+            <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+              성
+              <input
+                className={fieldClass}
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+              />
+            </label>
+            <span className="text-xs font-normal text-slate-400">비워둬도 괜찮아요.</span>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+              이름
+              <input
+                className={fieldClass}
+                value={givenName}
+                onChange={(e) => setGivenName(e.target.value)}
+                required
+              />
+            </label>
+            <span className="text-xs font-normal text-slate-400">
+              화면에서 부를 때 쓰는 이름이에요.
+            </span>
+          </div>
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
             성별
@@ -209,7 +235,7 @@ export function OnboardingPage() {
 
           {error ? <p className="text-sm font-bold text-red-500">{error}</p> : null}
 
-          <Button type="submit" size="lg" disabled={busy || name.trim().length === 0}>
+          <Button type="submit" size="lg" disabled={busy || givenName.trim().length === 0}>
             {busy ? '저장하는 중…' : '시작하기'}
           </Button>
         </form>

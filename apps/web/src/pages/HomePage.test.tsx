@@ -28,6 +28,7 @@ function profile(over: Partial<ProfileRow> = {}): ProfileRow {
   return {
     id: 'u1',
     display_name: '라윤',
+    given_name: '라윤',
     gender: 'female',
     birth_date: '2018-05-10',
     grade: 'g3',
@@ -77,6 +78,29 @@ describe('HomePage', () => {
   it('아이 이름으로 인사한다', () => {
     renderHome();
     expect(screen.getByText(/라윤/)).toBeInTheDocument();
+  });
+
+  it('성을 뺀 이름으로 부른다', () => {
+    useProfile.setState({
+      profile: profile({ display_name: '정라윤', given_name: '라윤' }),
+    });
+    renderHome();
+    expect(screen.getByTestId('greeting')).toHaveTextContent('라윤아');
+    expect(screen.getByTestId('greeting')).not.toHaveTextContent('정라윤');
+  });
+
+  it('given_name 이 없는 예전 행은 display_name 으로 부른다', () => {
+    useProfile.setState({ profile: profile({ display_name: '라윤', given_name: null }) });
+    renderHome();
+    expect(screen.getByTestId('greeting')).toHaveTextContent('라윤아');
+  });
+
+  it('받침이 없는 이름에는 야 를 붙인다', () => {
+    useProfile.setState({
+      profile: profile({ display_name: '김지호', given_name: '지호' }),
+    });
+    renderHome();
+    expect(screen.getByTestId('greeting')).toHaveTextContent('지호야');
   });
 
   it('하루 목표를 보여준다', () => {

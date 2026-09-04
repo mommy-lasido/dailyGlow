@@ -214,6 +214,7 @@ export type Database = {
           daily_goal_minutes: number
           display_name: string
           gender: string | null
+          given_name: string | null
           grade: string | null
           id: string
           onboarded_at: string | null
@@ -227,6 +228,7 @@ export type Database = {
           daily_goal_minutes?: number
           display_name: string
           gender?: string | null
+          given_name?: string | null
           grade?: string | null
           id: string
           onboarded_at?: string | null
@@ -240,6 +242,7 @@ export type Database = {
           daily_goal_minutes?: number
           display_name?: string
           gender?: string | null
+          given_name?: string | null
           grade?: string | null
           id?: string
           onboarded_at?: string | null

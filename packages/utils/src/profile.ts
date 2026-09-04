@@ -57,6 +57,56 @@ export function toISODate(date: Date = new Date()): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * 이름 뒤에 붙일 호격 조사를 고른다 — 받침이 있으면 '아', 없으면 '야'.
+ *
+ * 예전에는 무조건 '아' 를 붙였다. '라윤아' 는 맞지만 '지호아' 는 틀린다.
+ *
+ * 한글 음절은 유니코드에서 (초성 × 중성 × 종성) 순서로 촘촘히 배열돼 있고
+ * 종성이 '없음' 을 포함해 28가지다. 그래서 (코드포인트 - 0xAC00) % 28 이
+ * 0 이면 받침이 없는 글자다.
+ *
+ * 마지막 글자가 한글 음절이 아니면(영어 이름, 이모지) 받침을 따질 수 없다.
+ * 이때는 어느 쪽에도 덜 어색한 '야' 를 쓴다.
+ */
+export function vocativeParticle(name: string): string {
+  const last = name.trim().at(-1);
+  if (!last) return '야';
+
+  const code = last.codePointAt(0)!;
+  const isHangulSyllable = code >= 0xac00 && code <= 0xd7a3;
+  if (!isHangulSyllable) return '야';
+
+  return (code - 0xac00) % 28 !== 0 ? '아' : '야';
+}
+
+/**
+ * 저장된 이름을 입력 폼의 두 칸(성 · 이름)으로 되돌린다.
+ *
+ * display_name 은 성을 포함한 온전한 이름, given_name 은 성을 뺀 이름이다.
+ * given_name 이 없는 예전 행은 온전한 이름을 이름 칸에 넣는다 — 성을 자동으로
+ * 떼어내면 남궁·선우 같은 두 글자 성에서 틀린다.
+ */
+export function splitName(
+  displayName: string | null,
+  givenName: string | null,
+): { familyName: string; givenName: string } {
+  const full = (displayName ?? '').trim();
+  const given = (givenName ?? '').trim();
+
+  if (!given) return { familyName: '', givenName: full };
+  if (full.endsWith(given)) {
+    return { familyName: full.slice(0, full.length - given.length), givenName: given };
+  }
+  // 둘이 서로 안 맞으면(손으로 고친 데이터) 이름만 믿는다.
+  return { familyName: '', givenName: given };
+}
+
+/** 성 + 이름을 온전한 이름으로 합친다. 성이 비어 있으면 이름만 남는다. */
+export function joinName(familyName: string, givenName: string): string {
+  return `${familyName.trim()}${givenName.trim()}`;
+}
+
 /** 학년 서수. DB 의 lessons.min_grade / max_grade 와 같은 매핑이다. */
 export function gradeOrdinal(grade: Grade): number {
   return GRADES.indexOf(grade);

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   toISODate,
+  vocativeParticle,
+  splitName,
+  joinName,
   gradeOrdinal,
   recommendGrade,
   recommendReadingLevel,
@@ -20,6 +23,45 @@ describe('toISODate', () => {
 
   it('한 자리 월·일을 0 으로 채운다', () => {
     expect(toISODate(new Date(2026, 0, 7))).toBe('2026-01-07');
+  });
+});
+
+describe('vocativeParticle', () => {
+  it('받침이 있는 이름에는 아 를 붙인다', () => {
+    expect(vocativeParticle('라윤')).toBe('아');
+    expect(vocativeParticle('시윤')).toBe('아');
+    expect(vocativeParticle('길동')).toBe('아');
+  });
+
+  it('받침이 없는 이름에는 야 를 붙인다', () => {
+    expect(vocativeParticle('지호')).toBe('야');
+    expect(vocativeParticle('민서')).toBe('야');
+  });
+
+  it('한글이 아닌 이름에는 야 를 쓴다', () => {
+    expect(vocativeParticle('Emma')).toBe('야');
+    expect(vocativeParticle('')).toBe('야');
+  });
+});
+
+describe('splitName / joinName', () => {
+  it('온전한 이름에서 성을 떼어낸다', () => {
+    expect(splitName('정라윤', '라윤')).toEqual({ familyName: '정', givenName: '라윤' });
+    expect(splitName('남궁라윤', '라윤')).toEqual({ familyName: '남궁', givenName: '라윤' });
+  });
+
+  it('성이 없으면 이름만 남는다', () => {
+    expect(splitName('라윤', '라윤')).toEqual({ familyName: '', givenName: '라윤' });
+  });
+
+  it('given_name 이 없는 예전 행은 온전한 이름을 이름 칸에 넣는다', () => {
+    expect(splitName('정라윤', null)).toEqual({ familyName: '', givenName: '정라윤' });
+  });
+
+  it('합칠 때 성이 비면 이름만 남긴다', () => {
+    expect(joinName('정', '라윤')).toBe('정라윤');
+    expect(joinName('', '라윤')).toBe('라윤');
+    expect(joinName('  ', ' 라윤 ')).toBe('라윤');
   });
 });
 

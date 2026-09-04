@@ -10,6 +10,8 @@ import {
   GRADE_LABEL,
   READING_LEVELS,
   READING_LEVEL_LABEL,
+  joinName,
+  splitName,
   toISODate,
   type Gender,
   type Grade,
@@ -33,7 +35,9 @@ export function SettingsPage() {
   const save = useProfile((s) => s.save);
   const setSubjectLevel = useProfile((s) => s.setSubjectLevel);
 
-  const [name, setName] = useState('');
+  // 온보딩과 같은 규칙 — 저장은 성+이름(display_name), 부를 때는 이름(given_name).
+  const [familyName, setFamilyName] = useState('');
+  const [givenName, setGivenName] = useState('');
   const [gender, setGender] = useState<Gender | ''>('');
   const [birthDate, setBirthDate] = useState('');
   const [grade, setGrade] = useState<Grade | ''>('');
@@ -47,7 +51,9 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!profile) return;
-    setName(profile.display_name ?? '');
+    const parts = splitName(profile.display_name, profile.given_name);
+    setFamilyName(parts.familyName);
+    setGivenName(parts.givenName);
     setGender((profile.gender as Gender | null) ?? '');
     setBirthDate(profile.birth_date ?? '');
     setGrade((profile.grade as Grade | null) ?? '');
@@ -75,7 +81,8 @@ export function SettingsPage() {
     setError(null);
     setSaving(true);
     const res = await save({
-      display_name: name.trim(),
+      display_name: joinName(familyName, givenName),
+      given_name: givenName.trim(),
       gender: gender || null,
       birth_date: birthDate || null,
       grade: grade || null,
@@ -119,10 +126,32 @@ export function SettingsPage() {
       <Card className="flex flex-col gap-4">
         <h2 className="text-xl font-bold text-slate-700">프로필</h2>
 
-        <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
-          이름
-          <input className={fieldClass} value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
+        {/* 도움말 <span> 은 <label> 밖에 둔다 — 안에 넣으면 label 텍스트가 "성" 이 아니게 된다. */}
+        <div className="flex flex-col gap-1">
+          <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+            성
+            <input
+              className={fieldClass}
+              value={familyName}
+              onChange={(e) => setFamilyName(e.target.value)}
+            />
+          </label>
+          <span className="text-xs font-normal text-slate-400">비워둬도 괜찮아요.</span>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+            이름
+            <input
+              className={fieldClass}
+              value={givenName}
+              onChange={(e) => setGivenName(e.target.value)}
+            />
+          </label>
+          <span className="text-xs font-normal text-slate-400">
+            화면에서 부를 때 쓰는 이름이에요.
+          </span>
+        </div>
 
         <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
           성별

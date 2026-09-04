@@ -69,6 +69,26 @@ describe('SettingsPage', () => {
     expect((screen.getByLabelText('학년') as HTMLSelectElement).value).toBe('preschool');
   });
 
+  it('성과 이름을 따로 저장한다 — display_name 은 성+이름, given_name 은 이름', async () => {
+    const save = vi.fn().mockResolvedValue({});
+    useProfile.setState({ save });
+    renderPage();
+    fireEvent.change(screen.getByLabelText('성'), { target: { value: '정' } });
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
+    fireEvent.click(screen.getByRole('button', { name: /프로필 저장/ }));
+
+    await waitFor(() => expect(save).toHaveBeenCalled());
+    expect(save.mock.calls[0]![0].display_name).toBe('정시윤');
+    expect(save.mock.calls[0]![0].given_name).toBe('시윤');
+  });
+
+  it('저장된 성과 이름을 두 칸으로 나눠 채운다', () => {
+    useProfile.setState({ profile: profile({ display_name: '정시윤', given_name: '시윤' }) });
+    renderPage();
+    expect((screen.getByLabelText('성') as HTMLInputElement).value).toBe('정');
+    expect((screen.getByLabelText('이름') as HTMLInputElement).value).toBe('시윤');
+  });
+
   it('생일 입력에 min/max 가 있어 여섯 자리 연도를 막는다', () => {
     // 온보딩 화면과 같은 범위여야 한다.
     vi.useFakeTimers({ toFake: ['Date'] });
