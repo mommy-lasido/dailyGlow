@@ -27,11 +27,15 @@ const h = vi.hoisted(() => {
     return builder;
   };
 
-  return { responses, makeBuilder };
+  const signOut = vi.fn().mockResolvedValue({ error: null });
+  return { responses, makeBuilder, signOut };
 });
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: { from: (table: string) => h.makeBuilder(table) },
+  supabase: {
+    from: (table: string) => h.makeBuilder(table),
+    auth: { signOut: h.signOut },
+  },
 }));
 
 function baseProfile(over: Partial<ProfileRow> = {}): ProfileRow {
@@ -55,6 +59,7 @@ describe('useProfile 스토어', () => {
   beforeEach(() => {
     useProfile.setState({ profile: null, levels: {}, status: 'idle' });
     for (const key of Object.keys(h.responses)) delete h.responses[key];
+    h.signOut.mockClear();
   });
 
   describe('load', () => {
@@ -66,6 +71,45 @@ describe('useProfile 스토어', () => {
 
       expect(useProfile.getState().status).toBe('error');
       expect(useProfile.getState().profile).toBeNull();
+    });
+
+    it('로그인이 만료됐으면(PGRST301) 로그아웃시키고 오류 화면을 띄우지 않는다', async () => {
+      // db:reset 뒤 예전 세션이 남은 상황. 연결 문제가 아니라 로그인 만료라
+      // "다시 해보기" 카드가 아니라 로그인 화면으로 가야 한다.
+      h.responses['profiles'] = {
+        data: null,
+        error: { code: 'PGRST301', message: 'JWT cryptographic operation failed' },
+      };
+      h.responses['profile_subject_levels'] = { data: [], error: null };
+
+      await useProfile.getState().load('u1');
+
+      expect(h.signOut).toHaveBeenCalled();
+      expect(useProfile.getState().status).not.toBe('error');
+      expect(useProfile.getState().profile).toBeNull();
+    });
+
+    it('code 가 없어도 메시지에 JWT 가 있으면 로그인 만료로 본다', async () => {
+      h.responses['profiles'] = { data: baseProfile(), error: null };
+      h.responses['profile_subject_levels'] = {
+        data: null,
+        error: { message: 'JWT expired' },
+      };
+
+      await useProfile.getState().load('u1');
+
+      expect(h.signOut).toHaveBeenCalled();
+      expect(useProfile.getState().status).not.toBe('error');
+    });
+
+    it('연결 실패는 로그아웃시키지 않고 error 로 남긴다', async () => {
+      h.responses['profiles'] = { data: null, error: { message: 'Failed to fetch' } };
+      h.responses['profile_subject_levels'] = { data: [], error: null };
+
+      await useProfile.getState().load('u1');
+
+      expect(h.signOut).not.toHaveBeenCalled();
+      expect(useProfile.getState().status).toBe('error');
     });
 
     it('성공하면 프로필과 레벨 맵을 채우고 ready 가 된다', async () => {

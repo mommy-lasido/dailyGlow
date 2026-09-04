@@ -27,6 +27,25 @@ function toKoreanError(scope: string, raw: string): string {
   return '지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.';
 }
 
+/**
+ * 로그인이 만료된 오류인지 가려낸다.
+ *
+ * `db:reset` 뒤처럼 예전 세션이 브라우저에 남아 있으면 첫 조회가
+ * 401 `{"code":"PGRST301","message":"JWT cryptographic operation failed"}` 로 돌아온다.
+ * 이건 연결이 끊긴 게 아니라 로그인이 만료된 것이다. 둘을 같이 다루면
+ * 만료된 로그인이 "지금 연결이 잘 안 돼요" 로 보이고, 다시 해보기 버튼은
+ * 몇 번을 눌러도 같은 401 을 받는다.
+ *
+ * PostgREST 는 인증 실패를 code 로 알려준다 — PGRST301(JWT 문제),
+ * 42501(권한 없음). code 를 먼저 보고, 없으면 메시지에서 JWT 를 찾는다.
+ */
+function isAuthError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  if (code === 'PGRST301' || code === '42501') return true;
+  return typeof message === 'string' && /JWT/i.test(message);
+}
+
 interface ProfileState {
   profile: ProfileRow | null;
   /** subject_id → 레벨 */
@@ -75,7 +94,17 @@ export const useProfile = create<ProfileState>((set, get) => ({
     // 기다리는 사이에 clear() 나 다른 load 가 끼어들었으면 이 결과는 이미 낡았다.
     if (get().requestId !== generation) return;
 
-    if (profileRes.error || levelRes.error) {
+    const failure = profileRes.error ?? levelRes.error;
+    if (failure) {
+      // 로그인이 만료됐으면 로그아웃시킨다. onAuthStateChange 가 auth 스토어를
+      // 비우고, RequireAuth 가 /login 으로 보낸다 — 다시 로그인하는 것만이
+      // 유일한 해결책이라 "다시 해보기" 카드를 띄우면 안 된다.
+      if (isAuthError(failure)) {
+        console.warn('[profile] 로그인이 만료되어 로그아웃합니다:', failure.message);
+        get().clear();
+        await supabase.auth.signOut();
+        return;
+      }
       set({ status: 'error' });
       return;
     }
