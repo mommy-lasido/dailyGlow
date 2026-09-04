@@ -51,6 +51,7 @@ function lessonRow(over: Record<string, unknown> = {}) {
     subject_level: 1,
     min_grade: 1,
     max_grade: 6,
+    sort_order: 1,
     subjects: { slug: 'math', title: '수학', sort_order: 3 },
     ...over,
   };

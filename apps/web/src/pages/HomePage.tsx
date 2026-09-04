@@ -31,12 +31,16 @@ export function HomePage() {
       const { data, error } = await supabase
         .from('lessons')
         .select(
-          'id, title, activity_kind, subject_id, subject_level, min_grade, max_grade, subjects!inner(slug, title, sort_order)',
+          'id, title, activity_kind, subject_id, subject_level, sort_order, min_grade, max_grade, subjects!inner(slug, title, sort_order)',
         )
         .order('sort_order');
       if (error) throw error;
       return (data ?? []).map((r) => {
-        const subject = r.subjects as unknown as { slug: string; title: string };
+        const subject = r.subjects as unknown as {
+          slug: string;
+          title: string;
+          sort_order: number;
+        };
         return {
           id: r.id,
           title: r.title,
@@ -47,6 +51,8 @@ export function HomePage() {
           subject_level: r.subject_level,
           min_grade: r.min_grade,
           max_grade: r.max_grade,
+          sort_order: r.sort_order,
+          subject_sort_order: subject.sort_order,
         };
       });
     },

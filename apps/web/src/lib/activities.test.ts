@@ -15,6 +15,8 @@ function row(over: Partial<LessonGateRow>): LessonGateRow {
     subject_level: 1,
     min_grade: 0,
     max_grade: 1,
+    sort_order: 1,
+    subject_sort_order: 1,
     ...over,
   };
 }
@@ -38,6 +40,25 @@ describe('selectActivities', () => {
   it('레벨 기록이 없으면 1단계로 본다', () => {
     const rows = [row({ id: 'letters', subject_level: 1 })];
     expect(selectActivities(rows, 'preschool', {}).map((a) => a.id)).toEqual(['letters']);
+  });
+
+  it('과목 순서 다음에 레슨 순서로 정렬한다', () => {
+    // 시윤·도윤은 한글 letter-cards(1)와 수학 add-play(1)가 둘 다 sort_order 1 이다.
+    // 레슨 순서만 보면 들어올 때마다 카드 차례가 뒤바뀐다.
+    const rows = [
+      row({ id: 'add-play', subject_id: MATH, subject_slug: 'math', sort_order: 1, subject_sort_order: 4 }),
+      row({ id: 'word-cards', sort_order: 2, subject_sort_order: 1 }),
+      row({ id: 'letter-cards', sort_order: 1, subject_sort_order: 1 }),
+    ];
+    const levels = {
+      [HANGUL]: { level: 4, locked: false },
+      [MATH]: { level: 1, locked: false },
+    };
+    expect(selectActivities(rows, 'preschool', levels).map((a) => a.id)).toEqual([
+      'letter-cards',
+      'word-cards',
+      'add-play',
+    ]);
   });
 
   it('학년이 정해지지 않았으면 학년 조건은 통과시킨다', () => {

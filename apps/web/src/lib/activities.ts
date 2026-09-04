@@ -13,6 +13,10 @@ export interface LessonGateRow {
   subject_level: number;
   min_grade: number;
   max_grade: number;
+  /** 레슨끼리의 순서 (lessons.sort_order) */
+  sort_order: number;
+  /** 과목끼리의 순서 (subjects.sort_order) */
+  subject_sort_order: number;
 }
 
 export interface ActivityCard {
@@ -41,6 +45,9 @@ export function activityEmoji(kind: string): string {
  * 이 아이에게 보여줄 활동을 고른다.
  * 조건 두 가지 — 학년이 활동의 대상 범위 안에 있고, 과목 레벨이 활동의 시작 단계 이상일 것.
  * 레벨 기록이 아직 없으면 1단계로 본다.
+ *
+ * 결과는 과목 순서, 그 안에서 레슨 순서로 정렬한다. 레슨 순서만으로 정렬하면
+ * 시윤·도윤처럼 sort_order 가 1인 카드가 둘인 아이의 홈 화면이 들어올 때마다 뒤바뀐다.
  */
 export function selectActivities(
   rows: LessonGateRow[],
@@ -55,6 +62,10 @@ export function selectActivities(
       const level = levels[r.subject_id]?.level ?? 1;
       return gradeOk && level >= r.subject_level;
     })
+    .sort(
+      (a, b) =>
+        a.subject_sort_order - b.subject_sort_order || a.sort_order - b.sort_order,
+    )
     .map((r) => ({
       id: r.id,
       title: r.title,
