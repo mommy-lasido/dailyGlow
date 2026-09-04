@@ -4,6 +4,7 @@ import {
   recommendGrade,
   recommendReadingLevel,
   recommendDailyGoalMinutes,
+  recommendHangulStage,
   GRADE_LABEL,
   READING_LEVEL_LABEL,
 } from './profile';
@@ -68,6 +69,24 @@ describe('recommendDailyGoalMinutes', () => {
     expect(recommendDailyGoalMinutes('g1')).toBe(10);
     expect(recommendDailyGoalMinutes('g3')).toBe(15);
     expect(recommendDailyGoalMinutes('g5')).toBe(20);
+  });
+});
+
+describe('recommendHangulStage', () => {
+  it('아직 못 읽으면 1단계부터', () => {
+    expect(recommendHangulStage('pre_reader')).toBe(1);
+  });
+
+  it('배우는 중이면 낱말 읽기가 열리는 4단계', () => {
+    expect(recommendHangulStage('learning')).toBe(4);
+  });
+
+  it('혼자 잘 읽으면 마지막 35단계', () => {
+    expect(recommendHangulStage('fluent')).toBe(35);
+  });
+
+  it('읽기 수준을 고르지 않았으면 1단계로 본다', () => {
+    expect(recommendHangulStage(null)).toBe(1);
   });
 });
 

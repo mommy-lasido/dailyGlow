@@ -84,6 +84,24 @@ export function recommendReadingLevel(
   return gradeOrdinal(grade) <= 2 ? 'learning' : 'fluent';
 }
 
+/**
+ * 추천 한글 단계.
+ *
+ * 여기서 돌려주는 숫자는 '기적의 한글 학습'(길벗스쿨, 5권 35단계)의 단계 번호(1~35)다.
+ * 한글 과목에서는 profile_subject_levels.level 이 곧 이 단계 번호다.
+ *
+ * 읽기 수준만으로 단계를 정확히 맞힐 수는 없다. 온보딩에서 "이 정도부터 시작해 볼까요" 하고
+ * 제안하는 값일 뿐이고, 부모가 설정 화면에서 언제든 바꿀 수 있다.
+ *   - 아직 못 읽어요 → 1단계 (기본 모음부터)
+ *   - 배우는 중이에요 → 4단계 (낱말 읽기가 열리는 지점)
+ *   - 혼자 잘 읽어요 → 35단계 (한글 과정을 뗀 것으로 본다)
+ */
+export function recommendHangulStage(readingLevel: ReadingLevel | null): number {
+  if (readingLevel === 'fluent') return 35;
+  if (readingLevel === 'learning') return 4;
+  return 1;
+}
+
 /** 추천 하루 목표 시간(분). 어릴수록 짧게. */
 export function recommendDailyGoalMinutes(grade: Grade): number {
   const ord = gradeOrdinal(grade);
