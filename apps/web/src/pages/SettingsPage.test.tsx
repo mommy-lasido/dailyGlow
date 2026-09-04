@@ -85,6 +85,20 @@ describe('SettingsPage', () => {
     expect(screen.queryByText('저장했어요')).toBeNull();
   });
 
+  it('저장에 성공한 뒤 다시 저장하다 실패하면 저장했어요 가 사라진다', async () => {
+    const save = vi.fn().mockResolvedValue({});
+    useProfile.setState({ save });
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /프로필 저장/ }));
+    await screen.findByText('저장했어요');
+
+    save.mockResolvedValue({ error: '저장하지 못했어요. 잠시 후 다시 해주세요.' });
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤이' } });
+    fireEvent.click(screen.getByRole('button', { name: /프로필 저장/ }));
+    await screen.findByText('저장하지 못했어요. 잠시 후 다시 해주세요.');
+    expect(screen.queryByText('저장했어요')).toBeNull();
+  });
+
   it('과목 레벨을 바꾸면 setSubjectLevel 이 호출된다', async () => {
     const setSubjectLevel = vi.fn().mockResolvedValue(undefined);
     useProfile.setState({ setSubjectLevel });

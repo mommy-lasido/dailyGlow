@@ -73,6 +73,7 @@ export function SettingsPage() {
       daily_goal_minutes: goal,
     });
     if (res.error) {
+      setSaved(false);
       setError(res.error);
       return;
     }
