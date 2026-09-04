@@ -94,6 +94,39 @@ describe('useProfile 스토어', () => {
       expect(seen).not.toContain('loading');
     });
 
+    it('조회 도중 clear 가 일어나면 늦게 온 결과를 반영하지 않는다', async () => {
+      // 로그아웃이 조회 도중에 끼어드는 경우. 늦게 온 응답이 프로필을 되살리면
+      // 다음 아이 화면에 앞 아이 이름과 활동 목록이 잠깐 보인다.
+      h.responses['profiles'] = { data: baseProfile(), error: null };
+      h.responses['profile_subject_levels'] = {
+        data: [{ subject_id: 'math', level: 3, locked: false }],
+        error: null,
+      };
+
+      const pending = useProfile.getState().load('u1');
+      useProfile.getState().clear();
+      await pending;
+
+      expect(useProfile.getState().profile).toBeNull();
+      expect(useProfile.getState().levels).toEqual({});
+      expect(useProfile.getState().status).toBe('idle');
+    });
+
+    it('다음 아이의 load 는 status 를 다시 loading 으로 내린다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['profiles'] = { data: baseProfile({ display_name: '시윤' }), error: null };
+      h.responses['profile_subject_levels'] = { data: [], error: null };
+
+      useProfile.getState().clear();
+      const seen: string[] = [];
+      const unsub = useProfile.subscribe((s) => seen.push(s.status));
+      await useProfile.getState().load('u2');
+      unsub();
+
+      expect(seen).toContain('loading');
+      expect(useProfile.getState().profile?.display_name).toBe('시윤');
+    });
+
     it('프로필이 없으면 조회 중 status 를 loading 으로 내린다', async () => {
       h.responses['profiles'] = { data: baseProfile(), error: null };
       h.responses['profile_subject_levels'] = { data: [], error: null };

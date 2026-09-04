@@ -32,6 +32,13 @@ interface ProfileState {
   /** subject_id → 레벨 */
   levels: Record<string, SubjectLevel>;
   status: 'idle' | 'loading' | 'ready' | 'error';
+  /**
+   * load 요청 세대 번호. load 는 시작할 때 이 값을 올리고, 결과를 반영하기 전에
+   * 아직 자기 세대인지 확인한다. clear() 도 값을 올린다 — 로그아웃이 조회 도중에
+   * 끼어들면, 늦게 도착한 응답이 방금 지운 프로필을 되살려서 다음 아이 화면에
+   * 앞 아이 이름과 활동 목록이 잠깐 보인다.
+   */
+  requestId: number;
 
   load: (userId: string) => Promise<void>;
   save: (patch: Partial<ProfileRow>) => Promise<{ error?: string }>;
@@ -52,14 +59,21 @@ export const useProfile = create<ProfileState>((set, get) => ({
   profile: null,
   levels: {},
   status: 'idle',
+  requestId: 0,
 
   load: async (userId) => {
+    const generation = get().requestId + 1;
+    set({ requestId: generation });
+
     // 이미 프로필이 있으면 백그라운드 재조회 — 화면이 깜빡이지 않도록 loading 으로 내리지 않는다.
     if (!get().profile) set({ status: 'loading' });
     const [profileRes, levelRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
       supabase.from('profile_subject_levels').select('*').eq('profile_id', userId),
     ]);
+
+    // 기다리는 사이에 clear() 나 다른 load 가 끼어들었으면 이 결과는 이미 낡았다.
+    if (get().requestId !== generation) return;
 
     if (profileRes.error || levelRes.error) {
       set({ status: 'error' });
@@ -150,5 +164,6 @@ export const useProfile = create<ProfileState>((set, get) => ({
     return {};
   },
 
-  clear: () => set({ profile: null, levels: {}, status: 'idle' }),
+  clear: () =>
+    set({ profile: null, levels: {}, status: 'idle', requestId: get().requestId + 1 }),
 }));
