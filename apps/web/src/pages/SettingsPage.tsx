@@ -38,7 +38,10 @@ export function SettingsPage() {
   const [readingLevel, setReadingLevel] = useState<ReadingLevel | ''>('');
   const [goal, setGoal] = useState(10);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** subject_id → 그 과목 줄에 보여줄 오류 문구 */
+  const [levelErrors, setLevelErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!profile) return;
@@ -50,7 +53,11 @@ export function SettingsPage() {
     setGoal(profile.daily_goal_minutes ?? 10);
   }, [profile]);
 
-  const { data: subjects = [] } = useQuery({
+  const {
+    data: subjects,
+    isPending: subjectsPending,
+    isError: subjectsError,
+  } = useQuery({
     queryKey: ['subjects'],
     queryFn: async (): Promise<SubjectRow[]> => {
       const { data, error } = await supabase
@@ -64,6 +71,7 @@ export function SettingsPage() {
 
   async function onSaveProfile() {
     setError(null);
+    setSaving(true);
     const res = await save({
       display_name: name.trim(),
       gender: gender || null,
@@ -72,6 +80,7 @@ export function SettingsPage() {
       reading_level: readingLevel || null,
       daily_goal_minutes: goal,
     });
+    setSaving(false);
     if (res.error) {
       setSaved(false);
       setError(res.error);
@@ -79,6 +88,21 @@ export function SettingsPage() {
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  /**
+   * <select> 와 체크박스는 스토어의 levels 로 그려진다. 저장이 실패하면 스토어가
+   * 그대로라 값이 예전 숫자로 되돌아가는데, 이유를 말해주지 않으면 부모는
+   * 자기가 잘못 눌렀다고 생각한다. 실패한 과목 줄 옆에 이유를 붙인다.
+   */
+  async function onChangeLevel(subjectId: string, level: number, locked: boolean) {
+    const res = await setSubjectLevel(subjectId, level, locked);
+    setLevelErrors((prev) => {
+      const next = { ...prev };
+      if (res.error) next[subjectId] = res.error;
+      else delete next[subjectId];
+      return next;
+    });
   }
 
   return (
@@ -171,7 +195,10 @@ export function SettingsPage() {
         {error ? <p className="text-sm font-bold text-red-500">{error}</p> : null}
 
         <div className="flex items-center gap-3">
-          <Button onClick={() => void onSaveProfile()}>프로필 저장</Button>
+          {/* 저장하는 동안 잠근다 — 두 번 누르면 저장이 두 번 나간다. */}
+          <Button disabled={saving} onClick={() => void onSaveProfile()}>
+            {saving ? '저장하는 중…' : '프로필 저장'}
+          </Button>
           {saved ? <span className="text-sm font-bold text-green-600">저장했어요</span> : null}
         </div>
       </Card>
@@ -183,39 +210,58 @@ export function SettingsPage() {
           아이가 잘해도 다음 단계로 넘어가지 않아요.
         </p>
 
-        {subjects.map((s) => {
-          const current = levels[s.id] ?? { level: 1, locked: false };
-          const max = s.slug === 'hangul' ? 35 : 10;
-          return (
-            <div key={s.id} className="flex flex-wrap items-center gap-4 border-t border-glow-100 pt-4">
-              <span className="w-16 font-bold text-slate-700">{s.title}</span>
+        {subjectsPending ? (
+          <p className="text-center text-lg text-slate-400">과목 목록을 불러오는 중이에요…</p>
+        ) : subjectsError ? (
+          <p className="text-center text-lg text-slate-500">
+            지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.
+          </p>
+        ) : subjects.length === 0 ? (
+          <p className="text-center text-lg text-slate-500">아직 등록된 과목이 없어요.</p>
+        ) : (
+          subjects.map((s) => {
+            const current = levels[s.id] ?? { level: 1, locked: false };
+            const max = s.slug === 'hangul' ? 35 : 10;
+            const levelError = levelErrors[s.id];
+            return (
+              <div key={s.id} className="flex flex-col gap-2 border-t border-glow-100 pt-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="w-16 font-bold text-slate-700">{s.title}</span>
 
-              <select
-                aria-label={`${s.title} 단계`}
-                className="min-h-touch rounded-xl border-2 border-glow-100 px-3 text-lg"
-                value={current.level}
-                onChange={(e) => void setSubjectLevel(s.id, Number(e.target.value), current.locked)}
-              >
-                {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n}단계
-                  </option>
-                ))}
-              </select>
+                  <select
+                    aria-label={`${s.title} 단계`}
+                    className="min-h-touch rounded-xl border-2 border-glow-100 px-3 text-lg"
+                    value={current.level}
+                    onChange={(e) =>
+                      void onChangeLevel(s.id, Number(e.target.value), current.locked)
+                    }
+                  >
+                    {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}단계
+                      </option>
+                    ))}
+                  </select>
 
-              <label className="flex items-center gap-2 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  aria-label={`${s.title} 여기서 멈춰`}
-                  className="h-6 w-6"
-                  checked={current.locked}
-                  onChange={(e) => void setSubjectLevel(s.id, current.level, e.target.checked)}
-                />
-                여기서 멈춰
-              </label>
-            </div>
-          );
-        })}
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      aria-label={`${s.title} 여기서 멈춰`}
+                      className="h-6 w-6"
+                      checked={current.locked}
+                      onChange={(e) => void onChangeLevel(s.id, current.level, e.target.checked)}
+                    />
+                    여기서 멈춰
+                  </label>
+                </div>
+
+                {levelError ? (
+                  <p className="text-sm font-bold text-red-500">{levelError}</p>
+                ) : null}
+              </div>
+            );
+          })
+        )}
       </Card>
     </div>
   );

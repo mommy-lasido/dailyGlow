@@ -40,7 +40,11 @@ interface ProfileState {
    * 이미 값이 있는 과목은 건드리지 않는다 — 부모가 정한 값을 덮어쓰면 안 된다.
    */
   initializeSubjectLevels: (readingLevel: ReadingLevel | null) => Promise<{ error?: string }>;
-  setSubjectLevel: (subjectId: string, level: number, locked?: boolean) => Promise<void>;
+  setSubjectLevel: (
+    subjectId: string,
+    level: number,
+    locked?: boolean,
+  ) => Promise<{ error?: string }>;
   clear: () => void;
 }
 
@@ -81,7 +85,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
       .select()
       .single();
 
-    if (error) return { error: error.message };
+    if (error) return { error: toKoreanError('프로필 저장', error.message) };
     set({ profile: data });
     return {};
   },
@@ -122,7 +126,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
 
   setSubjectLevel: async (subjectId, level, locked) => {
     const current = get().profile;
-    if (!current) return;
+    if (!current) return { error: '프로필이 없습니다.' };
 
     const next: SubjectLevel = {
       level,
@@ -138,12 +142,12 @@ export const useProfile = create<ProfileState>((set, get) => ({
     });
 
     // 저장에 실패하면 로컬 상태를 갱신하지 않는다 — 저장 안 된 값을 화면에 보이지 않게.
-    if (error) {
-      console.warn('[profile] 과목 레벨 저장 실패:', error.message);
-      return;
-    }
+    // 대신 실패했다는 사실을 부르는 쪽에 돌려준다. <select> 가 예전 숫자로 조용히
+    // 되돌아가기만 하면 부모는 자기가 잘못 눌렀다고 생각한다.
+    if (error) return { error: toKoreanError('과목 레벨 저장', error.message) };
 
     set({ levels: { ...get().levels, [subjectId]: next } });
+    return {};
   },
 
   clear: () => set({ profile: null, levels: {}, status: 'idle' }),

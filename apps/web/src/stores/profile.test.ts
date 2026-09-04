@@ -107,6 +107,20 @@ describe('useProfile 스토어', () => {
     });
   });
 
+  describe('save', () => {
+    it('실패하면 PostgREST 영어 원문 대신 한국어 문장을 돌려준다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['profiles'] = {
+        data: null,
+        error: { message: 'new row violates row-level security policy for table "profiles"' },
+      };
+
+      const res = await useProfile.getState().save({ display_name: '시윤' });
+
+      expect(res.error).toBe('권한이 없어요. 로그아웃했다가 다시 들어와 주세요.');
+    });
+  });
+
   describe('initializeSubjectLevels', () => {
     beforeEach(() => {
       h.responses['subjects'] = {
@@ -196,6 +210,25 @@ describe('useProfile 스토어', () => {
       await useProfile.getState().setSubjectLevel('math', 4);
 
       expect(useProfile.getState().levels).toEqual({});
+    });
+
+    it('upsert 가 실패하면 영어 원문 대신 한국어 오류를 돌려준다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['profile_subject_levels:upsert'] = {
+        error: { message: 'new row violates row-level security policy for table "profiles"' },
+      };
+
+      const res = await useProfile.getState().setSubjectLevel('math', 4);
+
+      expect(res.error).toBe('권한이 없어요. 로그아웃했다가 다시 들어와 주세요.');
+      expect(res.error).not.toMatch(/[a-z]{4,}/);
+    });
+
+    it('upsert 가 성공하면 오류 없이 끝난다', async () => {
+      useProfile.setState({ profile: baseProfile(), levels: {}, status: 'ready' });
+      h.responses['profile_subject_levels:upsert'] = { error: null };
+
+      expect(await useProfile.getState().setSubjectLevel('math', 4)).toEqual({});
     });
 
     it('upsert 가 성공하면 로컬 levels 를 갱신한다', async () => {

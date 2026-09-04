@@ -5,15 +5,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 import { useProfile, type ProfileRow } from '@/stores/profile';
 
+/** 과목 조회 응답. 테스트마다 h.subjects 로 바꿔 끼운다. */
+const h = vi.hoisted(() => ({
+  subjects: { data: null, error: null } as { data: unknown; error: unknown },
+}));
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: () => ({
       select: () => ({
-        order: () =>
-          Promise.resolve({
-            data: [{ id: 'subj-hangul', slug: 'hangul', title: '한글', sort_order: 1 }],
-            error: null,
-          }),
+        order: () => Promise.resolve(h.subjects),
       }),
     }),
   },
@@ -49,12 +50,16 @@ function renderPage() {
 
 describe('SettingsPage', () => {
   beforeEach(() => {
+    h.subjects = {
+      data: [{ id: 'subj-hangul', slug: 'hangul', title: '한글', sort_order: 1 }],
+      error: null,
+    };
     useProfile.setState({
       profile: profile(),
       levels: { 'subj-hangul': { level: 4, locked: false } },
       status: 'ready',
       save: vi.fn().mockResolvedValue({}),
-      setSubjectLevel: vi.fn().mockResolvedValue(undefined),
+      setSubjectLevel: vi.fn().mockResolvedValue({}),
     });
   });
 
@@ -100,7 +105,7 @@ describe('SettingsPage', () => {
   });
 
   it('과목 레벨을 바꾸면 setSubjectLevel 이 호출된다', async () => {
-    const setSubjectLevel = vi.fn().mockResolvedValue(undefined);
+    const setSubjectLevel = vi.fn().mockResolvedValue({});
     useProfile.setState({ setSubjectLevel });
     renderPage();
     await screen.findByText('한글');
@@ -109,11 +114,72 @@ describe('SettingsPage', () => {
   });
 
   it('멈춤을 켜면 locked 가 true 로 전달된다', async () => {
-    const setSubjectLevel = vi.fn().mockResolvedValue(undefined);
+    const setSubjectLevel = vi.fn().mockResolvedValue({});
     useProfile.setState({ setSubjectLevel });
     renderPage();
     await screen.findByText('한글');
     fireEvent.click(screen.getByLabelText('한글 여기서 멈춰'));
     await waitFor(() => expect(setSubjectLevel).toHaveBeenCalledWith('subj-hangul', 4, true));
+  });
+
+  it('과목 레벨 저장이 실패하면 그 과목 줄에 이유를 보여준다', async () => {
+    const setSubjectLevel = vi
+      .fn()
+      .mockResolvedValue({ error: '지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.' });
+    useProfile.setState({ setSubjectLevel });
+    renderPage();
+    await screen.findByText('한글');
+    fireEvent.change(screen.getByLabelText('한글 단계'), { target: { value: '7' } });
+
+    await screen.findByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.');
+    // 저장이 안 됐으니 값은 예전 단계 그대로다 — 그 이유를 화면이 말해준다.
+    expect((screen.getByLabelText('한글 단계') as HTMLSelectElement).value).toBe('4');
+  });
+
+  it('다시 저장해서 성공하면 오류 문구가 사라진다', async () => {
+    const setSubjectLevel = vi
+      .fn()
+      .mockResolvedValueOnce({ error: '지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.' })
+      .mockResolvedValueOnce({});
+    useProfile.setState({ setSubjectLevel });
+    renderPage();
+    await screen.findByText('한글');
+
+    fireEvent.change(screen.getByLabelText('한글 단계'), { target: { value: '7' } });
+    await screen.findByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.');
+
+    fireEvent.change(screen.getByLabelText('한글 단계'), { target: { value: '7' } });
+    await waitFor(() =>
+      expect(screen.queryByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.')).toBeNull(),
+    );
+  });
+
+  it('과목 조회가 실패하면 빈 목록 대신 이유를 보여준다', async () => {
+    h.subjects = { data: null, error: { message: 'boom' } };
+    renderPage();
+    await screen.findByText('지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.');
+    expect(screen.queryByLabelText('한글 단계')).toBeNull();
+  });
+
+  it('과목이 하나도 없으면 비었다고 알려준다', async () => {
+    h.subjects = { data: [], error: null };
+    renderPage();
+    await screen.findByText('아직 등록된 과목이 없어요.');
+  });
+
+  it('저장하는 동안에는 저장 버튼을 다시 누를 수 없다', async () => {
+    let release: (v: unknown) => void = () => {};
+    const save = vi.fn().mockReturnValue(new Promise((r) => (release = r)));
+    useProfile.setState({ save });
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /프로필 저장/ }));
+    const button = await screen.findByRole('button', { name: '저장하는 중…' });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(save).toHaveBeenCalledTimes(1);
+
+    release({});
+    await waitFor(() => expect(screen.getByRole('button', { name: '프로필 저장' })).toBeEnabled());
   });
 });
