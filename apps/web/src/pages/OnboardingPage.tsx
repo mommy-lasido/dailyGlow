@@ -7,6 +7,7 @@ import {
   GENDER_LABEL,
   GRADES,
   GRADE_LABEL,
+  gradeOrdinal,
   READING_LEVELS,
   READING_LEVEL_LABEL,
   joinName,
@@ -80,6 +81,20 @@ export function OnboardingPage() {
     setGoal(recommendDailyGoalMinutes(g));
   }
 
+  /**
+   * 한글 읽기를 물어볼지.
+   *
+   * 초2 이상에게 "한글을 읽을 수 있나요" 하고 묻는 건 이상하다. 다만 초1 은
+   * 아직 배우는 중인 아이가 많아 애매하니 미취학·초1 까지만 묻는다.
+   * 학년을 아직 고르지 않았으면(빈 값) 판단할 근거가 없으므로 물어본다.
+   *
+   * 설정 화면에서는 이 칸을 늘 보여준다 — 부모가 고쳐줄 길은 남겨둬야 한다.
+   */
+  const asksReadingLevel = grade === '' || gradeOrdinal(grade) <= 1;
+
+  // 묻지 않은 학년은 한글을 뗀 것으로 본다.
+  const effectiveReadingLevel: ReadingLevel | '' = asksReadingLevel ? readingLevel : 'fluent';
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     submittedHere.current = true;
@@ -91,7 +106,7 @@ export function OnboardingPage() {
       gender: gender || null,
       birth_date: birthDate || null,
       grade: grade || null,
-      reading_level: readingLevel || null,
+      reading_level: effectiveReadingLevel || null,
       daily_goal_minutes: goal,
       onboarded_at: new Date().toISOString(),
     });
@@ -104,7 +119,7 @@ export function OnboardingPage() {
     // 과목별 시작 레벨을 여기서 제안해 둔다. 이게 없으면 한글이 1단계로 취급돼
     // 4단계부터 열리는 낱말 읽기가 홈에서 통째로 빠진다.
     // 실패하면 홈으로 보내지 않는다 — 카드가 비어 있는 이유를 아무도 알 수 없게 된다.
-    const levelRes = await initializeSubjectLevels(readingLevel || null);
+    const levelRes = await initializeSubjectLevels(effectiveReadingLevel || null);
     setBusy(false);
     if (levelRes.error) {
       setError(levelRes.error);
@@ -202,21 +217,23 @@ export function OnboardingPage() {
             </span>
           </div>
 
-          <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
-            한글 읽기
-            <select
-              className={fieldClass}
-              value={readingLevel}
-              onChange={(e) => setReadingLevel(e.target.value as ReadingLevel | '')}
-            >
-              <option value="">고르지 않음</option>
-              {READING_LEVELS.map((r) => (
-                <option key={r} value={r}>
-                  {READING_LEVEL_LABEL[r]}
-                </option>
-              ))}
-            </select>
-          </label>
+          {asksReadingLevel ? (
+            <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+              한글 읽기
+              <select
+                className={fieldClass}
+                value={readingLevel}
+                onChange={(e) => setReadingLevel(e.target.value as ReadingLevel | '')}
+              >
+                <option value="">고르지 않음</option>
+                {READING_LEVELS.map((r) => (
+                  <option key={r} value={r}>
+                    {READING_LEVEL_LABEL[r]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
             하루 목표

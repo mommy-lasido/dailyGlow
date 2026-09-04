@@ -160,6 +160,36 @@ describe('OnboardingPage', () => {
     expect(screen.getByRole('button', { name: /시작하기/ })).toBeInTheDocument();
   });
 
+  it('초2 부터는 한글 읽기를 묻지 않는다', () => {
+    renderPage();
+    expect(screen.getByLabelText('한글 읽기')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('학년'), { target: { value: 'g2' } });
+    expect(screen.queryByLabelText('한글 읽기')).toBeNull();
+  });
+
+  it('미취학·초1 에게는 한글 읽기를 묻는다', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('학년'), { target: { value: 'g1' } });
+    expect(screen.getByLabelText('한글 읽기')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('학년'), { target: { value: 'preschool' } });
+    expect(screen.getByLabelText('한글 읽기')).toBeInTheDocument();
+  });
+
+  it('초3 으로 저장하면 묻지 않은 읽기 수준이 fluent 로 들어간다', async () => {
+    const save = vi.fn().mockResolvedValue({});
+    const initializeSubjectLevels = vi.fn().mockResolvedValue({});
+    useProfile.setState({ save, initializeSubjectLevels });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText('이름'), { target: { value: '라윤' } });
+    fireEvent.change(screen.getByLabelText('학년'), { target: { value: 'g3' } });
+    fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
+
+    await waitFor(() => expect(save).toHaveBeenCalled());
+    expect(save.mock.calls[0]![0].reading_level).toBe('fluent');
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('fluent'));
+  });
+
   it('이미 온보딩을 마쳤으면 폼 대신 홈으로 보낸다', () => {
     useProfile.setState({ profile: profile({ onboarded_at: '2026-09-04T00:00:00Z' }) });
     render(
