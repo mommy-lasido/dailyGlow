@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import {
   DAILY_GOAL_OPTIONS,
@@ -15,6 +15,7 @@ import {
   type Grade,
   type ReadingLevel,
 } from '@dailyglow/utils';
+import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 
 const fieldClass =
@@ -24,6 +25,7 @@ export function OnboardingPage() {
   const profile = useProfile((s) => s.profile);
   const save = useProfile((s) => s.save);
   const initializeSubjectLevels = useProfile((s) => s.initializeSubjectLevels);
+  const signOut = useAuth((s) => s.signOut);
   const navigate = useNavigate();
 
   const [name, setName] = useState(profile?.display_name ?? '');
@@ -34,6 +36,24 @@ export function OnboardingPage() {
   const [goal, setGoal] = useState<number>(10);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 이 화면에서 방금 저장했는지. 저장이 성공하면 profile.onboarded_at 이 채워지는데,
+  // 그것만 보고 리다이렉트하면 초기 레벨 제안이 실패해도 그 이유가 화면에서 사라진다.
+  const submittedHere = useRef(false);
+
+  /**
+   * 프로필에 이미 값이 있으면 폼을 그 값으로 채운다.
+   * 빈 값으로 두면 여기서 저장하는 순간 기존 값이 전부 지워진다.
+   */
+  useEffect(() => {
+    if (!profile) return;
+    setName(profile.display_name ?? '');
+    setGender((profile.gender as Gender | null) ?? '');
+    setBirthDate(profile.birth_date ?? '');
+    setGrade((profile.grade as Grade | null) ?? '');
+    setReadingLevel((profile.reading_level as ReadingLevel | null) ?? '');
+    setGoal(profile.daily_goal_minutes ?? 10);
+  }, [profile]);
 
   /**
    * 생일이 바뀌면 학년·읽기 수준·목표 시간에 추천값을 채운다.
@@ -53,6 +73,7 @@ export function OnboardingPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    submittedHere.current = true;
     setBusy(true);
     setError(null);
     const res = await save({
@@ -81,6 +102,10 @@ export function OnboardingPage() {
     }
     navigate('/', { replace: true });
   }
+
+  // 온보딩을 이미 마쳤으면 이 화면에 올 일이 없다.
+  // 여기까지 흘러들어오면 빈 폼 저장으로 프로필이 지워질 수 있다.
+  if (profile?.onboarded_at && !submittedHere.current) return <Navigate to="/" replace />;
 
   return (
     <div className="flex flex-1 items-center justify-center">
@@ -183,6 +208,14 @@ export function OnboardingPage() {
             {busy ? '저장하는 중…' : '시작하기'}
           </Button>
         </form>
+
+        {/* 이 화면에서 빠져나갈 유일한 길. 없으면 새로고침해도 계속 여기로 돌아와서
+            다른 아이 계정으로 바꿔 들어갈 수가 없다. 시작하기와 경쟁하지 않게 낮춰 둔다. */}
+        <div className="mt-6 flex justify-center border-t border-glow-100 pt-4">
+          <Button type="button" variant="ghost" onClick={() => void signOut()}>
+            로그아웃
+          </Button>
+        </div>
       </Card>
     </div>
   );

@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OnboardingPage } from './OnboardingPage';
+import { useAuth } from '@/stores/auth';
 import { useProfile, type ProfileRow } from '@/stores/profile';
 
 function profile(over: Partial<ProfileRow> = {}): ProfileRow {
@@ -34,6 +35,7 @@ describe('OnboardingPage', () => {
       save: vi.fn().mockResolvedValue({}),
       initializeSubjectLevels: vi.fn().mockResolvedValue({}),
     });
+    useAuth.setState({ signOut: vi.fn().mockResolvedValue(undefined) });
   });
 
   afterEach(() => {
@@ -126,5 +128,47 @@ describe('OnboardingPage', () => {
 
     await screen.findByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.');
     expect(screen.getByRole('button', { name: /시작하기/ })).toBeInTheDocument();
+  });
+
+  it('이미 온보딩을 마쳤으면 폼 대신 홈으로 보낸다', () => {
+    useProfile.setState({ profile: profile({ onboarded_at: '2026-09-04T00:00:00Z' }) });
+    render(
+      <MemoryRouter initialEntries={['/onboarding']}>
+        <Routes>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/" element={<p>홈 화면</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('홈 화면')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /시작하기/ })).toBeNull();
+  });
+
+  it('프로필에 값이 있으면 폼을 그 값으로 채운다', () => {
+    useProfile.setState({
+      profile: profile({
+        display_name: '시윤',
+        gender: 'female',
+        birth_date: '2021-03-20',
+        grade: 'preschool',
+        reading_level: 'learning',
+        daily_goal_minutes: 5,
+      }),
+    });
+    renderPage();
+    expect((screen.getByLabelText('이름') as HTMLInputElement).value).toBe('시윤');
+    expect((screen.getByLabelText('성별') as HTMLSelectElement).value).toBe('female');
+    expect((screen.getByLabelText('생일') as HTMLInputElement).value).toBe('2021-03-20');
+    expect((screen.getByLabelText('학년') as HTMLSelectElement).value).toBe('preschool');
+    expect((screen.getByLabelText('한글 읽기') as HTMLSelectElement).value).toBe('learning');
+    expect((screen.getByLabelText('하루 목표') as HTMLSelectElement).value).toBe('5');
+  });
+
+  it('로그아웃을 누르면 signOut 이 호출된다', async () => {
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    useAuth.setState({ signOut });
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    await waitFor(() => expect(signOut).toHaveBeenCalled());
   });
 });
