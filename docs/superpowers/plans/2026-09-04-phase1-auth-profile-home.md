@@ -1011,24 +1011,28 @@ export function OnboardingPage() {
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
-            학년
-            <select
-              className={fieldClass}
-              value={grade}
-              onChange={(e) => setGrade(e.target.value as Grade | '')}
-            >
-              <option value="">고르지 않음</option>
-              {GRADES.map((g) => (
-                <option key={g} value={g}>
-                  {GRADE_LABEL[g]}
-                </option>
-              ))}
-            </select>
+          {/* 안내문은 <label> 밖에 둔다. 안에 넣으면 라벨 텍스트가
+              "학년 생일을 넣으면…" 으로 합쳐져 getByLabelText('학년') 이 못 찾는다. */}
+          <div className="flex flex-col gap-1">
+            <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+              학년
+              <select
+                className={fieldClass}
+                value={grade}
+                onChange={(e) => setGrade(e.target.value as Grade | '')}
+              >
+                <option value="">고르지 않음</option>
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {GRADE_LABEL[g]}
+                  </option>
+                ))}
+              </select>
+            </label>
             <span className="text-xs font-normal text-slate-400">
               생일을 넣으면 추천값이 채워져요. 실제 학년과 다르면 바꿔주세요.
             </span>
-          </label>
+          </div>
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
             한글 읽기
