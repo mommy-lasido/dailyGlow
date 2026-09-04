@@ -17,6 +17,8 @@ export interface LessonGateRow {
   sort_order: number;
   /** 과목끼리의 순서 (subjects.sort_order) */
   subject_sort_order: number;
+  /** lessons.config. 지금은 hint 만 읽는다. */
+  config: unknown;
 }
 
 export interface ActivityCard {
@@ -26,6 +28,18 @@ export interface ActivityCard {
   subjectSlug: string;
   subjectTitle: string;
   emoji: string;
+  /**
+   * 카드 제목 밑에 붙일 한 줄 예시. config.hint 가 없으면 null.
+   * "글자 읽기" 와 "낱말 읽기" 처럼 이름만으로는 구분이 안 되는 활동을 위해 있다.
+   */
+  hint: string | null;
+}
+
+/** config 는 jsonb 라 무슨 모양이든 올 수 있다. hint 가 문자열일 때만 쓴다. */
+export function activityHint(config: unknown): string | null {
+  if (!config || typeof config !== 'object') return null;
+  const hint = (config as { hint?: unknown }).hint;
+  return typeof hint === 'string' && hint.length > 0 ? hint : null;
 }
 
 const EMOJI: Record<string, string> = {
@@ -73,6 +87,7 @@ export function selectActivities(
       subjectSlug: r.subject_slug,
       subjectTitle: r.subject_title,
       emoji: activityEmoji(r.activity_kind),
+      hint: activityHint(r.config),
     }));
 }
 

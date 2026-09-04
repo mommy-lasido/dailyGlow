@@ -61,12 +61,15 @@ insert into public.lessons
   (subject_id, slug, title, level, sort_order, activity_kind, subject_level, min_grade, max_grade, config)
 select s.id, v.slug, v.title, v.level, v.sort_order, v.activity_kind, v.subject_level, v.min_grade, v.max_grade, v.config
 from (values
-  ('hangul', 'letter-cards',  '글자 읽기',      1, 1, 'letter_cards',  1,  0, 1, '{}'::jsonb),
-  ('hangul', 'word-cards',    '낱말 읽기',      1, 2, 'word_cards',    4,  0, 1, '{}'::jsonb),
-  ('hangul', 'reading-cards', '문장 읽기',      1, 3, 'reading_cards', 14, 0, 1, '{}'::jsonb),
-  ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',     14, 0, 1, '{}'::jsonb),
-  ('korean', 'spelling',      '맞춤법 탐험대',  1, 1, 'choice_quiz',   1,  1, 6, '{}'::jsonb),
-  ('math',   'add-play',      '더하기 놀이',    1, 1, 'choice_quiz',   1,  0, 1, '{"generator":"add_small"}'::jsonb),
-  ('math',   'grid-drill',    '100칸 계산',     1, 2, 'grid_drill',    1,  1, 6, '{}'::jsonb)
+  -- config.hint: 홈 화면 카드 제목 밑에 붙는 한 줄 예시.
+  -- "글자 읽기" 와 "낱말 읽기" 는 이름만으로 구분이 안 돼서, 무엇을 하는지
+  -- 한눈에 보이도록 실제 예를 보여준다.
+  ('hangul', 'letter-cards',  '글자 읽기',      1, 1, 'letter_cards',  1,  0, 1, '{"hint":"가 갸 거 겨"}'::jsonb),
+  ('hangul', 'word-cards',    '낱말 읽기',      1, 2, 'word_cards',    4,  0, 1, '{"hint":"고기, 나비"}'::jsonb),
+  ('hangul', 'reading-cards', '문장 읽기',      1, 3, 'reading_cards', 14, 0, 1, '{"hint":"꽃이 예뻐요"}'::jsonb),
+  ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',     14, 0, 1, '{"hint":"읽은 문장을 인쇄해서 연필로"}'::jsonb),
+  ('korean', 'spelling',      '맞춤법 탐험대',  1, 1, 'choice_quiz',   1,  1, 6, '{"hint":"안 / 않, 왠지 / 웬지"}'::jsonb),
+  ('math',   'add-play',      '더하기 놀이',    1, 1, 'choice_quiz',   1,  0, 1, '{"generator":"add_small","hint":"3 + 2 = ?"}'::jsonb),
+  ('math',   'grid-drill',    '100칸 계산',     1, 2, 'grid_drill',    1,  1, 6, '{"hint":"10×10 표를 빠르게"}'::jsonb)
 ) as v(subject_slug, slug, title, level, sort_order, activity_kind, subject_level, min_grade, max_grade, config)
 join s on s.slug = v.subject_slug;

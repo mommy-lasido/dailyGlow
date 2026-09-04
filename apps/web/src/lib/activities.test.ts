@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectActivities, activityEmoji, type LessonGateRow } from './activities';
+import { selectActivities, activityEmoji, activityHint, type LessonGateRow } from './activities';
 
 const HANGUL = 'subj-hangul';
 const MATH = 'subj-math';
@@ -17,6 +17,7 @@ function row(over: Partial<LessonGateRow>): LessonGateRow {
     max_grade: 1,
     sort_order: 1,
     subject_sort_order: 1,
+    config: {},
     ...over,
   };
 }
@@ -64,6 +65,30 @@ describe('selectActivities', () => {
   it('학년이 정해지지 않았으면 학년 조건은 통과시킨다', () => {
     const rows = [row({ id: 'grid', subject_id: MATH, subject_slug: 'math', min_grade: 1, max_grade: 6 })];
     expect(selectActivities(rows, null, { [MATH]: { level: 1, locked: false } })).toHaveLength(1);
+  });
+});
+
+describe('activityHint', () => {
+  it('config.hint 를 꺼내온다', () => {
+    expect(activityHint({ hint: '가 갸 거 겨' })).toBe('가 갸 거 겨');
+  });
+
+  it('hint 가 없거나 문자열이 아니면 null', () => {
+    expect(activityHint({})).toBeNull();
+    expect(activityHint(null)).toBeNull();
+    expect(activityHint({ hint: '' })).toBeNull();
+    expect(activityHint({ hint: 7 })).toBeNull();
+  });
+});
+
+describe('selectActivities · hint', () => {
+  it('활동 카드에 예시 문구를 실어 보낸다', () => {
+    const rows = [row({ id: 'letters', config: { hint: '가 갸 거 겨' } })];
+    expect(selectActivities(rows, 'preschool', {})[0]!.hint).toBe('가 갸 거 겨');
+  });
+
+  it('예시가 없는 활동은 hint 가 null 이다', () => {
+    expect(selectActivities([row({ id: 'letters' })], 'preschool', {})[0]!.hint).toBeNull();
   });
 });
 

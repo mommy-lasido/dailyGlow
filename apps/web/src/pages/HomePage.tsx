@@ -31,7 +31,7 @@ export function HomePage() {
       const { data, error } = await supabase
         .from('lessons')
         .select(
-          'id, title, activity_kind, subject_id, subject_level, sort_order, min_grade, max_grade, subjects!inner(slug, title, sort_order)',
+          'id, title, activity_kind, subject_id, subject_level, sort_order, min_grade, max_grade, config, subjects!inner(slug, title, sort_order)',
         )
         .order('sort_order');
       if (error) throw error;
@@ -53,6 +53,7 @@ export function HomePage() {
           max_grade: r.max_grade,
           sort_order: r.sort_order,
           subject_sort_order: subject.sort_order,
+          config: r.config,
         };
       });
     },
@@ -122,10 +123,18 @@ export function HomePage() {
             <Link key={a.id} to={`/activity/${a.id}`}>
               <Card className="flex items-center gap-5 transition-transform hover:scale-[1.02]">
                 <span className={isPreReader ? 'text-6xl' : 'text-5xl'}>{a.emoji}</span>
-                <div>
+                {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
+                <div className="min-w-0">
                   <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
                     {a.title}
                   </h2>
+                  {/* 이름만으로는 "글자 읽기" 와 "낱말 읽기" 가 구분되지 않는다.
+                      제목 바로 밑에 예를 보여주되, 제목보다 눈에 띄지 않게 흐리게. */}
+                  {a.hint ? (
+                    <p className={`text-slate-500 ${isPreReader ? 'text-xl' : 'text-base'}`}>
+                      {a.hint}
+                    </p>
+                  ) : null}
                   <p className="text-sm text-slate-400">{a.subjectTitle}</p>
                 </div>
               </Card>

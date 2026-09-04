@@ -53,6 +53,7 @@ function lessonRow(over: Record<string, unknown> = {}) {
     min_grade: 1,
     max_grade: 6,
     sort_order: 1,
+    config: {},
     subjects: { slug: 'math', title: '수학', sort_order: 3 },
     ...over,
   };
@@ -146,5 +147,11 @@ describe('HomePage', () => {
     expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
     expect(screen.getByText('수학')).toBeInTheDocument();
     expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
+  });
+
+  it('config.hint 가 있으면 제목 밑에 예시를 보여준다', async () => {
+    catalog.response = { data: [lessonRow({ config: { hint: '3 + 2 = ?' } })], error: null };
+    renderHome();
+    expect(await screen.findByText('3 + 2 = ?')).toBeInTheDocument();
   });
 });
