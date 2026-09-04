@@ -15,7 +15,7 @@ insert into auth.users (
 -- UUID 는 16진수만 쓸 수 있으므로 …00a1 / …00a2 / …00a3 로 구분한다.
 values
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000000a1',
-   'authenticated', 'authenticated', 'rayoon@dailyglow.dev', crypt('glow1234', gen_salt('bf')),
+   'authenticated', 'authenticated', 'layoon@dailyglow.dev', crypt('glow1234', gen_salt('bf')),
    now(), now(), now(),
    '{"provider":"email","providers":["email"]}', '{"display_name":"라윤"}', false, '', '', '', ''),
   ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000000a2',
@@ -32,7 +32,7 @@ insert into auth.identities (
 )
 values
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000a1',
-   '{"sub":"00000000-0000-0000-0000-0000000000a1","email":"rayoon@dailyglow.dev"}',
+   '{"sub":"00000000-0000-0000-0000-0000000000a1","email":"layoon@dailyglow.dev"}',
    'email', now(), now(), now()),
   ('00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000a2',
    '{"sub":"00000000-0000-0000-0000-0000000000a2","email":"siyoon@dailyglow.dev"}',

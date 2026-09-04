@@ -55,7 +55,7 @@ pnpm dev              # http://localhost:5173
 | API URL | `http://127.0.0.1:54321` |
 | Studio (DB GUI) | `http://127.0.0.1:54323` |
 | Mailpit (메일 확인) | `http://127.0.0.1:54324` |
-| 테스트 계정 | `rayoon@dailyglow.dev` · `siyoon@dailyglow.dev` · `doyoon@dailyglow.dev` (비밀번호 모두 `glow1234`) |
+| 테스트 계정 | `layoon@dailyglow.dev` · `siyoon@dailyglow.dev` · `doyoon@dailyglow.dev` (비밀번호 모두 `glow1234`) |
 
 `.env.local` 의 `VITE_SUPABASE_ANON_KEY` 는 `pnpm db:start` 또는 `supabase status` 출력의 `ANON_KEY` 값을 사용한다.
 
