@@ -69,6 +69,20 @@ describe('SettingsPage', () => {
     expect((screen.getByLabelText('학년') as HTMLSelectElement).value).toBe('preschool');
   });
 
+  it('생일 입력에 min/max 가 있어 여섯 자리 연도를 막는다', () => {
+    // 온보딩 화면과 같은 범위여야 한다.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 4, 9, 0));
+    try {
+      renderPage();
+      const input = screen.getByLabelText('생일') as HTMLInputElement;
+      expect(input.min).toBe('2005-01-01');
+      expect(input.max).toBe('2026-09-04');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('프로필을 저장하면 save 가 호출된다', async () => {
     const save = vi.fn().mockResolvedValue({});
     useProfile.setState({ save });

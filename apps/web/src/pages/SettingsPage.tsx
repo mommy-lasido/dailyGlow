@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@dailyglow/ui';
 import {
+  BIRTH_DATE_MIN,
   DAILY_GOAL_OPTIONS,
   GENDER_LABEL,
   GRADES,
   GRADE_LABEL,
   READING_LEVELS,
   READING_LEVEL_LABEL,
+  toISODate,
   type Gender,
   type Grade,
   type ReadingLevel,
@@ -137,9 +139,12 @@ export function SettingsPage() {
 
         <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
           생일
+          {/* min/max 가 없으면 202511 같은 여섯 자리 연도도 그대로 들어간다. */}
           <input
             type="date"
             className={fieldClass}
+            min={BIRTH_DATE_MIN}
+            max={toISODate()}
             value={birthDate}
             onChange={(e) => setBirthDate(e.target.value)}
           />

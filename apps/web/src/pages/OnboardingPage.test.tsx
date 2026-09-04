@@ -68,6 +68,13 @@ describe('OnboardingPage', () => {
     expect((screen.getByLabelText('학년') as HTMLSelectElement).value).toBe('g3');
   });
 
+  it('생일 입력에 min/max 가 있어 여섯 자리 연도를 막는다', () => {
+    renderPage();
+    const input = screen.getByLabelText('생일') as HTMLInputElement;
+    expect(input.min).toBe('2005-01-01');
+    expect(input.max).toBe('2026-09-04');
+  });
+
   it('이름이 비어 있으면 저장 버튼이 비활성화된다', () => {
     renderPage();
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '' } });

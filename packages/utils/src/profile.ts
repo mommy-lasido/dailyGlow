@@ -37,6 +37,26 @@ export const GENDER_LABEL: Record<Gender, string> = {
 
 export const DAILY_GOAL_OPTIONS = [5, 10, 15, 20] as const;
 
+/**
+ * 생일 입력에 허용할 가장 이른 날.
+ * 이보다 먼저 태어난 아이는 초등 과정을 이미 지났다.
+ */
+export const BIRTH_DATE_MIN = '2005-01-01';
+
+/**
+ * `<input type="date">` 의 max 에 넣을 오늘 날짜(YYYY-MM-DD).
+ *
+ * min/max 가 없으면 브라우저가 202511 같은 여섯 자리 연도도 그대로 받아준다.
+ * toISOString() 은 UTC 라 한국 시간으로 저녁이면 하루 전 날짜가 나오므로
+ * 지역 시간 그대로 직접 만든다.
+ */
+export function toISODate(date: Date = new Date()): string {
+  const yyyy = String(date.getFullYear()).padStart(4, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 /** 학년 서수. DB 의 lessons.min_grade / max_grade 와 같은 매핑이다. */
 export function gradeOrdinal(grade: Grade): number {
   return GRADES.indexOf(grade);

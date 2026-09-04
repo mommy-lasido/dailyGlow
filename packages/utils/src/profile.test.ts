@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  toISODate,
   gradeOrdinal,
   recommendGrade,
   recommendReadingLevel,
@@ -10,6 +11,17 @@ import {
 } from './profile';
 
 const TODAY = new Date('2026-09-04');
+
+describe('toISODate', () => {
+  it('지역 시간 기준으로 YYYY-MM-DD 를 만든다', () => {
+    // 밤 11시 — UTC 로 바꾸면 다음 날이 되는 시각이라도 그날 그대로여야 한다.
+    expect(toISODate(new Date(2026, 8, 4, 23, 30))).toBe('2026-09-04');
+  });
+
+  it('한 자리 월·일을 0 으로 채운다', () => {
+    expect(toISODate(new Date(2026, 0, 7))).toBe('2026-01-07');
+  });
+});
 
 describe('gradeOrdinal', () => {
   it('미취학은 0, 초1은 1, 초6은 6', () => {

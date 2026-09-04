@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import {
+  BIRTH_DATE_MIN,
   DAILY_GOAL_OPTIONS,
   GENDER_LABEL,
   GRADES,
@@ -11,6 +12,7 @@ import {
   recommendDailyGoalMinutes,
   recommendGrade,
   recommendReadingLevel,
+  toISODate,
   type Gender,
   type Grade,
   type ReadingLevel,
@@ -141,9 +143,12 @@ export function OnboardingPage() {
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
             생일
+            {/* min/max 가 없으면 202511 같은 여섯 자리 연도도 그대로 들어간다. */}
             <input
               type="date"
               className={fieldClass}
+              min={BIRTH_DATE_MIN}
+              max={toISODate()}
               value={birthDate}
               onChange={(e) => onBirthDateChange(e.target.value)}
             />
