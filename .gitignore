@@ -34,3 +34,6 @@ coverage/
 
 # obsidian vault (not part of the app)
 dailyGlow/
+
+# 브레인스토밍 시안 (로컬 전용)
+.superpowers/
