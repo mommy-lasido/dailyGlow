@@ -26,13 +26,14 @@ export const useProfile = create<ProfileState>((set, get) => ({
   status: 'idle',
 
   load: async (userId) => {
-    set({ status: 'loading' });
+    // 이미 프로필이 있으면 백그라운드 재조회 — 화면이 깜빡이지 않도록 loading 으로 내리지 않는다.
+    if (!get().profile) set({ status: 'loading' });
     const [profileRes, levelRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
       supabase.from('profile_subject_levels').select('*').eq('profile_id', userId),
     ]);
 
-    if (profileRes.error) {
+    if (profileRes.error || levelRes.error) {
       set({ status: 'error' });
       return;
     }
@@ -70,13 +71,19 @@ export const useProfile = create<ProfileState>((set, get) => ({
       locked: locked ?? get().levels[subjectId]?.locked ?? false,
     };
 
-    await supabase.from('profile_subject_levels').upsert({
+    const { error } = await supabase.from('profile_subject_levels').upsert({
       profile_id: current.id,
       subject_id: subjectId,
       level: next.level,
       locked: next.locked,
       updated_at: new Date().toISOString(),
     });
+
+    // 저장에 실패하면 로컬 상태를 갱신하지 않는다 — 저장 안 된 값을 화면에 보이지 않게.
+    if (error) {
+      console.warn('[profile] 과목 레벨 저장 실패:', error.message);
+      return;
+    }
 
     set({ levels: { ...get().levels, [subjectId]: next } });
   },

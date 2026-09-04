@@ -8,7 +8,7 @@ import { flushAttemptQueue } from '@/lib/sync';
 export function App() {
   const init = useAuth((s) => s.init);
   const status = useAuth((s) => s.status);
-  const user = useAuth((s) => s.user);
+  const userId = useAuth((s) => s.user?.id ?? null);
   const loadProfile = useProfile((s) => s.load);
   const clearProfile = useProfile((s) => s.clear);
 
@@ -17,9 +17,10 @@ export function App() {
   }, [init]);
 
   useEffect(() => {
-    if (user) void loadProfile(user.id);
+    // user.id 만 구독한다 — 토큰 갱신으로 user 객체가 새로 만들어져도 재조회하지 않도록.
+    if (userId) void loadProfile(userId);
     else clearProfile();
-  }, [user, loadProfile, clearProfile]);
+  }, [userId, loadProfile, clearProfile]);
 
   useEffect(() => {
     if (status === 'signed-in') void flushAttemptQueue();
