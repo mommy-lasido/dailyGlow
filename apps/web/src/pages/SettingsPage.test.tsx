@@ -251,6 +251,67 @@ describe('SettingsPage', () => {
     await screen.findByText('아직 등록된 과목이 없어요.');
   });
 
+  it('미취학 + 배우는 중 이면 한글 단계 조절이 보인다', async () => {
+    // beforeEach 의 기본 프로필(preschool + learning) 그대로.
+    renderPage();
+    await screen.findByText('한글');
+    expect(screen.getByLabelText('한글 단계')).toBeInTheDocument();
+    expect(screen.getByLabelText('한글 여기서 멈춰')).toBeInTheDocument();
+  });
+
+  it('미취학 + 아직 못 읽음 이면 한글 단계 조절이 보인다', async () => {
+    useProfile.setState({ profile: profile({ reading_level: 'pre_reader' }) });
+    renderPage();
+    await screen.findByText('한글');
+    expect(screen.getByLabelText('한글 단계')).toBeInTheDocument();
+  });
+
+  it('미취학 + 혼자 잘 읽어요 이면 단계 조절 대신 다 뗀 것으로 본다는 안내가 나오고, 여기서 멈춰·단계 설명도 함께 사라진다', async () => {
+    const setSubjectLevel = vi.fn().mockResolvedValue({});
+    useProfile.setState({
+      profile: profile({ reading_level: 'fluent' }),
+      setSubjectLevel,
+    });
+    renderPage();
+    await screen.findByText('한글');
+
+    expect(screen.queryByLabelText('한글 단계')).toBeNull();
+    expect(screen.queryByLabelText('한글 여기서 멈춰')).toBeNull();
+    expect(screen.queryByText("4단계 · 기본 자음 'ㄷ'")).toBeNull();
+    expect(
+      screen.getByText(
+        '한글을 다 뗀 것으로 보고 있어요. 위에서 읽기 수준을 바꾸면 단계가 다시 나타나요.',
+      ),
+    ).toBeInTheDocument();
+    // 안 보인다고 해서 15단계처럼 부모가 직접 넣어둔 값을 지우거나 바꿔선 안 된다.
+    expect(setSubjectLevel).not.toHaveBeenCalled();
+  });
+
+  it('초3 이면 읽기 수준과 상관없이 단계 조절 대신 학년 때문에 쓰이지 않는다는 안내가 나온다', async () => {
+    const setSubjectLevel = vi.fn().mockResolvedValue({});
+    useProfile.setState({
+      profile: profile({ grade: 'g3', reading_level: 'pre_reader' }),
+      setSubjectLevel,
+    });
+    renderPage();
+    await screen.findByText('한글');
+
+    expect(screen.queryByLabelText('한글 단계')).toBeNull();
+    expect(screen.queryByLabelText('한글 여기서 멈춰')).toBeNull();
+    expect(screen.queryByText("4단계 · 기본 자음 'ㄷ'")).toBeNull();
+    expect(
+      screen.getByText('한글 활동은 초등 2학년부터는 나오지 않아서, 단계는 쓰이지 않아요.'),
+    ).toBeInTheDocument();
+    expect(setSubjectLevel).not.toHaveBeenCalled();
+  });
+
+  it('학년을 아직 고르지 않았으면 한글 단계 조절이 보인다', async () => {
+    useProfile.setState({ profile: profile({ grade: null }) });
+    renderPage();
+    await screen.findByText('한글');
+    expect(screen.getByLabelText('한글 단계')).toBeInTheDocument();
+  });
+
   it('이름을 비우면 저장 버튼이 잠기고, 내용이 있으면 풀린다', () => {
     renderPage();
     const button = screen.getByRole('button', { name: /프로필 저장/ });

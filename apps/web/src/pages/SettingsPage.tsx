@@ -6,6 +6,8 @@ import {
   BIRTH_DATE_MIN,
   DAILY_GOAL_OPTIONS,
   hangulStage,
+  HANGUL_STAGE_HIDDEN_MESSAGE,
+  hangulStageHiddenReason,
   GENDER_LABEL,
   GRADES,
   GRADE_LABEL,
@@ -100,6 +102,13 @@ export function SettingsPage() {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
+
+  /**
+   * 한글 단계 조절 UI(단계 고르기 · 여기서 멈춰 · 단계 설명)를 보여줄지 —
+   * 온보딩 화면과 같은 기준(hangulStageHiddenReason)을 쓴다. 화면에 아직 저장하지
+   * 않은 학년·읽기 수준 값을 바로 반영하려고 프로필이 아니라 이 폼 상태를 본다.
+   */
+  const hangulHiddenReason = hangulStageHiddenReason(grade, readingLevel);
 
   /**
    * <select> 와 체크박스는 스토어의 levels 로 그려진다. 저장이 실패하면 스토어가
@@ -273,7 +282,14 @@ export function SettingsPage() {
                 <div className="flex flex-wrap items-center gap-4">
                   <span className="w-16 font-bold text-slate-700">{s.title}</span>
 
-                  {isHangul ? (
+                  {isHangul && hangulHiddenReason ? (
+                    // 단계를 바꿔도 실제로는 아무것도 달라지지 않는 상태 — 조용히
+                    // 사라지는 대신 왜 없는지 그 자리에서 말해준다. 값은 그대로 둔다
+                    // (시윤이 골라둔 15단계 같은 값을 잠깐 숨겼다고 지우면 안 된다).
+                    <p className="text-sm text-slate-400">
+                      {HANGUL_STAGE_HIDDEN_MESSAGE[hangulHiddenReason]}
+                    </p>
+                  ) : isHangul ? (
                     <>
                       <HangulStagePicker
                         aria-label={`${s.title} 단계`}
@@ -303,8 +319,10 @@ export function SettingsPage() {
                 </div>
 
                 {/* 지금 고른 단계에서 무엇을 배우는지. 부모가 어디에 맞출지 정하려면
-                    숫자가 아니라 내용이 보여야 한다. */}
-                {isHangul && stage ? (
+                    숫자가 아니라 내용이 보여야 한다. 단계 고르기 자체를 숨겼으면
+                    (hangulHiddenReason) 이 설명도 함께 숨긴다 — 안 쓰이는 단계를
+                    설명해 봐야 혼란만 늘어난다. */}
+                {isHangul && !hangulHiddenReason && stage ? (
                   <div className="rounded-xl bg-glow-50 px-4 py-3">
                     <p className="text-sm font-bold text-slate-700">
                       {stage.stage}단계 · {stage.label}

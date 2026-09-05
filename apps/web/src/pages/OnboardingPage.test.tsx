@@ -135,7 +135,7 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('learning', 4));
   });
 
-  it('읽기 수준을 고르지 않았으면 null 로 넘긴다', async () => {
+  it('읽기 수준을 고르지 않았으면 null 로 넘긴다 — 단계 고르기는 보이는 채라 기본값 1이 함께 간다', async () => {
     const initializeSubjectLevels = vi.fn().mockResolvedValue({});
     useProfile.setState({ initializeSubjectLevels });
     renderPage();
@@ -143,7 +143,7 @@ describe('OnboardingPage', () => {
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
     fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
 
-    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith(null));
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith(null, 1));
   });
 
   it('초기 레벨 제안이 실패하면 오류를 보여주고 홈으로 보내지 않는다', async () => {
@@ -171,6 +171,33 @@ describe('OnboardingPage', () => {
 
     fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'fluent' } });
     expect(screen.queryByLabelText('지금 배우는 한글 단계')).toBeNull();
+  });
+
+  it('다 읽음 이면 한글 단계 대신 다 뗀 것으로 본다는 안내가 그 자리에 나온다', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'fluent' } });
+    expect(screen.queryByLabelText('지금 배우는 한글 단계')).toBeNull();
+    expect(
+      screen.getByText(
+        '한글을 다 뗀 것으로 보고 있어요. 위에서 읽기 수준을 바꾸면 단계가 다시 나타나요.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('초3 이상이면 한글 단계 대신 학년 때문에 쓰이지 않는다는 안내가 나온다', () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('학년'), { target: { value: 'g3' } });
+    expect(screen.queryByLabelText('지금 배우는 한글 단계')).toBeNull();
+    expect(
+      screen.getByText('한글 활동은 초등 2학년부터는 나오지 않아서, 단계는 쓰이지 않아요.'),
+    ).toBeInTheDocument();
+  });
+
+  it('학년을 아직 고르지 않았으면 한글 단계 고르기가 보인다', () => {
+    renderPage();
+    expect((screen.getByLabelText('학년') as HTMLSelectElement).value).toBe('');
+    fireEvent.change(screen.getByLabelText('한글 읽기'), { target: { value: 'learning' } });
+    expect(screen.getByLabelText('지금 배우는 한글 단계')).toBeInTheDocument();
   });
 
   it('한글 단계 고르기는 배우는 중이면 4단계, 아직 못 읽음이면 1단계로 시작하고 읽기 수준이 바뀌면 다시 뽑는다', () => {

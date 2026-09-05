@@ -9,6 +9,7 @@ import {
   recommendReadingLevel,
   recommendDailyGoalMinutes,
   recommendHangulStage,
+  hangulStageHiddenReason,
   GRADE_LABEL,
   READING_LEVEL_LABEL,
 } from './profile';
@@ -141,6 +142,29 @@ describe('recommendHangulStage', () => {
 
   it('읽기 수준을 고르지 않았으면 1단계로 본다', () => {
     expect(recommendHangulStage(null)).toBe(1);
+  });
+});
+
+describe('hangulStageHiddenReason', () => {
+  it('미취학·초1 이면서 다 읽음이 아니면 보여준다(null)', () => {
+    expect(hangulStageHiddenReason('preschool', 'learning')).toBeNull();
+    expect(hangulStageHiddenReason('preschool', 'pre_reader')).toBeNull();
+    expect(hangulStageHiddenReason('g1', 'learning')).toBeNull();
+  });
+
+  it('혼자 잘 읽어요 이면 다 뗀 것으로 보고 숨긴다', () => {
+    expect(hangulStageHiddenReason('preschool', 'fluent')).toBe('fluent');
+  });
+
+  it('초2 이상이면 읽기 수준과 상관없이 학년 때문에 숨긴다', () => {
+    expect(hangulStageHiddenReason('g2', 'learning')).toBe('grade');
+    expect(hangulStageHiddenReason('g3', 'pre_reader')).toBe('grade');
+    expect(hangulStageHiddenReason('g3', 'fluent')).toBe('grade');
+  });
+
+  it('학년을 아직 고르지 않았으면 학년 조건은 만족하는 것으로 본다', () => {
+    expect(hangulStageHiddenReason('', 'learning')).toBeNull();
+    expect(hangulStageHiddenReason('', 'fluent')).toBe('fluent');
   });
 });
 

@@ -172,6 +172,40 @@ export function recommendHangulStage(readingLevel: ReadingLevel | null): number 
   return 1;
 }
 
+/**
+ * 한글 단계 조절 UI(단계 고르기 · 여기서 멈춰 · 지금 단계 설명)를 숨긴다면 그 이유.
+ * `null` 이면 보여준다.
+ *
+ * 한글 활동(자음모음 배우기 · 낱말 읽기 · 문장 읽기 · 쓰기 연습지)은 전부
+ * min_grade 0, max_grade 1 로 등록돼 있어 미취학·초1 을 넘어가면 아예 나오지
+ * 않는다. 그리고 '혼자 잘 읽어요'(fluent) 는 35단계(교재를 뗀 것)로 취급해
+ * 더 낮출 이유가 없다. 이 두 경우엔 단계 숫자를 바꿔도 실제로는 아무것도
+ * 달라지지 않으니, 뜻 없는 드롭다운을 보여주느니 이유를 말해주는 편이 낫다.
+ *
+ * 온보딩·설정 화면이 서로 다른 조건으로 판단하면 "설정에서는 보이는데
+ * 온보딩에서는 안 보인다" 같은 불일치가 생긴다. 그래서 두 화면 모두 이 함수
+ * 하나로만 판단한다.
+ *
+ * 학년을 아직 고르지 않았으면(빈 값) 부모가 말하지 않은 학년을 함부로
+ * 가정하지 않는다 — 조건을 만족하는 것으로 보고 보여준다.
+ */
+export type HangulStageHiddenReason = 'grade' | 'fluent';
+
+export function hangulStageHiddenReason(
+  grade: Grade | '',
+  readingLevel: ReadingLevel | '',
+): HangulStageHiddenReason | null {
+  if (grade !== '' && gradeOrdinal(grade) > 1) return 'grade';
+  if (readingLevel === 'fluent') return 'fluent';
+  return null;
+}
+
+/** 위 각 이유에 맞춰 컨트롤이 있던 자리에 그대로 보여줄 한 줄 설명. */
+export const HANGUL_STAGE_HIDDEN_MESSAGE: Record<HangulStageHiddenReason, string> = {
+  grade: '한글 활동은 초등 2학년부터는 나오지 않아서, 단계는 쓰이지 않아요.',
+  fluent: '한글을 다 뗀 것으로 보고 있어요. 위에서 읽기 수준을 바꾸면 단계가 다시 나타나요.',
+};
+
 /** 추천 하루 목표 시간(분). 어릴수록 짧게. */
 export function recommendDailyGoalMinutes(grade: Grade): number {
   const ord = gradeOrdinal(grade);
