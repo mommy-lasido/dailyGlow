@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 import { OfflineBadge } from '@/components/OfflineBadge';
-import { flushAttemptQueue } from '@/lib/sync';
+import { flushAttemptQueue, flushSessionQueue } from '@/lib/sync';
 
 export function App() {
   const init = useAuth((s) => s.init);
@@ -23,7 +23,9 @@ export function App() {
   }, [userId, loadProfile, clearProfile]);
 
   useEffect(() => {
-    if (status === 'signed-in') void flushAttemptQueue();
+    if (status !== 'signed-in') return;
+    void flushAttemptQueue();
+    void flushSessionQueue();
   }, [status]);
 
   return (
