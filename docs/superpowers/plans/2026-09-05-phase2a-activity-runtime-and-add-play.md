@@ -751,9 +751,9 @@ git commit -m "feat(web): 활동 레지스트리와 활동 화면을 놓는다"
 
 ---
 
-### Task 3: 더하기 놀이 문제 생성기
+### Task 3: 더하기 문제 생성기와 힌트
 
-문제를 만드는 규칙만 순수 함수로 분리한다. 화면 없이 규칙을 확실히 굳혀두면, 다음 작업에서 UI 에만 집중할 수 있다.
+문제를 만드는 규칙과 3차에 보여줄 힌트 문구를 순수 함수로 분리한다. 화면 없이 규칙을 굳혀두면 다음 작업들이 UI 에만 집중할 수 있다.
 
 **Files:**
 - Create: `apps/web/src/activities/add-play/generate.ts`
@@ -766,6 +766,7 @@ git commit -m "feat(web): 활동 레지스트리와 활동 화면을 놓는다"
   - `interface AddProblem { a: number; b: number; answer: number; icon: string; choices: number[] }`
   - `const ADD_SETTINGS: readonly { setting: AddSetting; name: string; icon: string; desc: string }[]`
   - `makeAddProblem(setting: AddSetting, rand?: () => number): AddProblem`
+  - `addHint(p: AddProblem): string` — 3차에 띄울 이어세기 안내 문구
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
@@ -773,9 +774,9 @@ git commit -m "feat(web): 활동 레지스트리와 활동 화면을 놓는다"
 
 ```typescript
 import { describe, expect, it } from 'vitest';
-import { ADD_SETTINGS, makeAddProblem, type AddSetting } from './generate';
+import { ADD_SETTINGS, addHint, makeAddProblem, type AddSetting } from './generate';
 
-/** 0, 0.5, 0.99 … 를 돌려주는 가짜 난수. 순서를 정해두면 결과가 결정적이다. */
+/** 정해둔 값을 차례로 돌려주는 가짜 난수. 결과가 결정적이 된다. */
 function seq(values: number[]): () => number {
   let i = 0;
   return () => values[i++ % values.length]!;
@@ -784,15 +785,13 @@ function seq(values: number[]): () => number {
 describe('makeAddProblem', () => {
   it('더하는 수는 고른 설정 그대로다', () => {
     for (const setting of [1, 2, 3] as AddSetting[]) {
-      const p = makeAddProblem(setting, seq([0]));
-      expect(p.b).toBe(setting);
+      expect(makeAddProblem(setting, seq([0])).b).toBe(setting);
     }
   });
 
   it('섞어서(0)를 고르면 1~3 중 하나가 나온다', () => {
     for (let i = 0; i < 20; i += 1) {
-      const p = makeAddProblem(0);
-      expect([1, 2, 3]).toContain(p.b);
+      expect([1, 2, 3]).toContain(makeAddProblem(0).b);
     }
   });
 
@@ -822,8 +821,7 @@ describe('makeAddProblem', () => {
 
   it('보기는 모두 1~10 사이다', () => {
     for (let i = 0; i < 100; i += 1) {
-      const p = makeAddProblem(0);
-      for (const c of p.choices) {
+      for (const c of makeAddProblem(0).choices) {
         expect(c).toBeGreaterThanOrEqual(1);
         expect(c).toBeLessThanOrEqual(10);
       }
@@ -841,6 +839,26 @@ describe('makeAddProblem', () => {
     expect(makeAddProblem(2, seq([0])).icon).toBe('🍎');
     expect(makeAddProblem(3, seq([0])).icon).toBe('🎈');
     expect(makeAddProblem(0, seq([0])).icon).toBe('🧸');
+  });
+});
+
+describe('addHint', () => {
+  it('앞의 수에서 이어서 세는 법을 알려준다', () => {
+    expect(addHint({ a: 3, b: 2, answer: 5, icon: '🍎', choices: [] })).toBe(
+      '3에서 시작해서 4, 5 — 이렇게 2만큼 더 세어봐요.',
+    );
+  });
+
+  it('1을 더할 때는 다음 수 하나만 말한다', () => {
+    expect(addHint({ a: 4, b: 1, answer: 5, icon: '⭐', choices: [] })).toBe(
+      '4에서 시작해서 5 — 이렇게 1만큼 더 세어봐요.',
+    );
+  });
+
+  it('3을 더할 때는 세 수를 이어서 말한다', () => {
+    expect(addHint({ a: 2, b: 3, answer: 5, icon: '🎈', choices: [] })).toBe(
+      '2에서 시작해서 3, 4, 5 — 이렇게 3만큼 더 세어봐요.',
+    );
   });
 });
 
@@ -920,23 +938,294 @@ export function makeAddProblem(
 
   return { a, b, answer, icon: ICONS[setting], choices: shuffle([answer, ...wrong], rand) };
 }
+
+/**
+ * 3차(힌트 라운드)에 띄울 안내. 이어세기를 그대로 읽어준다 —
+ * 5세에게는 "3 더하기 2" 보다 "3 다음에 4, 5" 가 훨씬 잡힌다.
+ */
+export function addHint(p: AddProblem): string {
+  const steps = Array.from({ length: p.b }, (_, i) => p.a + i + 1).join(', ');
+  return `${p.a}에서 시작해서 ${steps} — 이렇게 ${p.b}만큼 더 세어봐요.`;
+}
 ```
 
 - [ ] **Step 4: 테스트 통과 확인과 커밋**
 
 Run: `pnpm --filter @dailyglow/web test -- generate`
-Expected: PASS — 9개 테스트 통과.
+Expected: PASS — 12개 테스트 통과.
 
 ```bash
 git add apps/web/src/activities/add-play
-git commit -m "feat(web): 더하기 놀이 문제 생성기"
+git commit -m "feat(web): 더하기 문제 생성기와 이어세기 힌트"
 ```
 
 ---
 
-### Task 4: 더하기 놀이 화면
+### Task 4: 3단계 풀이 흐름
 
-기존 시윤이 앱의 더하기 놀이를 옮긴다. **원본에는 점수가 항상 10/10 으로 나오는 버그가 있었다** — 오답이면 회차가 넘어가지 않고 정답을 맞혀야만 다음으로 가는 구조라, 완료 화면의 `c >= 6` 분기가 실행될 수 없는 죽은 코드였다. **첫 시도에 맞힌 개수**를 따로 세어 점수가 실제 의미를 갖게 한다.
+**한 판을 어떻게 굴릴지**를 화면과 분리된 순수 상태 기계로 만든다. spec §14 의 규칙이다 — 1차에 쭉 풀고 채점, 2차에 오답만, 3차엔 힌트를 띄우고 맞힐 때까지. 맞춤법 탐험대도 나중에 이 모듈을 그대로 쓴다.
+
+**Files:**
+- Create: `apps/web/src/activities/quiz-flow.ts`
+- Create: `apps/web/src/activities/quiz-flow.test.ts`
+
+**Interfaces:**
+- Consumes: 없음 (순수 함수)
+- Produces:
+  - `interface QuizState { total: number; round: 1 | 2 | 3; phase: 'solving' | 'grading' | 'done'; queue: number[]; cursor: number; missed: number[]; firstTryCorrect: number; roundScores: number[] }`
+  - `createQuiz(total: number): QuizState`
+  - `currentIndex(s: QuizState): number | null`
+  - `submit(s: QuizState, isCorrect: boolean): QuizState`
+  - `nextRound(s: QuizState): QuizState`
+
+- [ ] **Step 1: 실패하는 테스트 작성**
+
+`apps/web/src/activities/quiz-flow.test.ts`:
+
+```typescript
+import { describe, expect, it } from 'vitest';
+import { createQuiz, currentIndex, nextRound, submit, type QuizState } from './quiz-flow';
+
+/** 정답/오답 배열대로 한 라운드를 쭉 푼다. */
+function solveRound(start: QuizState, results: boolean[]): QuizState {
+  return results.reduce((s, ok) => submit(s, ok), start);
+}
+
+describe('createQuiz', () => {
+  it('1차에 전체 문제를 순서대로 낸다', () => {
+    const s = createQuiz(3);
+    expect(s.round).toBe(1);
+    expect(s.phase).toBe('solving');
+    expect(s.queue).toEqual([0, 1, 2]);
+    expect(currentIndex(s)).toBe(0);
+  });
+});
+
+describe('1차', () => {
+  it('틀려도 다음 문제로 넘어간다', () => {
+    let s = createQuiz(3);
+    s = submit(s, false);
+    expect(currentIndex(s)).toBe(1);
+    expect(s.phase).toBe('solving');
+  });
+
+  it('다 풀면 채점 화면으로 간다', () => {
+    const s = solveRound(createQuiz(3), [true, false, true]);
+    expect(s.phase).toBe('grading');
+    expect(s.missed).toEqual([1]);
+    expect(s.roundScores).toEqual([2]);
+  });
+
+  it('점수는 1차에 맞힌 개수다', () => {
+    const s = solveRound(createQuiz(3), [true, false, true]);
+    expect(s.firstTryCorrect).toBe(2);
+  });
+
+  it('다 맞히면 채점 뒤 바로 끝난다', () => {
+    let s = solveRound(createQuiz(3), [true, true, true]);
+    expect(s.phase).toBe('grading');
+    expect(s.missed).toEqual([]);
+    s = nextRound(s);
+    expect(s.phase).toBe('done');
+    expect(s.firstTryCorrect).toBe(3);
+  });
+});
+
+describe('2차', () => {
+  it('1차에 틀린 문제만 낸다', () => {
+    let s = solveRound(createQuiz(4), [true, false, false, true]);
+    s = nextRound(s);
+    expect(s.round).toBe(2);
+    expect(s.phase).toBe('solving');
+    expect(s.queue).toEqual([1, 2]);
+    expect(currentIndex(s)).toBe(1);
+  });
+
+  it('여기서 맞혀도 점수는 안 오른다', () => {
+    let s = solveRound(createQuiz(3), [true, false, false]);
+    s = nextRound(s);
+    s = solveRound(s, [true, true]);
+    expect(s.firstTryCorrect).toBe(1);
+    expect(s.roundScores).toEqual([1, 2]);
+  });
+
+  it('여기서도 틀리면 3차로 넘어간다', () => {
+    let s = solveRound(createQuiz(3), [true, false, false]);
+    s = nextRound(s);
+    s = solveRound(s, [true, false]);
+    expect(s.phase).toBe('grading');
+    expect(s.missed).toEqual([2]);
+    s = nextRound(s);
+    expect(s.round).toBe(3);
+    expect(s.queue).toEqual([2]);
+  });
+
+  it('2차를 다 맞히면 끝난다', () => {
+    let s = solveRound(createQuiz(3), [true, false, false]);
+    s = nextRound(s);
+    s = solveRound(s, [true, true]);
+    s = nextRound(s);
+    expect(s.phase).toBe('done');
+  });
+});
+
+describe('3차', () => {
+  function reach3(): QuizState {
+    let s = solveRound(createQuiz(2), [false, true]);
+    s = nextRound(s);
+    s = submit(s, false);
+    return nextRound(s);
+  }
+
+  it('틀리면 같은 문제에 머문다', () => {
+    let s = reach3();
+    expect(currentIndex(s)).toBe(0);
+    s = submit(s, false);
+    expect(currentIndex(s)).toBe(0);
+    expect(s.phase).toBe('solving');
+  });
+
+  it('맞히면 다음으로 넘어가고, 다 맞히면 끝난다', () => {
+    let s = reach3();
+    s = submit(s, true);
+    expect(s.phase).toBe('done');
+  });
+
+  it('3차에 맞혀도 점수는 1차 것 그대로다', () => {
+    let s = reach3();
+    s = submit(s, true);
+    expect(s.firstTryCorrect).toBe(1);
+  });
+});
+
+describe('currentIndex', () => {
+  it('풀 게 없으면 null 이다', () => {
+    const s = solveRound(createQuiz(1), [true]);
+    expect(currentIndex(s)).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: 테스트가 실패하는지 확인**
+
+Run: `pnpm --filter @dailyglow/web test -- quiz-flow`
+Expected: FAIL — `Failed to resolve import "./quiz-flow"`
+
+- [ ] **Step 3: 구현**
+
+`apps/web/src/activities/quiz-flow.ts`:
+
+```typescript
+/**
+ * 정답이 있는 활동(choice_quiz)의 한 판을 굴리는 상태 기계. spec §14.
+ *
+ *   1차  전체를 쭉 푼다 — 맞았는지 그때그때 알려주지 않는다
+ *   2차  1차에 틀린 것만 다시
+ *   3차  2차에도 틀린 것에 힌트를 띄우고, 맞힐 때까지
+ *
+ * 점수(firstTryCorrect)는 1차 것만 센다. 2·3차에 맞힌 건 "결국 이해했다"는
+ * 뜻이지 실력 수치가 아니다.
+ *
+ * 화면과 문제 내용을 전혀 모른다 — 맞았는지 여부만 받는다. 그래서 더하기 놀이와
+ * 맞춤법 탐험대가 같은 모듈을 쓴다.
+ */
+
+export interface QuizState {
+  /** 1차에 낸 문제 수 */
+  total: number;
+  round: 1 | 2 | 3;
+  phase: 'solving' | 'grading' | 'done';
+  /** 이번 라운드에 풀 문제의 index 목록 */
+  queue: number[];
+  /** queue 안에서의 위치 */
+  cursor: number;
+  /** 이번 라운드에서 틀린 문제 index */
+  missed: number[];
+  /** 1차 정답 개수 = 기록에 남는 점수 */
+  firstTryCorrect: number;
+  /** 라운드별 정답 개수. "7개 → 9개 → 10개" 를 보여주는 데 쓴다. */
+  roundScores: number[];
+}
+
+export function createQuiz(total: number): QuizState {
+  return {
+    total,
+    round: 1,
+    phase: 'solving',
+    queue: Array.from({ length: total }, (_, i) => i),
+    cursor: 0,
+    missed: [],
+    firstTryCorrect: 0,
+    roundScores: [],
+  };
+}
+
+/** 지금 풀 문제의 index. 이번 라운드를 다 풀었으면 null. */
+export function currentIndex(s: QuizState): number | null {
+  if (s.phase !== 'solving') return null;
+  return s.queue[s.cursor] ?? null;
+}
+
+export function submit(s: QuizState, isCorrect: boolean): QuizState {
+  if (s.phase !== 'solving') return s;
+  const index = s.queue[s.cursor];
+  if (index === undefined) return s;
+
+  // 3차는 맞힐 때까지 같은 문제에 머문다.
+  if (s.round === 3 && !isCorrect) return s;
+
+  const missed = isCorrect ? s.missed : [...s.missed, index];
+  const cursor = s.cursor + 1;
+  const firstTryCorrect =
+    s.round === 1 && isCorrect ? s.firstTryCorrect + 1 : s.firstTryCorrect;
+
+  // 아직 남았으면 다음 문제로.
+  if (cursor < s.queue.length) {
+    return { ...s, cursor, missed, firstTryCorrect };
+  }
+
+  const scored = s.queue.length - missed.length;
+  const roundScores = [...s.roundScores, scored];
+
+  // 3차는 전부 맞혀야만 여기 도달하므로 곧바로 끝난다.
+  if (s.round === 3) {
+    return { ...s, cursor, missed, firstTryCorrect, roundScores, phase: 'done' };
+  }
+
+  return { ...s, cursor, missed, firstTryCorrect, roundScores, phase: 'grading' };
+}
+
+/** 채점 화면에서 "계속" 을 눌렀을 때. 틀린 게 없으면 끝난다. */
+export function nextRound(s: QuizState): QuizState {
+  if (s.phase !== 'grading') return s;
+  if (s.missed.length === 0) return { ...s, phase: 'done' };
+
+  return {
+    ...s,
+    round: (s.round + 1) as 2 | 3,
+    phase: 'solving',
+    queue: s.missed,
+    cursor: 0,
+    missed: [],
+  };
+}
+```
+
+- [ ] **Step 4: 테스트 통과 확인과 커밋**
+
+Run: `pnpm --filter @dailyglow/web test -- quiz-flow`
+Expected: PASS — 13개 테스트 통과.
+
+```bash
+git add apps/web/src/activities/quiz-flow.ts apps/web/src/activities/quiz-flow.test.ts
+git commit -m "feat(web): 문제 풀이 활동의 3단계 흐름"
+```
+
+---
+
+### Task 5: 더하기 놀이 화면
+
+Task 3 의 문제와 Task 4 의 흐름을 화면에 붙인다.
 
 **Files:**
 - Create: `apps/web/src/lib/confetti.ts`
@@ -947,8 +1236,8 @@ git commit -m "feat(web): 더하기 놀이 문제 생성기"
 - Modify: `supabase/seed.sql`
 
 **Interfaces:**
-- Consumes: `ActivityProps` / `ActivityResult` (Task 2), `makeAddProblem` / `ADD_SETTINGS` / `AddSetting` (Task 3), `useProfile` (`@/stores/profile`)
-- Produces: `AddPlayActivity` (기본 export 아님 — 이름 있는 export), `ACTIVITY_RENDERERS.add_play`, `spawnConfetti(count?: number): void`
+- Consumes: `ActivityProps` / `ActivityResult` (Task 2), `makeAddProblem` / `addHint` / `ADD_SETTINGS` / `AddSetting` / `AddProblem` (Task 3), `createQuiz` / `currentIndex` / `submit` / `nextRound` / `QuizState` (Task 4), `useProfile` (`@/stores/profile`)
+- Produces: `AddPlayActivity`, `ACTIVITY_RENDERERS.add_play`, `spawnConfetti(count?: number): void`
 
 - [ ] **Step 1: 컨페티 유틸과 애니메이션 추가**
 
@@ -1003,9 +1292,9 @@ export function spawnConfetti(count = 14): void {
 `apps/web/src/activities/add-play/AddPlayActivity.test.tsx`:
 
 ```tsx
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AddPlayActivity } from './AddPlayActivity';
 import { useProfile, type ProfileRow } from '@/stores/profile';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
@@ -1036,30 +1325,6 @@ function profile(readingLevel: string): ProfileRow {
   } as ProfileRow;
 }
 
-/** 지금 화면의 정답 버튼을 찾는다. 식(예: "3 + 1 = ?")에서 답을 계산한다. */
-function clickCorrect() {
-  const eq = screen.getByTestId('equation').textContent ?? '';
-  const [, a, b] = eq.match(/(\d+)\s*\+\s*(\d+)/) ?? [];
-  const answer = String(Number(a) + Number(b));
-  fireEvent.click(screen.getByRole('button', { name: answer }));
-}
-
-/** 지금 화면의 오답 버튼 하나를 누른다. */
-function clickWrong() {
-  const eq = screen.getByTestId('equation').textContent ?? '';
-  const [, a, b] = eq.match(/(\d+)\s*\+\s*(\d+)/) ?? [];
-  const answer = String(Number(a) + Number(b));
-  const wrong = screen
-    .getAllByTestId('choice')
-    .find((el) => el.textContent !== answer) as HTMLElement;
-  fireEvent.click(wrong);
-}
-
-function start() {
-  fireEvent.click(screen.getByRole('button', { name: /하나 더하기/ }));
-}
-
-/** 완료 화면의 "홈으로" 가 <Link> 라 라우터가 필요하다. */
 function renderActivity(onFinish: (r: ActivityResult) => void = () => {}) {
   return render(
     <MemoryRouter>
@@ -1068,21 +1333,42 @@ function renderActivity(onFinish: (r: ActivityResult) => void = () => {}) {
   );
 }
 
+function start() {
+  fireEvent.click(screen.getByRole('button', { name: /하나 더하기/ }));
+}
+
+/** 지금 화면의 식에서 정답을 계산한다. */
+function answerNow(): number {
+  const eq = screen.getByTestId('equation').textContent ?? '';
+  const [, a, b] = eq.match(/(\d+)\s*\+\s*(\d+)/) ?? [];
+  return Number(a) + Number(b);
+}
+
+function clickCorrect() {
+  fireEvent.click(screen.getByRole('button', { name: String(answerNow()) }));
+}
+
+function clickWrong() {
+  const answer = String(answerNow());
+  const wrong = screen
+    .getAllByTestId('choice')
+    .find((el) => el.textContent !== answer) as HTMLElement;
+  fireEvent.click(wrong);
+}
+
+/** 채점 화면의 "계속" 버튼 */
+function goOn() {
+  fireEvent.click(screen.getByRole('button', { name: /계속/ }));
+}
+
 describe('AddPlayActivity', () => {
   beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] });
-    vi.setSystemTime(new Date('2026-09-05T09:00:00'));
     useProfile.setState({ profile: profile('learning'), levels: {}, status: 'ready' });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('먼저 무엇을 연습할지 고르게 한다', () => {
     renderActivity();
     expect(screen.getByText(/뭘 연습해볼까/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /하나 더하기/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /섞어서 하기/ })).toBeInTheDocument();
   });
 
@@ -1093,64 +1379,88 @@ describe('AddPlayActivity', () => {
     expect(screen.getAllByTestId('choice')).toHaveLength(3);
   });
 
-  it('틀리면 다음 문제로 넘어가지 않는다', () => {
+  it('1차에서는 맞았는지 틀렸는지 알려주지 않고 다음으로 넘어간다', () => {
     renderActivity();
     start();
-    const before = screen.getByTestId('equation').textContent;
+    const first = screen.getByTestId('equation').textContent;
     clickWrong();
-    act(() => { vi.advanceTimersByTime(1000); });
-    expect(screen.getByTestId('equation').textContent).toBe(before);
-    expect(screen.getByText(/다시 세어볼까/)).toBeInTheDocument();
+    expect(screen.queryByText(/다시 세어볼까/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('equation').textContent).not.toBe(first);
   });
 
-  it('열 문제를 다 맞히면 만점으로 끝난다', async () => {
+  it('열 문제를 다 풀면 채점 화면이 나온다', () => {
+    renderActivity();
+    start();
+    for (let i = 0; i < 10; i += 1) clickCorrect();
+    expect(screen.getByText(/10개 중 10개 맞았어요/)).toBeInTheDocument();
+  });
+
+  it('다 맞히면 채점 뒤 바로 끝난다', () => {
     const onFinish = vi.fn<[ActivityResult], void>();
     renderActivity(onFinish);
     start();
-    for (let i = 0; i < 10; i += 1) {
-      clickCorrect();
-      act(() => { vi.advanceTimersByTime(1000); });
-    }
-    // setTimeout 을 손으로 돌렸으므로 onFinish 는 이미 불렸다. waitFor 는
-    // 가짜 타이머와 얽히므로 쓰지 않는다.
+    for (let i = 0; i < 10; i += 1) clickCorrect();
+    goOn();
     expect(onFinish).toHaveBeenCalled();
-    const result = onFinish.mock.calls[0]![0];
-    expect(result.totalCount).toBe(10);
-    expect(result.correctCount).toBe(10);
-    expect(screen.getByText(/10개 맞혔어요/)).toBeInTheDocument();
+    const r = onFinish.mock.calls[0]![0];
+    expect(r.totalCount).toBe(10);
+    expect(r.correctCount).toBe(10);
   });
 
-  it('한 번 틀린 문제는 맞혀도 점수에 안 들어간다', async () => {
+  it('틀린 문제만 2차에서 다시 낸다', () => {
+    renderActivity();
+    start();
+    clickWrong();
+    for (let i = 0; i < 9; i += 1) clickCorrect();
+    expect(screen.getByText(/10개 중 9개 맞았어요/)).toBeInTheDocument();
+    goOn();
+    expect(screen.getByText(/틀린 문제를 다시 풀어봐요/)).toBeInTheDocument();
+    expect(screen.getByTestId('equation')).toBeInTheDocument();
+  });
+
+  it('2차에 맞혀도 점수는 1차 것 그대로다', () => {
     const onFinish = vi.fn<[ActivityResult], void>();
     renderActivity(onFinish);
     start();
-    // 첫 문제만 틀렸다가 맞히고, 나머지 아홉은 한 번에 맞힌다
     clickWrong();
+    for (let i = 0; i < 9; i += 1) clickCorrect();
+    goOn();
     clickCorrect();
-    act(() => { vi.advanceTimersByTime(1000); });
-    for (let i = 0; i < 9; i += 1) {
-      clickCorrect();
-      act(() => { vi.advanceTimersByTime(1000); });
-    }
-    // setTimeout 을 손으로 돌렸으므로 onFinish 는 이미 불렸다. waitFor 는
-    // 가짜 타이머와 얽히므로 쓰지 않는다.
+    goOn();
     expect(onFinish).toHaveBeenCalled();
     expect(onFinish.mock.calls[0]![0].correctCount).toBe(9);
-    expect(screen.getByText(/9개 맞혔어요/)).toBeInTheDocument();
   });
 
-  it('걸린 시간을 결과에 담는다', async () => {
+  it('3차에는 힌트가 뜨고, 맞힐 때까지 같은 문제가 남는다', () => {
+    renderActivity();
+    start();
+    clickWrong();
+    for (let i = 0; i < 9; i += 1) clickCorrect();
+    goOn();
+    clickWrong();
+    goOn();
+    expect(screen.getByTestId('hint')).toHaveTextContent(/이렇게 .*만큼 더 세어봐요/);
+    const stuck = screen.getByTestId('equation').textContent;
+    clickWrong();
+    expect(screen.getByText(/다시 세어볼까/)).toBeInTheDocument();
+    expect(screen.getByTestId('equation').textContent).toBe(stuck);
+  });
+
+  it('3차까지 마치면 라운드별 성적을 보여주고 끝난다', () => {
     const onFinish = vi.fn<[ActivityResult], void>();
     renderActivity(onFinish);
     start();
-    for (let i = 0; i < 10; i += 1) {
-      clickCorrect();
-      act(() => { vi.advanceTimersByTime(1000); });
-    }
-    // setTimeout 을 손으로 돌렸으므로 onFinish 는 이미 불렸다. waitFor 는
-    // 가짜 타이머와 얽히므로 쓰지 않는다.
+    clickWrong();
+    for (let i = 0; i < 9; i += 1) clickCorrect();
+    goOn();
+    clickWrong();
+    goOn();
+    clickCorrect();
     expect(onFinish).toHaveBeenCalled();
-    expect(onFinish.mock.calls[0]![0].durationSec).toBeGreaterThan(0);
+    const r = onFinish.mock.calls[0]![0];
+    expect(r.correctCount).toBe(9);
+    expect(r.meta?.roundScores).toEqual([9, 0, 1]);
+    expect(screen.getByText(/9개 맞혔어요/)).toBeInTheDocument();
   });
 
   it('아직 못 읽는 아이에게는 식을 더 크게 보여준다', () => {
@@ -1184,79 +1494,85 @@ import { Button, Card } from '@dailyglow/ui';
 import { useProfile } from '@/stores/profile';
 import { spawnConfetti } from '@/lib/confetti';
 import type { ActivityProps } from '@/activities/types';
-import { ADD_SETTINGS, makeAddProblem, type AddProblem, type AddSetting } from './generate';
+import {
+  createQuiz,
+  currentIndex,
+  nextRound,
+  submit,
+  type QuizState,
+} from '@/activities/quiz-flow';
+import {
+  ADD_SETTINGS,
+  addHint,
+  makeAddProblem,
+  type AddProblem,
+  type AddSetting,
+} from './generate';
 
 const ROUNDS = 10;
-const PRAISE = ['잘했어요! 🎉', '정답이에요! 👏', '최고예요! 🏆', '완벽해요! 😊'];
+const ROUND_TITLE: Record<number, string> = {
+  2: '틀린 문제를 다시 풀어봐요',
+  3: '이번엔 힌트를 보고 풀어봐요',
+};
 
 export function AddPlayActivity({ onFinish }: ActivityProps) {
-  const readingLevel = useProfile((s) => s.profile?.reading_level ?? null);
-  const isPreReader = readingLevel === 'pre_reader';
+  const isPreReader = useProfile((s) => s.profile?.reading_level) === 'pre_reader';
 
   const [setting, setSetting] = useState<AddSetting | null>(null);
+  const [problems, setProblems] = useState<AddProblem[]>([]);
+  const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [startedAt, setStartedAt] = useState(0);
-  const [round, setRound] = useState(0);
-  const [problem, setProblem] = useState<AddProblem | null>(null);
-  /** 첫 시도에 맞힌 개수. 원본은 이걸 세지 않아 점수가 늘 만점이었다. */
-  const [firstTryCorrect, setFirstTryCorrect] = useState(0);
-  /** 이번 문제에서 이미 틀렸는지 */
-  const [missedThisRound, setMissedThisRound] = useState(false);
-  const [locked, setLocked] = useState(false);
-  const [message, setMessage] = useState('');
-  const [done, setDone] = useState(false);
+  /** 3차에서 방금 틀렸을 때만 쓰는 안내 */
+  const [retryMessage, setRetryMessage] = useState('');
 
   function begin(chosen: AddSetting) {
     setSetting(chosen);
+    setProblems(Array.from({ length: ROUNDS }, () => makeAddProblem(chosen)));
+    setQuiz(createQuiz(ROUNDS));
     setStartedAt(Date.now());
-    setProblem(makeAddProblem(chosen));
-    setRound(0);
-    setFirstTryCorrect(0);
-    setMissedThisRound(false);
-    setMessage('');
+    setRetryMessage('');
+  }
+
+  function finish(state: QuizState) {
+    spawnConfetti();
+    onFinish({
+      totalCount: state.total,
+      correctCount: state.firstTryCorrect,
+      durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
+      meta: { setting, roundScores: state.roundScores },
+    });
   }
 
   function pick(value: number) {
-    if (locked || !problem || setting === null) return;
+    if (!quiz) return;
+    const index = currentIndex(quiz);
+    if (index === null) return;
 
-    if (value !== problem.answer) {
-      setMissedThisRound(true);
-      setMessage('괜찮아요, 다시 세어볼까? 🤔');
-      return;
-    }
+    const isCorrect = value === problems[index]!.answer;
+    // 3차에서 틀리면 같은 문제에 머문다 — 흐름은 submit 이 알아서 처리한다.
+    setRetryMessage(quiz.round === 3 && !isCorrect ? '괜찮아요, 다시 세어볼까? 🤔' : '');
+    if (isCorrect) spawnConfetti(6);
 
-    setLocked(true);
-    setMessage(PRAISE[Math.floor(Math.random() * PRAISE.length)]!);
-    spawnConfetti(6);
-    const earned = missedThisRound ? 0 : 1;
-
-    setTimeout(() => {
-      const nextRound = round + 1;
-      const total = firstTryCorrect + earned;
-      setFirstTryCorrect(total);
-      setLocked(false);
-      setMissedThisRound(false);
-      setMessage('');
-
-      if (nextRound >= ROUNDS) {
-        setDone(true);
-        spawnConfetti();
-        onFinish({
-          totalCount: ROUNDS,
-          correctCount: total,
-          durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-          meta: { setting },
-        });
-        return;
-      }
-      setRound(nextRound);
-      setProblem(makeAddProblem(setting));
-    }, 900);
+    const next = submit(quiz, isCorrect);
+    setQuiz(next);
+    if (next.phase === 'done') finish(next);
   }
 
-  if (setting === null) {
+  function goOn() {
+    if (!quiz) return;
+    const next = nextRound(quiz);
+    setQuiz(next);
+    setRetryMessage('');
+    if (next.phase === 'done') finish(next);
+  }
+
+  // ── 무엇을 연습할지 고르기 ─────────────────────────────
+  if (!quiz || setting === null) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className={`text-center font-bold text-glow-600 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}>
+        <h1
+          className={`text-center font-bold text-glow-600 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}
+        >
           뭘 연습해볼까?
         </h1>
         <p className="text-center text-slate-500">그림을 보면서 세어봐도 좋아요</p>
@@ -1269,7 +1585,9 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
             <span className="flex items-center gap-5">
               <span className="text-5xl">{s.icon}</span>
               <span>
-                <span className={`block font-bold text-slate-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}>
+                <span
+                  className={`block font-bold text-slate-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}
+                >
                   {s.name}
                 </span>
                 <span className="block text-sm text-slate-400">{s.desc}</span>
@@ -1281,20 +1599,21 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
     );
   }
 
-  if (done) {
+  // ── 끝 ────────────────────────────────────────────────
+  if (quiz.phase === 'done') {
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
         <span className="text-6xl">🎉➕✨</span>
         <h2 className="text-2xl font-bold text-glow-600">
-          10문제 중 {firstTryCorrect}개 맞혔어요!
+          10문제 중 {quiz.firstTryCorrect}개 맞혔어요!
         </h2>
-        <p className="text-slate-500">
-          {firstTryCorrect >= 9
-            ? '완벽해요! 정말 잘했어요.'
-            : firstTryCorrect >= 6
-              ? '잘했어요! 조금만 더 연습해볼까?'
-              : '괜찮아요, 다시 도전해봐요!'}
-        </p>
+        {quiz.roundScores.length > 1 ? (
+          <p className="text-slate-500">
+            처음엔 {quiz.roundScores[0]}개였는데 끝까지 다 이해했어요. 잘했어요!
+          </p>
+        ) : (
+          <p className="text-slate-500">한 번에 다 맞혔어요. 정말 대단해요!</p>
+        )}
         <Link to="/">
           <Button size="lg">홈으로</Button>
         </Link>
@@ -1302,13 +1621,45 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
     );
   }
 
-  if (!problem) return null;
+  // ── 채점 ──────────────────────────────────────────────
+  if (quiz.phase === 'grading') {
+    const scored = quiz.roundScores[quiz.roundScores.length - 1] ?? 0;
+    const asked = scored + quiz.missed.length;
+    return (
+      <Card className="flex flex-col items-center gap-4 text-center">
+        <span className="text-6xl">{quiz.missed.length === 0 ? '🎉' : '📋'}</span>
+        <h2 className="text-2xl font-bold text-glow-600">
+          {asked}개 중 {scored}개 맞았어요!
+        </h2>
+        <p className="text-slate-500">
+          {quiz.missed.length === 0
+            ? '다 맞았어요!'
+            : `틀린 ${quiz.missed.length}개를 다시 풀어볼까요?`}
+        </p>
+        <Button size="lg" onClick={goOn}>
+          계속하기
+        </Button>
+      </Card>
+    );
+  }
+
+  // ── 문제 풀기 ─────────────────────────────────────────
+  const index = currentIndex(quiz);
+  if (index === null) return null;
+  const problem = problems[index]!;
+  const done = quiz.cursor;
+  const left = quiz.queue.length - quiz.cursor;
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap justify-center gap-1 text-xl">
-        {Array.from({ length: ROUNDS }).map((_, i) => (
-          <span key={i}>{i < firstTryCorrect ? '❤️' : '🤍'}</span>
+      {quiz.round > 1 ? (
+        <p className="text-center font-bold text-glow-600">{ROUND_TITLE[quiz.round]}</p>
+      ) : null}
+
+      {/* 1·2차에는 정답 여부를 알려주지 않으므로 진행 정도만 보여준다. */}
+      <div className="flex flex-wrap justify-center gap-1 text-xl" aria-label="진행">
+        {quiz.queue.map((_, i) => (
+          <span key={i}>{i < done ? '🐾' : '·'}</span>
         ))}
       </div>
 
@@ -1334,6 +1685,15 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
           {problem.a} + {problem.b} = ?
         </div>
 
+        {quiz.round === 3 ? (
+          <p
+            data-testid="hint"
+            className="rounded-2xl bg-glow-50 px-4 py-3 text-lg text-glow-700"
+          >
+            💡 {addHint(problem)}
+          </p>
+        ) : null}
+
         <div className="flex justify-center gap-4">
           {problem.choices.map((c) => (
             <button
@@ -1347,7 +1707,9 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
           ))}
         </div>
 
-        <p className="min-h-[1.75rem] font-bold text-glow-600">{message}</p>
+        <p className="min-h-[1.75rem] font-bold text-glow-600">
+          {retryMessage || (quiz.round === 1 ? `${left}개 남았어요` : '')}
+        </p>
       </Card>
     </div>
   );
@@ -1395,19 +1757,19 @@ Expected: `{"renderer": "add_play", "generator": "add_small"}`
 - [ ] **Step 7: 테스트 통과 확인과 커밋**
 
 Run: `pnpm --filter @dailyglow/web test -- AddPlayActivity`
-Expected: PASS — 8개 테스트 통과.
+Expected: PASS — 11개 테스트 통과.
 
 Run: `pnpm typecheck && pnpm lint && pnpm test`
 Expected: 전부 PASS.
 
 ```bash
 git add apps/web/src/lib/confetti.ts apps/web/src/styles/index.css apps/web/src/activities supabase/seed.sql
-git commit -m "feat(web): 더하기 놀이 화면 — 첫 시도 정답만 점수에 넣는다"
+git commit -m "feat(web): 더하기 놀이 화면 — 1차·2차·힌트 3단계"
 ```
 
 ---
 
-### Task 5: 손으로 확인하기
+### Task 6: 손으로 확인하기
 
 자동 테스트가 못 잡는 것을 브라우저에서 확인한다 — 기록이 실제로 `sessions` 테이블에 들어가는지, 홈의 "오늘의 목표"가 실제로 채워지는지.
 
@@ -1415,7 +1777,7 @@ git commit -m "feat(web): 더하기 놀이 화면 — 첫 시도 정답만 점�
 - Modify: `README.md`
 
 **Interfaces:**
-- Consumes: Task 1~4 전부
+- Consumes: Task 1~5 전부
 - Produces: 없음 (검증과 문서)
 
 - [ ] **Step 1: 기록 전 상태 확인**
@@ -1424,40 +1786,43 @@ Run:
 ```bash
 docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "select count(*) from public.sessions;"
 ```
-Expected: 지금까지의 개수를 적어둔다 (아마 0).
+지금까지의 개수를 적어둔다.
 
 - [ ] **Step 2: 개발 서버에서 한 판 해보기**
 
-개발 서버가 이미 떠 있으면 그대로 쓴다. 없으면 `pnpm dev`.
+개발 서버가 이미 떠 있으면 그대로 쓴다 (`http://localhost:3000`). 없으면 `pnpm dev`.
 
 `siyoon@dailyglow.dev` / `glow1234` 로 로그인해 **더하기 놀이** 카드를 누른다.
 
 Expected:
-1. "뭘 연습해볼까?" 화면에 ⭐하나 더하기 / 🍎둘 더하기 / 🎈셋 더하기 / 🧸섞어서 하기 네 개가 보인다.
-2. 하나를 고르면 그림과 식이 나오고 보기 3개가 뜬다.
-3. **일부러 틀려본다** — 다음 문제로 넘어가지 않고 "괜찮아요, 다시 세어볼까? 🤔" 가 뜬다.
-4. 그 문제를 맞히면 다음으로 넘어가지만 **하트는 늘지 않는다** (첫 시도에 못 맞혔으므로).
-5. 열 문제를 끝내면 완료 화면에 **실제 맞힌 개수**가 나온다 — 일부러 하나 틀렸다면 10이 아니라 9여야 한다. (원본 앱의 버그는 여기서 늘 10이 나오는 것이었다.)
+1. "뭘 연습해볼까?" 에 ⭐하나 / 🍎둘 / 🎈셋 / 🧸섞어서 네 개가 보인다.
+2. 하나를 고르면 그림·식·보기 3개가 나온다.
+3. **일부러 두 개를 틀린다.** 틀려도 ⭕❌ 없이 곧바로 다음 문제로 넘어간다.
+4. 열 문제를 다 풀면 **"10개 중 8개 맞았어요!"** 채점 화면이 나온다.
+5. 계속하기 → **틀린 2개만** 다시 나온다. "틀린 문제를 다시 풀어봐요" 문구 확인.
+6. 그 중 하나를 또 틀린다 → 채점 후 계속하기 → **3차에 💡힌트가 뜬다** ("3에서 시작해서 4, 5 — 이렇게 2만큼 더 세어봐요").
+7. 3차에서 일부러 또 틀려본다 → **같은 문제가 그대로 남고** "괜찮아요, 다시 세어볼까? 🤔" 가 뜬다.
+8. 맞히면 완료 화면에 **8개**가 나온다 (1차 점수). 2·3차에 맞힌 건 점수에 안 들어간다.
 
 - [ ] **Step 3: 기록이 남았는지 확인**
 
 Run:
 ```bash
-docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "select p.given_name, s.activity_kind, s.mode, s.duration_sec, s.total_count, s.correct_count, s.meta, s.created_at from public.sessions s join public.profiles p on p.id = s.profile_id order by s.created_at desc limit 3;"
+docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "select p.given_name, s.activity_kind, s.mode, s.duration_sec, s.total_count, s.correct_count, s.meta from public.sessions s join public.profiles p on p.id = s.profile_id order by s.created_at desc limit 3;"
 ```
-Expected: 방금 한 판이 한 행 늘어 있고, `given_name` 이 시윤, `mode` 가 `screen`, `total_count` 가 10, `correct_count` 가 화면에서 본 숫자와 같다.
+Expected: 방금 한 판이 한 행 늘어 있고, `given_name` 이 시윤, `mode` 가 `screen`, `total_count` 가 10, `correct_count` 가 완료 화면의 숫자(8)와 같고, `meta` 에 `roundScores` 가 들어 있다.
 
 - [ ] **Step 4: 홈의 오늘의 목표가 채워졌는지 확인**
 
 홈으로 돌아간다.
 
-Expected: "오늘의 목표" 진행바가 더 이상 `0분 / 5분` 이 아니다. 한 판이 1분 안에 끝났으면 `0분` 그대로일 수 있으니, 그럴 때는 한 판을 더 하거나 위 SQL 의 `duration_sec` 합이 60초를 넘는지로 확인한다.
+Expected: "오늘의 목표" 진행바가 더 이상 `0분 / 5분` 이 아니다. 한 판이 1분 안에 끝났으면 그대로일 수 있으니, 그럴 때는 위 SQL 의 `duration_sec` 합이 60초를 넘는지로 확인한다.
 
 - [ ] **Step 5: 오프라인에서도 기록이 남는지 확인**
 
 브라우저 개발자 도구의 네트워크 탭에서 **오프라인**으로 바꾼 뒤 한 판을 더 한다.
 
-Expected: 완료 화면은 정상적으로 나온다. 다시 **온라인**으로 바꾸면 잠시 뒤 `sessions` 행이 하나 더 늘어 있다 (위 SQL 로 확인).
+Expected: 완료 화면은 정상적으로 나온다. 다시 **온라인**으로 바꾸면 잠시 뒤 `sessions` 행이 하나 더 늘어 있다.
 
 - [ ] **Step 6: README 갱신**
 
@@ -1470,9 +1835,9 @@ Expected: 완료 화면은 정상적으로 나온다. 다시 **온라인**으로
 그 자리에 다음을 넣는다:
 
 ```markdown
-- [x] Phase 2a: 활동 실행 구조(레지스트리·세션 기록) + 더하기 놀이
+- [x] Phase 2a: 활동 실행 구조(레지스트리·세션 기록) + 3단계 풀이 흐름 + 더하기 놀이
 - [ ] Phase 2b: 한글 35단계 시스템(자모 분해·최소 단계 자동 계산) + 자음모음 배우기 · 낱말 읽기 · 문장 읽기
-- [ ] Phase 2c: 맞춤법 탐험대 (낱말 95쌍 이관)
+- [ ] Phase 2c: 맞춤법 탐험대 (낱말 95쌍 이관, 3단계 흐름 재사용)
 ```
 
 - [ ] **Step 7: 커밋**
@@ -1487,6 +1852,8 @@ git commit -m "docs: Phase 2a 완료 — 남은 단계 갱신"
 ## 완료 기준
 
 - 홈에서 더하기 놀이 카드를 누르면 실제로 문제를 풀 수 있다.
+- 1차에는 정답 여부를 알려주지 않고 열 문제를 쭉 푼 뒤 한꺼번에 채점한다.
+- 2차에는 틀린 것만, 3차에는 힌트를 띄우고 맞힐 때까지 — spec §14 의 3단계 흐름대로 동작한다.
 - 한 번 틀린 문제는 나중에 맞혀도 점수에 들어가지 않는다 — 완료 화면의 숫자가 실제 실력을 나타낸다.
 - 한 판이 끝나면 `sessions` 에 행이 남고, 오프라인이었다면 온라인 복귀 시 올라간다.
 - 홈의 "오늘의 목표" 진행바가 실제 기록으로 채워진다.
@@ -1496,3 +1863,7 @@ git commit -m "docs: Phase 2a 완료 — 남은 단계 갱신"
 ## 다음 단계
 
 Phase 2b 계획서를 따로 쓴다 — 한글 35단계 시스템(자모 분해와 최소 단계 자동 계산)이 먼저이고, 그 위에 자음모음 배우기 · 낱말 읽기 · 문장 읽기가 올라간다. 콘텐츠(낱말·문장) seed 도 그 계획에 포함된다.
+
+Phase 2c 의 맞춤법 탐험대는 Task 4 의 `quiz-flow` 를 그대로 재사용한다. 다른 점은 3차 힌트가
+런타임 생성이 아니라 원본 데이터의 보기별 해설이라는 것, 그리고 낱말마다 예문이 2개씩 있어
+**2차 복습에서는 1차와 다른 예문으로 묻는다**는 것뿐이다(원본 앱의 `pickTemplateIndex` 동작).
