@@ -55,7 +55,7 @@ pnpm dev              # http://localhost:5173
 | API URL | `http://127.0.0.1:54321` |
 | Studio (DB GUI) | `http://127.0.0.1:54323` |
 | Mailpit (메일 확인) | `http://127.0.0.1:54324` |
-| 테스트 계정 | `test@dailyglow.dev` / `test1234` (seed.sql, `db:reset` 시 재생성) |
+| 테스트 계정 | `layoon@dailyglow.dev` · `siyoon@dailyglow.dev` · `doyoon@dailyglow.dev` (비밀번호 모두 `glow1234`) |
 
 `.env.local` 의 `VITE_SUPABASE_ANON_KEY` 는 `pnpm db:start` 또는 `supabase status` 출력의 `ANON_KEY` 값을 사용한다.
 
@@ -78,6 +78,7 @@ pnpm dev              # http://localhost:5173
 - [ ] 문제 유형별 렌더러 / 채점기 (`LessonPage` 의 자리표시자 대체)
 - [ ] 오프라인 콘텐츠 프리페치 (lessons/problems → Dexie)
 - [ ] `wrong_type_stats` ↔ Dexie `typeStats` 동기화
-- [ ] 실제 과목별 정답률 → `HomePage` 차트 연결
-- [ ] 회원가입 / 프로필(닉네임·아바타) 화면
+- [ ] Phase 2: 활동 렌더러 (맞춤법 · 자음모음 배우기 · 낱말/문장 읽기 · 더하기) + 한글 35단계 시스템
+- [ ] Phase 3: 100칸 계산 + 인쇄
+- [ ] Phase 4: 사진 채점 (Edge Function, `ANTHROPIC_API_KEY` 필요)
 ```

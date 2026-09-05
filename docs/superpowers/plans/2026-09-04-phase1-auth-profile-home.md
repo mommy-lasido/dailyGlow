@@ -137,7 +137,7 @@ Expected: 에러 없이 완료.
 
 Run:
 ```bash
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "
+docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "
 select column_name from information_schema.columns
  where table_name='profiles' and column_name in
  ('gender','birth_date','grade','reading_level','daily_goal_minutes','onboarded_at','birth_year')
@@ -147,11 +147,12 @@ Expected: `birth_date`, `daily_goal_minutes`, `gender`, `grade`, `onboarded_at`,
 
 Run:
 ```bash
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "
+docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "
 select tablename, rowsecurity from pg_tables
- where tablename in ('profile_subject_levels','sessions');"
+ where schemaname = 'public' and tablename in ('profile_subject_levels','sessions');"
 ```
-Expected: 두 테이블 모두 `rowsecurity = t`.
+Expected: 두 테이블 모두 `rowsecurity = t`. (`schemaname` 조건이 없으면 Supabase 내장
+`auth.sessions` 까지 걸려서 3행이 나온다.)
 
 - [ ] **Step 3: DB 타입 재생성**
 
@@ -512,7 +513,7 @@ join s on s.slug = v.subject_slug;
 Run:
 ```bash
 pnpm db:reset
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "
+docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "
 select p.display_name, u.email, p.onboarded_at
   from public.profiles p join auth.users u on u.id = p.id order by u.email;"
 ```
@@ -520,7 +521,7 @@ Expected: 3행 — 도윤/라윤/시윤, `onboarded_at` 은 모두 NULL.
 
 Run:
 ```bash
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "
+docker exec supabase_db_dailyGlow psql -U postgres -d postgres -c "
 select s.slug, l.title, l.activity_kind, l.subject_level, l.min_grade, l.max_grade
   from public.lessons l join public.subjects s on s.id = l.subject_id
  order by s.sort_order, l.sort_order;"
@@ -1010,24 +1011,28 @@ export function OnboardingPage() {
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
-            학년
-            <select
-              className={fieldClass}
-              value={grade}
-              onChange={(e) => setGrade(e.target.value as Grade | '')}
-            >
-              <option value="">고르지 않음</option>
-              {GRADES.map((g) => (
-                <option key={g} value={g}>
-                  {GRADE_LABEL[g]}
-                </option>
-              ))}
-            </select>
+          {/* 안내문은 <label> 밖에 둔다. 안에 넣으면 라벨 텍스트가
+              "학년 생일을 넣으면…" 으로 합쳐져 getByLabelText('학년') 이 못 찾는다. */}
+          <div className="flex flex-col gap-1">
+            <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
+              학년
+              <select
+                className={fieldClass}
+                value={grade}
+                onChange={(e) => setGrade(e.target.value as Grade | '')}
+              >
+                <option value="">고르지 않음</option>
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {GRADE_LABEL[g]}
+                  </option>
+                ))}
+              </select>
+            </label>
             <span className="text-xs font-normal text-slate-400">
               생일을 넣으면 추천값이 채워져요. 실제 학년과 다르면 바꿔주세요.
             </span>
-          </label>
+          </div>
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
             한글 읽기

@@ -1,80 +1,147 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, ProgressBar } from '@dailyglow/ui';
-import { SUBJECTS, SUBJECT_LABEL, levelFromXp } from '@dailyglow/utils';
+import { GRADE_LABEL, vocativeParticle, type Grade } from '@dailyglow/utils';
 import { useAuth } from '@/stores/auth';
+import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
-import { ProgressChart, type ProgressDatum } from '@/components/ProgressChart';
+import {
+  fetchTodayMinutes,
+  selectActivities,
+  type LessonGateRow,
+} from '@/lib/activities';
+
+/** 아직 못 읽는 아이에게는 글자를 크게 보여준다. */
+function greetingClass(readingLevel: string | null): string {
+  return readingLevel === 'pre_reader' ? 'text-5xl' : 'text-3xl';
+}
 
 export function HomePage() {
-  const user = useAuth((s) => s.user);
   const signOut = useAuth((s) => s.signOut);
+  const profile = useProfile((s) => s.profile);
+  const levels = useProfile((s) => s.levels);
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    enabled: Boolean(user),
-    queryFn: async () => {
+  const {
+    data: lessons,
+    isPending: lessonsPending,
+    isError: lessonsError,
+  } = useQuery({
+    queryKey: ['activity-catalog'],
+    queryFn: async (): Promise<LessonGateRow[]> => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user!.id)
-        .maybeSingle();
+        .from('lessons')
+        .select(
+          'id, title, activity_kind, subject_id, subject_level, sort_order, min_grade, max_grade, config, subjects!inner(slug, title, sort_order)',
+        )
+        .order('sort_order');
       if (error) throw error;
-      return data;
+      return (data ?? []).map((r) => {
+        const subject = r.subjects as unknown as {
+          slug: string;
+          title: string;
+          sort_order: number;
+        };
+        return {
+          id: r.id,
+          title: r.title,
+          activity_kind: r.activity_kind,
+          subject_id: r.subject_id,
+          subject_slug: subject.slug,
+          subject_title: subject.title,
+          subject_level: r.subject_level,
+          min_grade: r.min_grade,
+          max_grade: r.max_grade,
+          sort_order: r.sort_order,
+          subject_sort_order: subject.sort_order,
+          config: r.config,
+        };
+      });
     },
   });
 
-  const level = levelFromXp(profile?.total_xp ?? 0);
+  const { data: todayMinutes = 0 } = useQuery({
+    queryKey: ['today-minutes', profile?.id],
+    enabled: Boolean(profile),
+    queryFn: () => fetchTodayMinutes(profile!.id),
+  });
 
-  // TODO: 실제 과목별 정답률로 교체. 지금은 자리표시자.
-  const chartData: ProgressDatum[] = SUBJECTS.map((s) => ({
-    label: SUBJECT_LABEL[s],
-    accuracy: 0,
-  }));
+  const goal = profile?.daily_goal_minutes ?? 10;
+  // DB 타입은 grade 를 string 으로 주므로 도메인 타입으로 좁힌다.
+  const grade = (profile?.grade as Grade | null) ?? null;
+  const activities = selectActivities(lessons ?? [], grade, levels);
+  const isPreReader = profile?.reading_level === 'pre_reader';
+  // 부를 때는 성을 뺀 이름으로. given_name 이 비었거나(빈 문자열 포함) 없는 예전 행은 온전한 이름으로 대신한다.
+  const callName = profile?.given_name || profile?.display_name || '친구';
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-center justify-between">
+      <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-lg text-slate-500">안녕,</p>
-          <h1 className="text-3xl font-bold text-glow-600">
-            {profile?.display_name ?? '친구'}
+          <h1
+            data-testid="greeting"
+            className={`font-bold text-glow-600 ${greetingClass(profile?.reading_level ?? null)}`}
+          >
+            {callName}
+            {isPreReader ? '! 🌈' : `${vocativeParticle(callName)} 👋`}
           </h1>
+          {grade ? <p className="mt-1 text-sm text-slate-400">{GRADE_LABEL[grade]}</p> : null}
         </div>
-        <Button variant="ghost" onClick={() => void signOut()}>
-          로그아웃
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+          <Link to="/settings">
+            <Button variant="ghost">설정</Button>
+          </Link>
+          <Button variant="ghost" onClick={() => void signOut()}>
+            로그아웃
+          </Button>
+        </div>
       </header>
 
       <Card className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-bold text-glow-600">레벨 {level.level}</span>
-          <span className="text-sm text-slate-500">
-            다음 레벨까지 {level.xpForNextLevel - level.xpIntoLevel} XP
+          <span className="text-xl font-bold text-glow-600">오늘의 목표</span>
+          <span className="text-lg text-slate-500">
+            {todayMinutes}분 / {goal}분
           </span>
         </div>
-        <ProgressBar ratio={level.ratio} />
+        <ProgressBar ratio={goal === 0 ? 0 : todayMinutes / goal} />
       </Card>
 
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {SUBJECTS.map((s) => (
-          <Link key={s} to={`/subject/${s}`}>
-            <Card className="flex min-h-[8rem] items-center justify-center text-2xl font-bold text-glow-600 transition-transform hover:scale-105">
-              {SUBJECT_LABEL[s]}
-            </Card>
-          </Link>
-        ))}
+      <section className="flex flex-col gap-4">
+        {lessonsPending ? (
+          <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
+        ) : lessonsError ? (
+          <Card className="text-center text-lg text-slate-500">
+            지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.
+          </Card>
+        ) : activities.length === 0 ? (
+          <Card className="text-center text-lg text-slate-500">
+            아직 준비된 공부가 없어요. 설정에서 학년과 단계를 확인해 주세요.
+          </Card>
+        ) : (
+          activities.map((a) => (
+            <Link key={a.id} to={`/activity/${a.id}`}>
+              <Card className="flex items-center gap-5 transition-transform hover:scale-[1.02]">
+                <span className={isPreReader ? 'text-6xl' : 'text-5xl'}>{a.emoji}</span>
+                {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
+                <div className="min-w-0">
+                  <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+                    {a.title}
+                  </h2>
+                  {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
+                      예를 보여준다. 제목보다 눈에 띄지 않게 흐리게. 없으면 아무것도 그리지 않는다. */}
+                  {a.hint ? (
+                    <p className={`text-slate-500 ${isPreReader ? 'text-xl' : 'text-base'}`}>
+                      {a.hint}
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-slate-400">{a.subjectTitle}</p>
+                </div>
+              </Card>
+            </Link>
+          ))
+        )}
       </section>
-
-      <Card className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold text-slate-700">과목별 정답률</h2>
-        <ProgressChart data={chartData} />
-        <Link to="/review">
-          <Button variant="secondary" size="lg" className="w-full">
-            틀린 문제 다시 풀기
-          </Button>
-        </Link>
-      </Card>
     </div>
   );
 }
