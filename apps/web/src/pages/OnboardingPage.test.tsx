@@ -135,7 +135,7 @@ describe('OnboardingPage', () => {
     await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith('learning', 4));
   });
 
-  it('읽기 수준을 고르지 않았으면 null 로 넘긴다 — 단계 고르기는 보이는 채라 기본값 1이 함께 간다', async () => {
+  it('읽기 수준을 고르지 않았으면 null 로 넘긴다', async () => {
     const initializeSubjectLevels = vi.fn().mockResolvedValue({});
     useProfile.setState({ initializeSubjectLevels });
     renderPage();
@@ -143,7 +143,7 @@ describe('OnboardingPage', () => {
     fireEvent.change(screen.getByLabelText('이름'), { target: { value: '시윤' } });
     fireEvent.click(screen.getByRole('button', { name: /시작하기/ }));
 
-    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith(null, 1));
+    await waitFor(() => expect(initializeSubjectLevels).toHaveBeenCalledWith(null));
   });
 
   it('초기 레벨 제안이 실패하면 오류를 보여주고 홈으로 보내지 않는다', async () => {
@@ -159,6 +159,20 @@ describe('OnboardingPage', () => {
 
     await screen.findByText('지금은 저장하지 못했어요. 잠시 뒤에 다시 해주세요.');
     expect(screen.getByRole('button', { name: /시작하기/ })).toBeInTheDocument();
+  });
+
+  it('한글 읽기를 아직 고르지 않았으면 한글 단계 고르기도, 숨긴 이유 안내도 나오지 않는다', () => {
+    renderPage();
+    expect((screen.getByLabelText('한글 읽기') as HTMLSelectElement).value).toBe('');
+    expect(screen.queryByLabelText('지금 배우는 한글 단계')).toBeNull();
+    expect(
+      screen.queryByText(
+        '한글을 다 뗀 것으로 보고 있어요. 위에서 읽기 수준을 바꾸면 단계가 다시 나타나요.',
+      ),
+    ).toBeNull();
+    expect(
+      screen.queryByText('한글 활동은 초등 2학년부터는 나오지 않아서, 단계는 쓰이지 않아요.'),
+    ).toBeNull();
   });
 
   it('배우는 중·아직 못 읽음 이면 한글 단계 고르기가 나타나고, 다 읽음 이면 나타나지 않는다', () => {

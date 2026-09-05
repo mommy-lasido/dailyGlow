@@ -107,6 +107,23 @@ export function OnboardingPage() {
   const hangulStageHidden = hangulStageHiddenReason(grade, readingLevel);
 
   /**
+   * hangulStageHiddenReason 은 "빈 학년"은 조건을 만족한 것으로 보되(부모가
+   * 말하지 않은 학년을 가정하지 않으려고), "빈 읽기 수준"에 대해서는 판단을
+   * 내리지 않는다 — 그건 설정 화면에서는 일어날 수 없는 일이기 때문이다(거기선
+   * 프로필이 이미 있고 읽기 수준도 늘 채워져 있다).
+   *
+   * 온보딩에서는 이야기가 다르다. 한글 읽기 질문에 아직 답하지 않았으면
+   * (readingLevel === '') 단계 고르기는 그 질문의 후속이므로 아직 등장할
+   * 차례가 아니다 — 숨긴 것도 아니니 이유 문구도 보여주지 않는다. 공유
+   * 판단 함수를 온보딩 전용으로 구부리지 않고, 이 화면에서만 필요한 조건을
+   * 호출부에서 덧붙인다.
+   *
+   * 저장할 때도 이 값으로 판단한다 — 화면에 보여준 적 없는 단계 값을
+   * 마치 부모가 고른 것처럼 그대로 저장해 버리면 안 된다.
+   */
+  const showHangulStagePicker = hangulStageHidden === null && readingLevel !== '';
+
+  /**
    * 읽기 수준이 바뀌면 한글 단계 추천값도 다시 뽑는다.
    * 생일이 바뀌면 학년 추천값을 다시 채우는 것과 같은 규칙 — 예측 가능한 편이
    * 영리한 것보다 낫다. 부모가 이미 직접 고른 단계가 있어도 여기서 덮어쓴다.
@@ -138,11 +155,11 @@ export function OnboardingPage() {
 
     // 과목별 시작 레벨을 여기서 제안해 둔다. 이게 없으면 한글이 1단계로 취급돼
     // 4단계부터 열리는 낱말 읽기가 홈에서 통째로 빠진다.
-    // 부모가 단계 고르기를 볼 수 있었으면(hangulStageHidden 이 null) 그 값을 그대로 쓴다.
+    // 부모가 단계 고르기를 실제로 보고 골랐으면(showHangulStagePicker) 그 값을 그대로 쓴다.
     // 실패하면 홈으로 보내지 않는다 — 카드가 비어 있는 이유를 아무도 알 수 없게 된다.
-    const levelRes = hangulStageHidden
-      ? await initializeSubjectLevels(effectiveReadingLevel || null)
-      : await initializeSubjectLevels(effectiveReadingLevel || null, hangulStageValue);
+    const levelRes = showHangulStagePicker
+      ? await initializeSubjectLevels(effectiveReadingLevel || null, hangulStageValue)
+      : await initializeSubjectLevels(effectiveReadingLevel || null);
     setBusy(false);
     if (levelRes.error) {
       setError(levelRes.error);
@@ -261,7 +278,7 @@ export function OnboardingPage() {
           {/* 도움말 <span> 은 <label> 밖에 둔다 — 안에 넣으면 label 텍스트가 바뀐다. */}
           {hangulStageHidden ? (
             <p className="text-sm text-slate-400">{HANGUL_STAGE_HIDDEN_MESSAGE[hangulStageHidden]}</p>
-          ) : (
+          ) : showHangulStagePicker ? (
             <div className="flex flex-col gap-1">
               <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
                 지금 배우는 한글 단계
@@ -275,7 +292,7 @@ export function OnboardingPage() {
                 집에서 쓰는 교재의 단계에 맞춰주세요. 나중에 설정에서 바꿀 수 있어요.
               </span>
             </div>
-          )}
+          ) : null}
 
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
             하루 목표
