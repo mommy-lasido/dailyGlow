@@ -6,7 +6,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { OnboardingPage } from '@/pages/OnboardingPage';
 import { HomePage } from '@/pages/HomePage';
 import { SettingsPage } from '@/pages/SettingsPage';
-import { ActivityPlaceholderPage } from '@/pages/ActivityPlaceholderPage';
+import { ActivityPage } from '@/pages/ActivityPage';
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <HomePage /> },
               { path: 'settings', element: <SettingsPage /> },
-              { path: 'activity/:lessonId', element: <ActivityPlaceholderPage /> },
+              { path: 'activity/:lessonId', element: <ActivityPage /> },
             ],
           },
         ],
