@@ -1,4 +1,5 @@
 import type { ActivityLesson, ActivityRenderer } from './types';
+import { AddPlayActivity } from './add-play/AddPlayActivity';
 
 /**
  * 어떤 컴포넌트로 그릴지 정하는 열쇠.
@@ -21,4 +22,6 @@ export function resolveRendererId(lesson: ActivityLesson): string {
  * 열쇠 → 컴포넌트. 새 활동을 추가할 때 여기에 한 줄만 더하면 된다.
  * 아직 등록되지 않은 활동은 ActivityPage 가 "준비 중" 화면으로 받아낸다.
  */
-export const ACTIVITY_RENDERERS: Record<string, ActivityRenderer> = {};
+export const ACTIVITY_RENDERERS: Record<string, ActivityRenderer> = {
+  add_play: AddPlayActivity,
+};

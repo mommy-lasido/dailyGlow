@@ -15,3 +15,21 @@
     overscroll-behavior: none;
   }
 }
+
+/* 축하 이모지가 위에서 떨어지는 효과 (lib/confetti.ts 가 쓴다) */
+.confetti {
+  position: fixed;
+  top: -20px;
+  z-index: 50;
+  pointer-events: none;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes confetti-fall {
+  to {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0.9;
+  }
+}
