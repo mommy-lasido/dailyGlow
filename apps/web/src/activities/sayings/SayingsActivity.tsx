@@ -10,9 +10,10 @@ import {
   submit,
   type QuizState,
 } from '@/activities/quiz-flow';
-import type { SayingKind } from './content';
+import type { Saying, SayingKind } from './content';
 import {
   choiceText,
+  hanjaOf,
   makeSayingSet,
   SAYING_PROBLEM_COUNT,
   poolFor,
@@ -39,6 +40,8 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
   const kind = kindOf(lesson.config);
   const pool = poolFor(kind);
 
+  /** 먼저 모아 보고, 그다음에 푼다. 배경지식이 없으면 찍는 것밖에 못 한다. */
+  const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
   const [problems, setProblems] = useState<SayingProblem[]>([]);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [startedAt, setStartedAt] = useState(0);
@@ -51,6 +54,7 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
     setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());
     setRetryMessage('');
+    setPhase('quiz');
   }
 
   function finish(state: QuizState) {
@@ -88,17 +92,27 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
     if (next.phase === 'done') finish(next);
   }
 
-  // ── 시작하기 ──────────────────────────────────────────
-  if (!quiz) {
+  // ── ① 모아 보기 ───────────────────────────────────────
+  if (phase === 'learn' || !quiz) {
     return (
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <h1 className="text-3xl font-bold text-glow-600">{lesson.title}</h1>
-        {/* 자료를 어디서 골랐는지는 아이에게 아무 쓸모가 없다. 무엇을 하게 되는지만 쓴다. */}
-        <p className="text-slate-500">{Math.min(SAYING_PROBLEM_COUNT, pool.length)}문제를 풀어봐요.</p>
+      <div className="flex flex-col gap-4">
+        <h1 className="text-center text-3xl font-bold text-glow-600">{lesson.title}</h1>
+        <p className="text-center text-slate-500">
+          먼저 읽어보고 나서 {Math.min(SAYING_PROBLEM_COUNT, pool.length)}문제를 풀어요.
+        </p>
+
+        <ol className="flex flex-col gap-3">
+          {pool.map((s, i) => (
+            <li key={s.text}>
+              <SayingCard saying={s} index={i + 1} />
+            </li>
+          ))}
+        </ol>
+
         <Button size="lg" onClick={begin}>
-          시작하기
+          다 읽었어요 — 퀴즈 풀기
         </Button>
-      </Card>
+      </div>
     );
   }
 
@@ -166,6 +180,12 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
         <p data-testid="question" className="text-center text-2xl font-bold text-slate-700">
           {sayingQuestion(problem)}
         </p>
+        {/* 사자성어는 한자를 같이 보여준다. 글자 뜻에서 말뜻을 짐작하는 힘이 붙는다. */}
+        {problem.direction === 'toMeaning' && hanjaOf(problem.answer) ? (
+          <p data-testid="question-hanja" className="text-center text-xl text-slate-400">
+            {hanjaOf(problem.answer)}
+          </p>
+        ) : null}
 
         {/* 뜻을 주고 표현을 고르는 판에서는 그 뜻을 크게 보여준다. */}
         {problem.direction === 'toText' ? (
@@ -196,6 +216,11 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
               className="min-h-touch rounded-3xl bg-glow-100 px-5 py-4 text-left text-lg font-bold text-slate-700 shadow-md transition-transform active:scale-95"
             >
               {choiceText(c, problem.direction)}
+              {problem.direction === 'toText' && hanjaOf(c) ? (
+                <span className="ml-2 text-base font-normal text-slate-400">
+                  {hanjaOf(c)}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>
@@ -205,5 +230,27 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
         </p>
       </Card>
     </div>
+  );
+}
+
+/** 모아 보기 화면의 한 줄. 사자성어는 한자와 글자별 뜻까지 보여준다. */
+function SayingCard({ saying, index }: { saying: Saying; index: number }) {
+  return (
+    <Card className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="text-sm font-bold text-glow-300">{index}</span>
+        <span className="text-xl font-bold text-slate-700">{saying.text}</span>
+        {saying.hanja ? (
+          <span data-testid="list-hanja" className="text-lg text-glow-600">
+            {saying.hanja}
+          </span>
+        ) : null}
+      </div>
+      {saying.chars ? (
+        <p className="text-sm text-slate-400">{saying.chars.join(' · ')}</p>
+      ) : null}
+      <p className="text-slate-600">{saying.meaning}</p>
+      <p className="text-sm text-slate-400">{saying.example}</p>
+    </Card>
   );
 }

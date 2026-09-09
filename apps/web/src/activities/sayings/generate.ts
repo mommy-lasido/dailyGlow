@@ -116,6 +116,14 @@ export function choiceText(s: Saying, direction: SayingDirection): string {
 }
 
 /**
+ * 표현 옆에 붙일 한자. 속담에는 없다.
+ * 한자를 같이 보여주면 글자 뜻에서 말뜻을 짐작하는 힘이 붙는다.
+ */
+export function hanjaOf(s: Saying): string | null {
+  return s.kind === 'idiom' && s.hanja ? s.hanja : null;
+}
+
+/**
  * 3차(힌트 라운드)에 띄울 안내.
  *
  * 사자성어는 글자마다 뜻이 있어 그것만 보여줘도 뜻이 짐작된다.
