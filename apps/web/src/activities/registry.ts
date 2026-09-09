@@ -1,5 +1,6 @@
 import type { ActivityLesson, ActivityRenderer } from './types';
 import { AddPlayActivity } from './add-play/AddPlayActivity';
+import { CountPlayActivity } from './count-play/CountPlayActivity';
 
 /**
  * 어떤 컴포넌트로 그릴지 정하는 열쇠.
@@ -24,4 +25,5 @@ export function resolveRendererId(lesson: ActivityLesson): string {
  */
 export const ACTIVITY_RENDERERS: Record<string, ActivityRenderer> = {
   add_play: AddPlayActivity,
+  count_play: CountPlayActivity,
 };

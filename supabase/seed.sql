@@ -70,7 +70,9 @@ from (values
   ('hangul', 'reading-cards', '문장 읽기',      1, 3, 'reading_cards', 14, 0, 1, '{}'::jsonb),
   ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',     14, 0, 1, '{}'::jsonb),
   ('korean', 'spelling',      '맞춤법 탐험대',  1, 1, 'choice_quiz',   1,  1, 6, '{}'::jsonb),
-  ('math',   'add-play',      '더하기 놀이',    1, 1, 'choice_quiz',   2,  0, 1, '{"generator":"add_small","renderer":"add_play"}'::jsonb),
-  ('math',   'grid-drill',    '100칸 계산',     1, 2, 'grid_drill',    1,  1, 6, '{}'::jsonb)
+  -- 수학은 수 세기부터다. 덧셈은 그 다음 단계(2)라 아직 수를 못 세는 아이에게는 안 보인다.
+  ('math',   'count-play',    '수 세기 놀이',   1, 1, 'choice_quiz',   1,  0, 1, '{"renderer":"count_play"}'::jsonb),
+  ('math',   'add-play',      '더하기 놀이',    1, 2, 'choice_quiz',   2,  0, 1, '{"generator":"add_small","renderer":"add_play"}'::jsonb),
+  ('math',   'grid-drill',    '100칸 계산',     1, 3, 'grid_drill',    1,  1, 6, '{}'::jsonb)
 ) as v(subject_slug, slug, title, level, sort_order, activity_kind, subject_level, min_grade, max_grade, config)
 join s on s.slug = v.subject_slug;

@@ -88,10 +88,14 @@ describe('AddPlayActivity', () => {
   it('1차에서는 맞았는지 틀렸는지 알려주지 않고 다음으로 넘어간다', () => {
     renderActivity();
     start();
-    const first = screen.getByTestId('equation').textContent;
+    expect(screen.getByText('10개 남았어요')).toBeInTheDocument();
     clickWrong();
+    // 틀렸다는 표시가 없어야 하고, 그래도 다음 문제로 넘어가야 한다.
     expect(screen.queryByText(/다시 세어볼까/)).not.toBeInTheDocument();
-    expect(screen.getByTestId('equation').textContent).not.toBe(first);
+    expect(screen.queryByTestId('hint')).not.toBeInTheDocument();
+    // 식이 바뀌었는지로 검사하면 안 된다 — "3 + 1" 이 연달아 두 번 나올 수 있어
+    // 문제는 정상적으로 넘어갔는데도 실패하는 일이 생긴다. 남은 개수는 반드시 줄어든다.
+    expect(screen.getByText('9개 남았어요')).toBeInTheDocument();
   });
 
   it('열 문제를 다 풀면 채점 화면이 나온다', () => {
