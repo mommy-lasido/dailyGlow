@@ -19,7 +19,7 @@ import {
   type AddSetting,
 } from './generate';
 
-const ROUNDS = 10;
+const PROBLEM_COUNT = 10;
 const ROUND_TITLE: Record<number, string> = {
   2: '틀린 문제를 다시 풀어봐요',
   3: '이번엔 힌트를 보고 풀어봐요',
@@ -37,8 +37,8 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
 
   function begin(chosen: AddSetting) {
     setSetting(chosen);
-    setProblems(Array.from({ length: ROUNDS }, () => makeAddProblem(chosen)));
-    setQuiz(createQuiz(ROUNDS));
+    setProblems(Array.from({ length: PROBLEM_COUNT }, () => makeAddProblem(chosen)));
+    setQuiz(createQuiz(PROBLEM_COUNT));
     setStartedAt(Date.now());
     setRetryMessage('');
   }
