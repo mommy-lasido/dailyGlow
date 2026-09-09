@@ -122,6 +122,56 @@ describe('SpellingActivity', () => {
     expect(onFinish.mock.calls[0]![0].correctCount).toBe(9);
   });
 
+  it('문제를 푸는 동안에는 풀이를 보여주지 않는다', () => {
+    // 두 낱말의 뜻을 그 자리에서 보여주면 맞았는지 알려주는 셈이라 1차 점수가 무너진다.
+    renderActivity();
+    start();
+    expect(screen.queryByTestId('review')).not.toBeInTheDocument();
+    clickWrong();
+    expect(screen.queryByTestId('review')).not.toBeInTheDocument();
+  });
+
+  it('채점 화면에서 이번에 푼 문제들의 풀이를 펼친다', () => {
+    renderActivity();
+    start();
+    const first = screen.getByTestId('sentence').textContent!;
+    const firstItem = SPELLING_ITEMS.find((i) =>
+      i.templates.some((t) => t.replace(BLANK, '\u00a0') === first),
+    )!;
+    clickWrong();
+    for (let i = 0; i < 9; i += 1) clickCorrect();
+
+    const review = screen.getByTestId('review');
+    // 열 문제가 모두 풀이에 들어간다.
+    expect(review.querySelectorAll(':scope > li')).toHaveLength(10);
+    // 맞는 말과 틀린 말의 설명이 둘 다 나온다 — 예전 앱이 그랬다.
+    for (const o of firstItem.options) {
+      expect(review).toHaveTextContent(o.note);
+    }
+  });
+
+  it('완료 화면에서 열 문제 풀이를 다시 볼 수 있다', () => {
+    renderActivity();
+    start();
+    for (let i = 0; i < 10; i += 1) clickCorrect();
+    expect(screen.getByTestId('review').querySelectorAll(':scope > li')).toHaveLength(10);
+  });
+
+  it('풀이에는 빈칸을 채운 문장이 나온다', () => {
+    renderActivity();
+    start();
+    const first = screen.getByTestId('sentence').textContent!;
+    const item = SPELLING_ITEMS.find((i) =>
+      i.templates.some((t) => t.replace(BLANK, '\u00a0') === first),
+    )!;
+    const template = item.templates.find((t) => t.replace(BLANK, '\u00a0') === first)!;
+    const answer = item.options.find((o) => o.correct)!;
+    for (let i = 0; i < 10; i += 1) clickCorrect();
+    expect(screen.getByTestId('review')).toHaveTextContent(
+      template.replace(BLANK, answer.text),
+    );
+  });
+
   it('3차에는 왜 그 말이 맞는지 설명이 뜨고, 맞힐 때까지 같은 문제가 남는다', () => {
     renderActivity();
     start();

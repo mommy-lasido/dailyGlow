@@ -12,6 +12,7 @@ import {
 } from '@/activities/quiz-flow';
 import {
   BLANK,
+  filledSentence,
   makeSpellingSet,
   SPELLING_PROBLEM_COUNT,
   spellingHint,
@@ -34,6 +35,37 @@ function Sentence({ text }: { text: string }) {
       </span>
       {after}
     </p>
+  );
+}
+
+/**
+ * 풀이 — 문제마다 어느 말이 맞고 왜 그런지 보여준다.
+ *
+ * 이 설명이 이 활동에서 실제로 배우는 부분이다. 다만 문제를 푸는 도중에는
+ * 띄우지 않는다 — 맞았는지 알려주는 셈이 되어 1차 점수가 무너진다.
+ * 그래서 한 회차를 다 푼 뒤 채점 화면과 완료 화면에서 펼친다.
+ */
+function Review({ problems }: { problems: SpellingProblem[] }) {
+  return (
+    <ol data-testid="review" className="flex w-full flex-col gap-4 text-left">
+      {problems.map((p, i) => (
+        <li key={`${p.sentence}-${i}`} className="rounded-2xl bg-glow-50 px-4 py-3">
+          <p className="text-lg font-bold text-slate-700">
+            {filledSentence(p.sentence, p.answer.text)}
+          </p>
+          <ul className="mt-2 flex flex-col gap-1">
+            {p.options.map((o) => (
+              <li key={o.text} className="text-sm text-slate-600">
+                <span className={o.correct ? 'font-bold text-glow-600' : 'text-slate-400'}>
+                  {o.correct ? '⭕' : '❌'} {o.text}
+                </span>{' '}
+                — {o.note}
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -117,6 +149,7 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
         ) : (
           <p className="text-slate-500">한 번에 다 맞혔어요. 정말 대단해요!</p>
         )}
+        <Review problems={problems} />
         <Link to="/">
           <Button size="lg">홈으로</Button>
         </Link>
@@ -135,6 +168,8 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
           {asked}개 중 {scored}개 맞았어요!
         </h2>
         <p className="text-slate-500">틀린 {quiz.missed.length}개를 다시 풀어볼까요?</p>
+        {/* 이번 회차에 나온 문제들의 풀이. 다시 풀기 전에 읽어보라고 위에 둔다. */}
+        <Review problems={quiz.queue.map((i) => problems[i]!)} />
         <Button size="lg" onClick={goOn}>
           틀린 {quiz.missed.length}개 다시 풀기
         </Button>
