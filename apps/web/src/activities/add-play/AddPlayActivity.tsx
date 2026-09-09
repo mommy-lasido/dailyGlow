@@ -63,9 +63,13 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
     setRetryMessage(quiz.round === 3 && !isCorrect ? '괜찮아요, 다시 세어볼까? 🤔' : '');
     if (isCorrect) spawnConfetti(6);
 
+    // 다 맞혔으면 채점 화면을 건너뛴다. "5개 중 5개 맞았어요" 와
+    // "5문제 중 5개 맞혔어요" 를 잇달아 보여주고 계속하기까지 누르게 할 이유가 없다.
     const next = submit(quiz, isCorrect);
-    setQuiz(next);
-    if (next.phase === 'done') finish(next);
+    const settled =
+      next.phase === 'grading' && next.missed.length === 0 ? nextRound(next) : next;
+    setQuiz(settled);
+    if (settled.phase === 'done') finish(settled);
   }
 
   function goOn() {
@@ -132,22 +136,20 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
   }
 
   // ── 채점 ──────────────────────────────────────────────
+  // 다 맞힌 판은 pick 에서 곧장 끝으로 보내므로, 이 화면은 틀린 문제가 있을 때만 뜬다.
   if (quiz.phase === 'grading') {
     const scored = quiz.roundScores[quiz.roundScores.length - 1] ?? 0;
     const asked = scored + quiz.missed.length;
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">{quiz.missed.length === 0 ? '🎉' : '📋'}</span>
+        <span className="text-6xl">📋</span>
         <h2 className="text-2xl font-bold text-glow-600">
           {asked}개 중 {scored}개 맞았어요!
         </h2>
-        <p className="text-slate-500">
-          {quiz.missed.length === 0
-            ? '다 맞았어요!'
-            : `틀린 ${quiz.missed.length}개를 다시 풀어볼까요?`}
-        </p>
+        <p className="text-slate-500">틀린 {quiz.missed.length}개를 다시 풀어볼까요?</p>
+        {/* "계속하기" 는 문제를 더 풀라는 말처럼 읽힌다. 무엇을 하게 되는지 그대로 쓴다. */}
         <Button size="lg" onClick={goOn}>
-          계속하기
+          틀린 {quiz.missed.length}개 다시 풀기
         </Button>
       </Card>
     );

@@ -10,6 +10,8 @@ import {
   selectActivities,
   type LessonGateRow,
 } from '@/lib/activities';
+import { buildSuggestion, fetchRecentSessions } from '@/lib/promotion';
+import { LevelSuggestionCard } from '@/components/LevelSuggestionCard';
 
 /** 아직 못 읽는 아이에게는 글자를 크게 보여준다. */
 function greetingClass(readingLevel: string | null): string {
@@ -65,10 +67,18 @@ export function HomePage() {
     queryFn: () => fetchTodayMinutes(profile!.id),
   });
 
+  // 단계를 올릴 때가 됐는지 판단할 재료. 없으면 제안이 안 뜰 뿐이라 홈은 그대로 열린다.
+  const { data: recentSessions = [], refetch: refetchSessions } = useQuery({
+    queryKey: ['recent-sessions', profile?.id],
+    enabled: Boolean(profile),
+    queryFn: () => fetchRecentSessions(profile!.id),
+  });
+
   const goal = profile?.daily_goal_minutes ?? 10;
   // DB 타입은 grade 를 string 으로 주므로 도메인 타입으로 좁힌다.
   const grade = (profile?.grade as Grade | null) ?? null;
   const activities = selectActivities(lessons ?? [], grade, levels);
+  const suggestion = buildSuggestion(lessons ?? [], levels, recentSessions, grade);
   const isPreReader = profile?.reading_level === 'pre_reader';
   // 부를 때는 성을 뺀 이름으로. given_name 이 비었거나(빈 문자열 포함) 없는 예전 행은 온전한 이름으로 대신한다.
   const callName = profile?.given_name || profile?.display_name || '친구';
@@ -106,6 +116,15 @@ export function HomePage() {
         </div>
         <ProgressBar ratio={goal === 0 ? 0 : todayMinutes / goal} />
       </Card>
+
+      {/* 단계 제안은 활동 목록 위에 둔다. 아래에 두면 카드를 다 지나쳐야 보인다. */}
+      {suggestion ? (
+        <LevelSuggestionCard
+          key={`${suggestion.subjectId}-${suggestion.kind}-${suggestion.toLevel}`}
+          suggestion={suggestion}
+          onDone={() => void refetchSessions()}
+        />
+      ) : null}
 
       <section className="flex flex-col gap-4">
         {lessonsPending ? (

@@ -62,9 +62,9 @@ function clickWrong() {
   fireEvent.click(wrong);
 }
 
-/** 채점 화면의 "계속" 버튼 */
+/** 채점 화면의 "틀린 N개 다시 풀기" 버튼. 다 맞힌 판에는 이 화면이 아예 뜨지 않는다. */
 function goOn() {
-  fireEvent.click(screen.getByRole('button', { name: /계속/ }));
+  fireEvent.click(screen.getByRole('button', { name: /다시 풀기/ }));
 }
 
 describe('AddPlayActivity', () => {
@@ -98,19 +98,22 @@ describe('AddPlayActivity', () => {
     expect(screen.getByText('9개 남았어요')).toBeInTheDocument();
   });
 
-  it('열 문제를 다 풀면 채점 화면이 나온다', () => {
+  it('한 문제라도 틀리면 채점 화면이 나온다', () => {
     renderActivity();
     start();
-    for (let i = 0; i < 10; i += 1) clickCorrect();
-    expect(screen.getByText(/10개 중 10개 맞았어요/)).toBeInTheDocument();
+    clickWrong();
+    for (let i = 0; i < 9; i += 1) clickCorrect();
+    expect(screen.getByText(/10개 중 9개 맞았어요/)).toBeInTheDocument();
   });
 
-  it('다 맞히면 채점 뒤 바로 끝난다', () => {
+  it('다 맞히면 채점 화면을 거치지 않고 바로 끝난다', () => {
+    // "10개 중 10개 맞았어요" 와 "10문제 중 10개 맞혔어요" 를 잇달아 보여주고
+    // 버튼까지 누르게 하면, 다 맞혔는데도 문제를 더 푸는 것처럼 읽힌다.
     const onFinish = vi.fn<(r: ActivityResult) => void>();
     renderActivity(onFinish);
     start();
     for (let i = 0; i < 10; i += 1) clickCorrect();
-    goOn();
+    expect(screen.queryByRole('button', { name: /다시 풀기/ })).not.toBeInTheDocument();
     expect(onFinish).toHaveBeenCalled();
     const r = onFinish.mock.calls[0]![0];
     expect(r.totalCount).toBe(10);
@@ -136,7 +139,7 @@ describe('AddPlayActivity', () => {
     for (let i = 0; i < 9; i += 1) clickCorrect();
     goOn();
     clickCorrect();
-    goOn();
+    // 남은 것을 다 맞혔으므로 채점 화면 없이 끝난다.
     expect(onFinish).toHaveBeenCalled();
     expect(onFinish.mock.calls[0]![0].correctCount).toBe(9);
   });

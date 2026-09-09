@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  COUNT_OBJECTS,
   COUNT_SETTINGS,
   countHint,
+  countQuestion,
   KOREAN_COUNT,
   makeCountProblem,
+  subjectParticle,
   type CountRange,
 } from './generate';
 
@@ -68,16 +71,53 @@ describe('makeCountProblem', () => {
     }
   });
 
-  it('설정에 맞는 그림을 쓴다', () => {
-    expect(makeCountProblem(3).icon).toBe('🍎');
-    expect(makeCountProblem(5).icon).toBe('🐟');
-    expect(makeCountProblem(10).icon).toBe('🌸');
+  it('세는 대상은 목록 안에서 나온다', () => {
+    for (let i = 0; i < 100; i += 1) {
+      expect(COUNT_OBJECTS).toContain(makeCountProblem(5).object);
+    }
   });
 
   it('난수를 주입하면 결과가 정해진다', () => {
     const a = makeCountProblem(10, cyclingRand([0.35, 0.1, 0.8, 0.2, 0.6]));
     const b = makeCountProblem(10, cyclingRand([0.35, 0.1, 0.8, 0.2, 0.6]));
     expect(a).toEqual(b);
+  });
+});
+
+describe('COUNT_OBJECTS', () => {
+  it('네 살이 아는 세는 말만 쓴다 — 개와 마리', () => {
+    // 송이·권·대·잔 같은 말은 이 나이에 배울 것이 아니다. 세는 것 자체가 어려운데
+    // 말까지 낯설면 못 푸는 이유가 둘로 늘어난다.
+    const units = new Set(COUNT_OBJECTS.map((o) => o.unit));
+    expect([...units].sort()).toEqual(['개', '마리']);
+  });
+
+  it('개와 마리를 둘 다 넉넉히 담는다', () => {
+    expect(COUNT_OBJECTS.filter((o) => o.unit === '개').length).toBeGreaterThanOrEqual(2);
+    expect(COUNT_OBJECTS.filter((o) => o.unit === '마리').length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('subjectParticle', () => {
+  it('받침이 없으면 "가"', () => {
+    expect(subjectParticle('사과')).toBe('가');
+    expect(subjectParticle('물고기')).toBe('가');
+    expect(subjectParticle('강아지')).toBe('가');
+  });
+
+  it('받침이 있으면 "이"', () => {
+    expect(subjectParticle('공')).toBe('이');
+    expect(subjectParticle('꽃')).toBe('이');
+  });
+});
+
+describe('countQuestion', () => {
+  it('무엇을 무슨 말로 세는지 함께 묻는다', () => {
+    expect(countQuestion({ icon: '🍎', name: '사과', unit: '개' })).toBe('사과가 몇 개일까?');
+    expect(countQuestion({ icon: '🐟', name: '물고기', unit: '마리' })).toBe(
+      '물고기가 몇 마리일까?',
+    );
+    expect(countQuestion({ icon: '⚽', name: '공', unit: '개' })).toBe('공이 몇 개일까?');
   });
 });
 
@@ -98,7 +138,14 @@ describe('KOREAN_COUNT', () => {
 describe('countHint', () => {
   it('세는 방법만 알려주고 답은 말하지 않는다', () => {
     // 세는 것 자체가 배울 내용이라 답을 알려주면 배울 것이 남지 않는다.
-    expect(countHint()).toContain('짚어가며');
-    expect(countHint()).not.toMatch(/모두|전부|개예요/);
+    const hint = countHint({ icon: '🍎', name: '사과', unit: '개' });
+    expect(hint).toContain('짚어가며');
+    expect(hint).not.toMatch(/모두|전부/);
+    expect(hint).not.toMatch(/\d/);
+  });
+
+  it('그 물건을 세는 말로 세어준다', () => {
+    expect(countHint({ icon: '🐟', name: '물고기', unit: '마리' })).toContain('한 마리, 두 마리');
+    expect(countHint({ icon: '🍎', name: '사과', unit: '개' })).toContain('한 개, 두 개');
   });
 });

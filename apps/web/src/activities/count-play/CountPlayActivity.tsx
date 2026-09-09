@@ -14,6 +14,7 @@ import {
 import {
   COUNT_SETTINGS,
   countHint,
+  countQuestion,
   KOREAN_COUNT,
   makeCountProblem,
   type CountProblem,
@@ -30,8 +31,6 @@ const ROUND_TITLE: Record<number, string> = {
   2: '틀린 문제를 다시 세어봐요',
   3: '이번엔 번호를 보면서 세어봐요',
 };
-
-const QUESTION = '몇 개일까?';
 
 export function CountPlayActivity({ onFinish }: ActivityProps) {
   const [range, setRange] = useState<CountRange | null>(null);
@@ -70,9 +69,13 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     setRetryMessage(quiz.round === 3 && !isCorrect ? '괜찮아요, 다시 세어볼까? 🤔' : '');
     if (isCorrect) spawnConfetti(6);
 
+    // 다 맞혔으면 채점 화면을 건너뛴다. "5개 중 5개 맞았어요" 와
+    // "5문제 중 5개 맞혔어요" 를 잇달아 보여주고 계속하기까지 누르게 할 이유가 없다.
     const next = submit(quiz, isCorrect);
-    setQuiz(next);
-    if (next.phase === 'done') finish(next);
+    const settled =
+      next.phase === 'grading' && next.missed.length === 0 ? nextRound(next) : next;
+    setQuiz(settled);
+    if (settled.phase === 'done') finish(settled);
   }
 
   function goOn() {
@@ -131,22 +134,20 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   }
 
   // ── 채점 ──────────────────────────────────────────────
+  // 다 맞힌 판은 pick 에서 곧장 끝으로 보내므로, 이 화면은 틀린 문제가 있을 때만 뜬다.
   if (quiz.phase === 'grading') {
     const scored = quiz.roundScores[quiz.roundScores.length - 1] ?? 0;
     const asked = scored + quiz.missed.length;
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">{quiz.missed.length === 0 ? '🎉' : '📋'}</span>
+        <span className="text-6xl">📋</span>
         <h2 className="text-2xl font-bold text-glow-600">
           {asked}개 중 {scored}개 맞았어요!
         </h2>
-        <p className="text-slate-500">
-          {quiz.missed.length === 0
-            ? '다 맞았어요!'
-            : `틀린 ${quiz.missed.length}개를 다시 세어볼까요?`}
-        </p>
+        <p className="text-slate-500">틀린 {quiz.missed.length}개를 다시 세어볼까요?</p>
+        {/* "계속하기" 는 문제를 더 풀라는 말처럼 읽힌다. 무엇을 하게 되는지 그대로 쓴다. */}
         <Button size="lg" onClick={goOn}>
-          계속하기
+          틀린 {quiz.missed.length}개 다시 세기
         </Button>
       </Card>
     );
@@ -161,6 +162,8 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   // 3차에서는 그림마다 번호를 붙여준다. 이것이 이 활동의 진짜 힌트다 —
   // 답을 말해주는 대신 세는 방법을 보여준다.
   const numbered = quiz.round === 3;
+  // "사과가 몇 개일까?" / "물고기가 몇 마리일까?" — 세는 말도 같이 익힌다.
+  const question = countQuestion(problem.object);
 
   return (
     <div className="flex flex-col gap-5">
@@ -182,7 +185,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
         >
           {Array.from({ length: problem.answer }).map((_, i) => (
             <span key={i} className="flex flex-col items-center">
-              <span className="text-5xl">{problem.icon}</span>
+              <span className="text-5xl">{problem.object.icon}</span>
               {numbered ? (
                 <span className="text-sm font-bold text-glow-600">
                   {i + 1} {KOREAN_COUNT[i]}
@@ -194,11 +197,11 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
 
         <div className="flex items-center justify-center gap-3">
           <span data-testid="question" className="text-4xl font-bold text-slate-700">
-            {QUESTION}
+            {question}
           </span>
           <button
             type="button"
-            onClick={() => speak(QUESTION)}
+            onClick={() => speak(question)}
             aria-label="문제 읽어주기"
             className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl shadow-md transition-transform active:scale-95"
           >
@@ -211,7 +214,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
             data-testid="hint"
             className="rounded-2xl bg-glow-50 px-4 py-3 text-lg text-glow-700"
           >
-            💡 {countHint()}
+            💡 {countHint(problem.object)}
           </p>
         ) : null}
 
@@ -221,8 +224,9 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
             <button
               key={c}
               data-testid="choice"
+              data-value={c}
               onClick={() => pick(c)}
-              aria-label={`${c}개`}
+              aria-label={`${c}${problem.object.unit}`}
               className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 shadow-md transition-transform active:scale-95"
             >
               <span className="block text-4xl font-bold text-slate-700">{c}</span>
