@@ -58,7 +58,12 @@ export function activityIconId(row: {
   const config = row.config;
   if (config && typeof config === 'object') {
     const renderer = (config as { renderer?: unknown }).renderer;
-    if (typeof renderer === 'string' && renderer.length > 0) return renderer;
+    if (typeof renderer === 'string' && renderer.length > 0) {
+      // 속담과 사자성어는 화면은 같지만 그림이 다르다. config.kind 로 더 좁힌다.
+      const kind = (config as { kind?: unknown }).kind;
+      if (typeof kind === 'string' && kind.length > 0) return `${renderer}:${kind}`;
+      return renderer;
+    }
   }
   return row.activity_kind;
 }

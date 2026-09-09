@@ -213,6 +213,20 @@ function DefaultIcon() {
   );
 }
 
+/**
+ * 영숙님이 그려 준 그림이 있는 활동.
+ *
+ * 그림 안에 활동 이름이 들어 있지만, 카드의 제목 글씨는 그대로 둔다 — 그림 속
+ * 글씨는 이 크기에서 읽으라고 있는 것이 아니라 장식이고, 아직 그림이 없는
+ * 다섯 활동과 카드 모양이 어긋나면 안 되기 때문이다.
+ */
+const ACTIVITY_ART: Record<string, string> = {
+  choice_quiz: '/activity-art/spelling.png',
+  'sayings:proverb': '/activity-art/proverb.png',
+  'sayings:idiom': '/activity-art/idiom.png',
+  grid_drill: '/activity-art/grid.png',
+};
+
 export const ACTIVITY_ICONS: Record<string, () => JSX.Element> = {
   letter_cards: LetterCardsIcon,
   word_cards: WordCardsIcon,
@@ -230,6 +244,14 @@ export const ACTIVITY_ICONS: Record<string, () => JSX.Element> = {
  * 기본 그림으로 받아낸다 — 카드가 빈칸으로 남지 않게.
  */
 export function ActivityIcon({ id, className }: { id: string; className?: string }) {
+  const art = ACTIVITY_ART[id];
+  if (art) {
+    return (
+      <span data-testid="activity-icon" data-icon={id} className={className}>
+        <img src={art} alt="" className="h-full w-full rounded-2xl object-contain" />
+      </span>
+    );
+  }
   const Icon = ACTIVITY_ICONS[id] ?? DefaultIcon;
   return (
     <span data-testid="activity-icon" data-icon={id} className={className}>

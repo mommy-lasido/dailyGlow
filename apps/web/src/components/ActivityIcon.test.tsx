@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { ACTIVITY_ICONS, ActivityIcon } from './ActivityIcon';
 
 /** 지금 앱에 있는 활동 전부. 하나라도 그림이 없으면 카드가 밋밋해진다. */
+/** 영숙님이 그려 준 그림을 쓰는 활동 — 이것들은 <svg> 가 아니라 <img> 로 그려진다. */
+const ART_IDS = ['choice_quiz', 'sayings:proverb', 'sayings:idiom', 'grid_drill'];
+
 const EVERY_ACTIVITY = [
   'letter_cards',
   'word_cards',
@@ -20,6 +23,18 @@ describe('ActivityIcon', () => {
     expect(ACTIVITY_ICONS[id]).toBeTypeOf('function');
   });
 
+  it('영숙님이 그려 준 그림이 있는 활동은 그 그림을 쓴다', () => {
+    for (const id of ['choice_quiz', 'sayings:proverb', 'sayings:idiom', 'grid_drill']) {
+      const { container, unmount } = render(<ActivityIcon id={id} />);
+      const img = container.querySelector('img');
+      expect(img).toBeInTheDocument();
+      expect(img!.getAttribute('src')).toMatch(/^\/activity-art\/.+\.png$/);
+      // 카드 제목이 따로 있으므로 그림에는 대체 글이 필요 없다.
+      expect(img!.getAttribute('alt')).toBe('');
+      unmount();
+    }
+  });
+
   it('그림을 그린다', () => {
     const { container } = render(<ActivityIcon id="letter_cards" />);
     expect(container.querySelector('svg')).toBeInTheDocument();
@@ -32,9 +47,9 @@ describe('ActivityIcon', () => {
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('모든 그림이 같은 64×64 격자 안에 그려진다', () => {
+  it('직접 그린 그림은 모두 같은 64×64 격자 안에 있다', () => {
     // 격자가 다르면 카드마다 그림 크기가 들쭉날쭉해진다.
-    for (const id of EVERY_ACTIVITY) {
+    for (const id of EVERY_ACTIVITY.filter((i) => !ART_IDS.includes(i))) {
       const { container, unmount } = render(<ActivityIcon id={id} />);
       expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 64 64');
       unmount();

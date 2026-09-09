@@ -144,7 +144,7 @@ export function HomePage() {
               <Card className="flex items-center gap-5 transition-transform hover:scale-[1.02]">
                 <ActivityIcon
                   id={a.iconId}
-                  className={`shrink-0 ${isPreReader ? 'h-20 w-20' : 'h-16 w-16'}`}
+                  className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
                 />
                 {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
                 <div className="min-w-0">
