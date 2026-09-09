@@ -3,6 +3,7 @@ import { AddPlayActivity } from './add-play/AddPlayActivity';
 import { CountPlayActivity } from './count-play/CountPlayActivity';
 import { JamoActivity } from './jamo/JamoActivity';
 import { SayingsActivity } from './sayings/SayingsActivity';
+import { SpellingActivity } from './spelling/SpellingActivity';
 
 /**
  * 어떤 컴포넌트로 그릴지 정하는 열쇠.
@@ -30,4 +31,5 @@ export const ACTIVITY_RENDERERS: Record<string, ActivityRenderer> = {
   count_play: CountPlayActivity,
   letter_cards: JamoActivity,
   sayings: SayingsActivity,
+  choice_quiz: SpellingActivity,
 };
