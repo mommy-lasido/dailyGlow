@@ -43,10 +43,20 @@ export function activityHint(config: unknown): string | null {
   return typeof hint === 'string' && hint.length > 0 ? hint : null;
 }
 
+/**
+ * 카드에 붙는 그림.
+ *
+ * 한글 활동에는 그림 대신 **한글 글자**를 쓴다. 🔤 나 📗 같은 그림은 어느 나라
+ * 글자를 배우는 칸인지 말해주지 않지만, 'ㄱㅏ' 는 그 자체가 배울 내용이다.
+ * 아직 글을 못 읽는 아이도 카드에서 본 모양을 활동 안에서 다시 만나게 된다.
+ *
+ * 쓰기 연습지만 ✏️ 를 그대로 둔다. 이것은 화면에서 읽는 활동이 아니라
+ * 인쇄해서 연필로 하는 것이고, 연필 그림이 그 점을 가장 잘 말해준다.
+ */
 const EMOJI: Record<string, string> = {
-  letter_cards: '🔤',
-  word_cards: '📗',
-  reading_cards: '📖',
+  letter_cards: 'ㄱㅏ',
+  word_cards: '낱',
+  reading_cards: '글',
   worksheet: '✏️',
   choice_quiz: '📝',
   grid_drill: '🔢',

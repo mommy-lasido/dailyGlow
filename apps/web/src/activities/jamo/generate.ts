@@ -35,6 +35,44 @@ export const BASIC_VOWELS: JamoItem[] = [
   { letter: 'ㅣ', sound: '이' },
 ];
 
+/**
+ * 자음 열넷. 가나다 순서다.
+ *
+ * 책은 1단계(모음) 다음에 바로 2단계 '가 갸 거 겨' 로 넘어가지만, 그 사이에
+ * **자음의 모양과 이름**을 익히는 걸음이 하나 빠져 있다. 만 3~4세에게는
+ * 'ㄱ' 이 어떻게 생겼는지가 '가' 를 읽는 것보다 먼저다.
+ *
+ * 책이 다루지 않는 'ㅇ' 도 넣는다. 책에서는 15단계 받침으로 처음 나오지만,
+ * 아이는 '아·이·오·우' 에서 이 모양을 날마다 본다.
+ */
+export const BASIC_CONSONANTS: JamoItem[] = [
+  { letter: 'ㄱ', sound: '기역' },
+  { letter: 'ㄴ', sound: '니은' },
+  { letter: 'ㄷ', sound: '디귿' },
+  { letter: 'ㄹ', sound: '리을' },
+  { letter: 'ㅁ', sound: '미음' },
+  { letter: 'ㅂ', sound: '비읍' },
+  { letter: 'ㅅ', sound: '시옷' },
+  { letter: 'ㅇ', sound: '이응' },
+  { letter: 'ㅈ', sound: '지읒' },
+  { letter: 'ㅊ', sound: '치읓' },
+  { letter: 'ㅋ', sound: '키읔' },
+  { letter: 'ㅌ', sound: '티읕' },
+  { letter: 'ㅍ', sound: '피읖' },
+  { letter: 'ㅎ', sound: '히읗' },
+];
+
+/**
+ * 이 단계의 아이에게 보여줄 자음.
+ *
+ * 처음에는 'ㄱ ㄴ ㄷ ㄹ' 넷만 본다. 열넷을 한꺼번에 늘어놓으면 네 살에게는
+ * 너무 많다. 단계가 오를수록 하나씩 늘어 열넷을 다 채운다.
+ */
+export function consonantsForStage(stage: number): JamoItem[] {
+  const count = Math.max(4, Math.min(stage + 3, BASIC_CONSONANTS.length));
+  return BASIC_CONSONANTS.slice(0, count);
+}
+
 /** 유니코드에서 한글 첫소리(초성)가 놓인 순서 */
 const LEAD = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
 /** 유니코드에서 가운뎃소리(중성)가 놓인 순서 */

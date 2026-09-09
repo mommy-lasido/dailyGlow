@@ -31,6 +31,19 @@ function renderActivity(
   );
 }
 
+/** 무엇을 배울지 고른다. 고르기 전에는 아무 글자도 안 나온다. */
+function chooseVowels() {
+  fireEvent.click(screen.getByRole('button', { name: /모음 배우기/ }));
+}
+
+function chooseConsonants() {
+  fireEvent.click(screen.getByRole('button', { name: /자음 배우기/ }));
+}
+
+function chooseSyllables() {
+  fireEvent.click(screen.getByRole('button', { name: /글자 배우기/ }));
+}
+
 /** 배우기 화면을 지나 문제 화면으로 넘어간다. */
 function goToQuiz() {
   fireEvent.click(screen.getByRole('button', { name: '다 봤어요' }));
@@ -59,28 +72,76 @@ beforeEach(() => {
   canSpeak.mockReturnValue(true);
 });
 
+describe('JamoActivity — 무엇을 배울지 고르기', () => {
+  it('자음을 먼저 보여준다', () => {
+    // 가갸거겨보다 ㄱㄴㄷㄹ 모양이 먼저다. 책에는 이 걸음이 빠져 있다.
+    renderActivity(1);
+    const names = screen
+      .getAllByRole('button')
+      .map((b) => b.textContent)
+      .filter((t) => t?.includes('배우기'));
+    expect(names[0]).toContain('자음 배우기');
+    expect(names[1]).toContain('모음 배우기');
+  });
+
+  it('1단계 아이에게는 자음 넷만 보여준다', () => {
+    // 열넷을 한꺼번에 늘어놓으면 네 살에게는 너무 많다.
+    renderActivity(1);
+    chooseConsonants();
+    expect(screen.getByTestId('letter')).toHaveTextContent('ㄱ');
+    expect(screen.getByText('1 / 4')).toBeInTheDocument();
+  });
+
+  it('자음은 이름으로 읽어준다', () => {
+    renderActivity(1);
+    chooseConsonants();
+    fireEvent.click(screen.getByRole('button', { name: '기역 소리 듣기' }));
+    expect(speak).toHaveBeenCalledWith('기역');
+  });
+
+  it('아직 글자를 배울 단계가 아니면 글자 배우기를 보여주지 않는다', () => {
+    renderActivity(1);
+    expect(screen.queryByRole('button', { name: /글자 배우기/ })).not.toBeInTheDocument();
+  });
+
+  it('2단계부터는 글자 배우기도 고를 수 있다', () => {
+    renderActivity(2);
+    expect(screen.getByRole('button', { name: /글자 배우기/ })).toBeInTheDocument();
+  });
+
+  it('단계가 오르면 자음이 늘어난다', () => {
+    renderActivity(6);
+    chooseConsonants();
+    expect(screen.getByText('1 / 9')).toBeInTheDocument();
+  });
+});
+
 describe('JamoActivity — 배우기', () => {
   it('문제부터 내지 않고 글자를 먼저 보여준다', () => {
     // 한 번도 본 적 없는 글자를 바로 문제로 내면 아이는 찍을 수밖에 없다.
     renderActivity(1);
+    chooseVowels();
     expect(screen.getByTestId('letter')).toHaveTextContent('ㅏ');
     expect(screen.queryByTestId('choice')).not.toBeInTheDocument();
   });
 
   it('1단계 아이에게는 기본 모음을 보여준다', () => {
     renderActivity(1);
+    chooseVowels();
     expect(screen.getByText('1 / 10')).toBeInTheDocument();
-    expect(screen.getByText(/기본 모음/)).toBeInTheDocument();
+    expect(screen.getByText('모음 배우기')).toBeInTheDocument();
   });
 
   it('2단계 아이에게는 ㄱ 이 모음과 만난 글자를 보여준다', () => {
     renderActivity(2);
+    chooseSyllables();
     expect(screen.getByTestId('letter')).toHaveTextContent('가');
     expect(screen.getByText(/기본 자음/)).toBeInTheDocument();
   });
 
   it('글자를 누르면 소리를 들려준다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: '아 소리 듣기' }));
     expect(speak).toHaveBeenCalledWith('아');
   });
@@ -88,11 +149,13 @@ describe('JamoActivity — 배우기', () => {
   it('배우기 화면에서는 스스로 소리를 내지 않는다', () => {
     // 아이가 누를 때만 난다. 자동으로 떠들면 화면을 안 보게 된다.
     renderActivity(1);
+    chooseVowels();
     expect(speak).not.toHaveBeenCalled();
   });
 
   it('다음 글자로 넘어갈 수 있다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
     expect(screen.getByTestId('letter')).toHaveTextContent('ㅑ');
     expect(screen.getByText('2 / 10')).toBeInTheDocument();
@@ -100,12 +163,14 @@ describe('JamoActivity — 배우기', () => {
 
   it('아래 목록에서 글자를 바로 골라 볼 수 있다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅜ' }));
     expect(screen.getByTestId('letter')).toHaveTextContent('ㅜ');
   });
 
   it('마지막 글자에서만 문제로 넘어가는 버튼이 나온다', () => {
     renderActivity(1);
+    chooseVowels();
     expect(screen.queryByRole('button', { name: '다 봤어요' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     expect(screen.getByRole('button', { name: '다 봤어요' })).toBeInTheDocument();
@@ -114,6 +179,7 @@ describe('JamoActivity — 배우기', () => {
   it('소리가 안 나는 기기에서는 옆에서 읽어달라고 알려준다', () => {
     canSpeak.mockReturnValue(false);
     renderActivity(1);
+    chooseVowels();
     expect(screen.getByText(/옆에서 읽어주세요/)).toBeInTheDocument();
   });
 });
@@ -122,6 +188,7 @@ describe('JamoActivity — 찾기', () => {
   it('문제가 나오면 소리를 한 번 들려준다', () => {
     // 여기서 소리는 거들어 주는 것이 아니라 문제 그 자체다.
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     speak.mockClear();
     goToQuiz();
@@ -130,6 +197,7 @@ describe('JamoActivity — 찾기', () => {
 
   it('보기는 3개이고 그중에 정답이 있다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     expect(screen.getAllByTestId('choice')).toHaveLength(3);
@@ -139,6 +207,7 @@ describe('JamoActivity — 찾기', () => {
 
   it('1차에서는 맞았는지 알려주지 않고 다음으로 넘어간다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     expect(screen.getByText('5개 남았어요')).toBeInTheDocument();
@@ -151,6 +220,7 @@ describe('JamoActivity — 찾기', () => {
   it('다 맞히면 채점 화면 없이 끝나고, 점수는 1차 것이다', () => {
     const onFinish = vi.fn();
     renderActivity(1, onFinish);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     for (let i = 0; i < 5; i += 1) clickCorrect();
@@ -163,6 +233,7 @@ describe('JamoActivity — 찾기', () => {
   it('2차에 고쳐도 점수는 1차 것 그대로다', () => {
     const onFinish = vi.fn();
     renderActivity(1, onFinish);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     clickWrong();
@@ -174,6 +245,7 @@ describe('JamoActivity — 찾기', () => {
 
   it('3차에는 글자를 보여주고, 맞힐 때까지 같은 문제가 남는다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     clickWrong();
@@ -191,6 +263,7 @@ describe('JamoActivity — 찾기', () => {
 
   it('같은 문제에 머무는 동안 소리가 거듭 나지 않는다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     clickWrong();
@@ -213,6 +286,7 @@ describe('JamoActivity — 찾기', () => {
 
   it('다시 듣기 버튼을 누르면 소리가 난다', () => {
     renderActivity(1);
+    chooseVowels();
     fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
     goToQuiz();
     speak.mockClear();

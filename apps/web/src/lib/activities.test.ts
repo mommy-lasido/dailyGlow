@@ -94,8 +94,19 @@ describe('selectActivities · hint', () => {
 
 describe('activityEmoji', () => {
   it('활동 종류마다 다른 그림을 준다', () => {
-    expect(activityEmoji('letter_cards')).toBe('🔤');
     expect(activityEmoji('grid_drill')).toBe('🔢');
     expect(activityEmoji('알 수 없는 종류')).toBe('📘');
+  });
+
+  it('한글 활동에는 그림 대신 한글 글자를 쓴다', () => {
+    // 🔤 는 어느 나라 글자를 배우는 칸인지 말해주지 않는다.
+    expect(activityEmoji('letter_cards')).toBe('ㄱㅏ');
+    expect(activityEmoji('word_cards')).toBe('낱');
+    expect(activityEmoji('reading_cards')).toBe('글');
+  });
+
+  it('쓰기 연습지는 연필 그림을 그대로 둔다', () => {
+    // 화면에서 읽는 활동이 아니라 인쇄해서 연필로 하는 것이다.
+    expect(activityEmoji('worksheet')).toBe('✏️');
   });
 });

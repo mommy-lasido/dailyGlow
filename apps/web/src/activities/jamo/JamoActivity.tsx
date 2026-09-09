@@ -13,14 +13,19 @@ import {
   type QuizState,
 } from '@/activities/quiz-flow';
 import {
+  consonantsForStage,
   JAMO_MAX_STAGE,
   JAMO_PROBLEM_COUNT,
   jamoHint,
   lettersForStage,
   makeJamoProblem,
+  BASIC_VOWELS,
   type JamoItem,
   type JamoProblem,
 } from './generate';
+
+/** 무엇을 배울지. 자음 모양 → 모음 모양 → 둘이 만난 글자 순서다. */
+type JamoMode = 'consonant' | 'vowel' | 'syllable';
 
 const ROUND_TITLE: Record<number, string> = {
   2: '틀린 글자를 다시 찾아봐요',
@@ -38,8 +43,8 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   // 마지막 자음으로 맞춰 복습이 된다.
   const stage = Math.min(Math.max(lesson.childLevel, 1), JAMO_MAX_STAGE);
   const stageLabel = hangulStage(stage)?.label ?? '자음과 모음';
-  const items = lettersForStage(stage);
 
+  const [mode, setMode] = useState<JamoMode | null>(null);
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
   /** 배우기 화면에서 지금 보고 있는 글자 */
   const [card, setCard] = useState(0);
@@ -52,6 +57,81 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   const [retryMessage, setRetryMessage] = useState('');
 
   const speechOk = canSpeak();
+
+  const items: JamoItem[] =
+    mode === 'consonant'
+      ? consonantsForStage(stage)
+      : mode === 'vowel'
+        ? BASIC_VOWELS
+        : mode === 'syllable'
+          ? lettersForStage(stage)
+          : [];
+
+  function begin(chosen: JamoMode) {
+    setMode(chosen);
+    setPhase('learn');
+    setCard(0);
+    setHeard(new Set());
+  }
+
+  // ── 무엇을 배울지 고르기 ───────────────────────────────
+  if (mode === null) {
+    const consonantCount = consonantsForStage(stage).length;
+    const menu = [
+      {
+        mode: 'consonant' as JamoMode,
+        icon: 'ㄱ',
+        name: '자음 배우기',
+        desc: consonantsForStage(stage)
+          .map((i) => i.letter)
+          .join(' '),
+      },
+      {
+        mode: 'vowel' as JamoMode,
+        icon: 'ㅏ',
+        name: '모음 배우기',
+        desc: BASIC_VOWELS.map((i) => i.letter).join(' '),
+      },
+      // 자음과 모음이 만난 글자는 책의 2단계부터다. 아직 거기 못 간 아이에게는
+      // 무엇을 배우는 칸인지 알 수 없는 빈 카드가 되므로 보여주지 않는다.
+      ...(stage >= 2
+        ? [
+            {
+              mode: 'syllable' as JamoMode,
+              icon: '가',
+              name: '글자 배우기',
+              desc: lettersForStage(stage)
+                .map((i) => i.letter)
+                .join(' '),
+            },
+          ]
+        : []),
+    ];
+
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-center text-4xl font-bold text-glow-600">뭘 배워볼까?</h1>
+        <p className="text-center text-slate-500">
+          {stage}단계 · 자음 {consonantCount}개
+        </p>
+        {menu.map((m) => (
+          <button
+            key={m.mode}
+            onClick={() => begin(m.mode)}
+            className="min-h-touch rounded-3xl bg-white p-5 text-left shadow-lg ring-1 ring-black/5 transition-transform active:scale-95"
+          >
+            <span className="flex items-center gap-5">
+              <span className="text-5xl font-bold text-glow-500">{m.icon}</span>
+              <span className="min-w-0">
+                <span className="block text-2xl font-bold text-slate-700">{m.name}</span>
+                <span className="block truncate text-sm text-slate-400">{m.desc}</span>
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   function playCard(index: number) {
     speak(items[index]!.sound);
@@ -74,7 +154,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { stage, roundScores: state.roundScores },
+      meta: { stage, mode, roundScores: state.roundScores },
     });
   }
 
@@ -110,7 +190,11 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
     return (
       <div className="flex flex-col gap-5">
         <p className="text-center text-slate-500">
-          {stage}단계 · {stageLabel}
+          {mode === 'consonant'
+            ? '자음 배우기'
+            : mode === 'vowel'
+              ? '모음 배우기'
+              : `${stage}단계 · ${stageLabel}`}
         </p>
 
         <Card className="flex flex-col items-center gap-5 text-center">
