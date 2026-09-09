@@ -70,6 +70,10 @@ from (values
   ('hangul', 'reading-cards', '문장 읽기',      1, 3, 'reading_cards', 14, 0, 1, '{}'::jsonb),
   ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',     14, 0, 1, '{}'::jsonb),
   ('korean', 'spelling',      '맞춤법 탐험대',  1, 1, 'choice_quiz',   1,  1, 6, '{}'::jsonb),
+  -- 속담·사자성어는 초등 교재 세 권(하루 한장·바빠·썬더키즈)의 목차를 모아 만들었다.
+  -- 세 권 모두에 실린 표현이 1단계, 두 권이 2단계, 한 권이 3단계다.
+  ('korean', 'proverbs',      '속담 배우기',    1, 2, 'choice_quiz',   1,  3, 6, '{"renderer":"sayings","kind":"proverb"}'::jsonb),
+  ('korean', 'idioms',        '사자성어 배우기', 1, 3, 'choice_quiz',   1,  3, 6, '{"renderer":"sayings","kind":"idiom"}'::jsonb),
   -- 수학은 수 세기부터다. 덧셈은 그 다음 단계(2)라 아직 수를 못 세는 아이에게는 안 보인다.
   ('math',   'count-play',    '수 세기 놀이',   1, 1, 'choice_quiz',   1,  0, 1, '{"renderer":"count_play"}'::jsonb),
   ('math',   'add-play',      '더하기 놀이',    1, 2, 'choice_quiz',   2,  0, 1, '{"generator":"add_small","renderer":"add_play"}'::jsonb),

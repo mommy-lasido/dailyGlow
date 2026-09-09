@@ -183,6 +183,25 @@ function SpellingIcon() {
   );
 }
 
+/** 속담·사자성어 — 옛말이 적힌 두루마리 */
+function SayingsIcon() {
+  return (
+    <Frame>
+      <path
+        d="M14 12H50a4 4 0 0 1 4 4v32a4 4 0 0 1-4 4H14z"
+        fill={PAPER}
+        stroke={ORANGE_MID}
+        strokeWidth="4"
+        strokeLinejoin="round"
+      />
+      {/* 말려 있는 양쪽 끝 */}
+      <rect x="6" y="10" width="10" height="44" rx="5" fill={ORANGE_SOFT} stroke={ORANGE} strokeWidth="4" />
+      <path d="M24 26 H46" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
+      <path d="M24 36 H40" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
+    </Frame>
+  );
+}
+
 /** 아직 그림을 정하지 않은 활동 */
 function DefaultIcon() {
   return (
@@ -203,6 +222,7 @@ export const ACTIVITY_ICONS: Record<string, () => JSX.Element> = {
   add_play: AddPlayIcon,
   grid_drill: GridDrillIcon,
   choice_quiz: SpellingIcon,
+  sayings: SayingsIcon,
 };
 
 /**

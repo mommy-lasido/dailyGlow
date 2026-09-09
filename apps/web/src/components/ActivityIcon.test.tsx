@@ -12,6 +12,7 @@ const EVERY_ACTIVITY = [
   'add_play',
   'grid_drill',
   'choice_quiz',
+  'sayings',
 ];
 
 describe('ActivityIcon', () => {
