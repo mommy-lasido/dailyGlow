@@ -30,10 +30,11 @@ describe('자료', () => {
     }
   });
 
-  it('모든 항목에 정답이 정확히 하나다', () => {
+  it('모든 항목의 보기가 둘이고 그중 정답이 하나다', () => {
+    // 한 항목만 보기가 셋이면 화면에서 고장처럼 보인다.
     for (const item of SPELLING_ITEMS) {
+      expect(item.options).toHaveLength(2);
       expect(item.options.filter((o) => o.correct)).toHaveLength(1);
-      expect(item.options.length).toBeGreaterThanOrEqual(2);
     }
   });
 

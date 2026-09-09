@@ -26,13 +26,19 @@ const ROUND_TITLE: Record<number, string> = {
   3: '이번엔 힌트를 보고 풀어봐요',
 };
 
-/** 빈칸을 눈에 띄게 그린다. 문장 어디가 물음인지 한눈에 보여야 한다. */
+/**
+ * 빈칸을 눈에 띄게 그린다. 문장 어디가 물음인지 한눈에 보여야 한다.
+ *
+ * 처음에는 밑줄만 그었는데, 쓴 색(glow-400)이 팔레트에 없어 흐린 회색 선으로
+ * 나왔다. 문장 맨 앞에 빈칸이 오는 문항에서는 특히 고장처럼 보였다.
+ * 이제 옅은 주황 칸에 굵은 밑줄을 둬서 "여기에 들어갈 말을 고르는 것" 임을 보인다.
+ */
 function Sentence({ text }: { text: string }) {
   const [before, after] = text.split(BLANK);
   return (
     <p data-testid="sentence" className="text-center text-2xl leading-relaxed text-slate-700">
       {before}
-      <span className="mx-1 inline-block min-w-[3rem] border-b-4 border-glow-400 align-bottom text-glow-600">
+      <span className="mx-1 inline-block min-w-[4rem] rounded-t-lg border-b-4 border-glow-500 bg-glow-50 px-2">
         &nbsp;
       </span>
       {after}
