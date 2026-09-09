@@ -27,7 +27,8 @@ export interface ActivityCard {
   activityKind: string;
   subjectSlug: string;
   subjectTitle: string;
-  emoji: string;
+  /** 카드에 그릴 그림의 이름. ActivityIcon 이 이 이름으로 그림을 고른다. */
+  iconId: string;
   /**
    * 카드 제목 밑에 붙일 한 줄 예시. config.hint 가 없으면 null.
    * 지금은 "낱말 읽기" 에만 붙는다 — 제목만으로는 "자음모음 배우기" 와
@@ -44,26 +45,22 @@ export function activityHint(config: unknown): string | null {
 }
 
 /**
- * 카드에 붙는 그림.
+ * 어떤 그림을 그릴지 정하는 이름.
  *
- * 한글 활동에는 그림 대신 **한글 글자**를 쓴다. 🔤 나 📗 같은 그림은 어느 나라
- * 글자를 배우는 칸인지 말해주지 않지만, 'ㄱㅏ' 는 그 자체가 배울 내용이다.
- * 아직 글을 못 읽는 아이도 카드에서 본 모양을 활동 안에서 다시 만나게 된다.
- *
- * 쓰기 연습지만 ✏️ 를 그대로 둔다. 이것은 화면에서 읽는 활동이 아니라
- * 인쇄해서 연필로 하는 것이고, 연필 그림이 그 점을 가장 잘 말해준다.
+ * 화면을 고를 때(`resolveRendererId`)와 같은 규칙을 쓴다 — `config.renderer` 가
+ * 있으면 그것을, 없으면 `activity_kind` 를. 더하기 놀이와 수 세기 놀이와
+ * 맞춤법 탐험대는 셋 다 `choice_quiz` 라, 종류만 보면 세 카드에 같은 그림이 붙는다.
  */
-const EMOJI: Record<string, string> = {
-  letter_cards: 'ㄱㅏ',
-  word_cards: '낱',
-  reading_cards: '글',
-  worksheet: '✏️',
-  choice_quiz: '📝',
-  grid_drill: '🔢',
-};
-
-export function activityEmoji(kind: string): string {
-  return EMOJI[kind] ?? '📘';
+export function activityIconId(row: {
+  activity_kind: string;
+  config: unknown;
+}): string {
+  const config = row.config;
+  if (config && typeof config === 'object') {
+    const renderer = (config as { renderer?: unknown }).renderer;
+    if (typeof renderer === 'string' && renderer.length > 0) return renderer;
+  }
+  return row.activity_kind;
 }
 
 /**
@@ -97,7 +94,7 @@ export function selectActivities(
       activityKind: r.activity_kind,
       subjectSlug: r.subject_slug,
       subjectTitle: r.subject_title,
-      emoji: activityEmoji(r.activity_kind),
+      iconId: activityIconId(r),
       hint: activityHint(r.config),
     }));
 }

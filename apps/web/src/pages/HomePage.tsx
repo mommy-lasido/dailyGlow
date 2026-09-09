@@ -12,6 +12,7 @@ import {
 } from '@/lib/activities';
 import { buildSuggestion, fetchRecentSessions } from '@/lib/promotion';
 import { LevelSuggestionCard } from '@/components/LevelSuggestionCard';
+import { ActivityIcon } from '@/components/ActivityIcon';
 
 /** 아직 못 읽는 아이에게는 글자를 크게 보여준다. */
 function greetingClass(readingLevel: string | null): string {
@@ -141,7 +142,10 @@ export function HomePage() {
           activities.map((a) => (
             <Link key={a.id} to={`/activity/${a.id}`}>
               <Card className="flex items-center gap-5 transition-transform hover:scale-[1.02]">
-                <span className={isPreReader ? 'text-6xl' : 'text-5xl'}>{a.emoji}</span>
+                <ActivityIcon
+                  id={a.iconId}
+                  className={`shrink-0 ${isPreReader ? 'h-20 w-20' : 'h-16 w-16'}`}
+                />
                 {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
                 <div className="min-w-0">
                   <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>

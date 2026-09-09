@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { selectActivities, activityEmoji, activityHint, type LessonGateRow } from './activities';
+import {
+  selectActivities,
+  activityIconId,
+  activityHint,
+  type LessonGateRow,
+} from './activities';
 
 const HANGUL = 'subj-hangul';
 const MATH = 'subj-math';
@@ -92,21 +97,29 @@ describe('selectActivities · hint', () => {
   });
 });
 
-describe('activityEmoji', () => {
-  it('활동 종류마다 다른 그림을 준다', () => {
-    expect(activityEmoji('grid_drill')).toBe('🔢');
-    expect(activityEmoji('알 수 없는 종류')).toBe('📘');
+describe('activityIconId', () => {
+  it('활동 종류를 그림 이름으로 쓴다', () => {
+    expect(activityIconId({ activity_kind: 'letter_cards', config: {} })).toBe('letter_cards');
+    expect(activityIconId({ activity_kind: 'grid_drill', config: null })).toBe('grid_drill');
   });
 
-  it('한글 활동에는 그림 대신 한글 글자를 쓴다', () => {
-    // 🔤 는 어느 나라 글자를 배우는 칸인지 말해주지 않는다.
-    expect(activityEmoji('letter_cards')).toBe('ㄱㅏ');
-    expect(activityEmoji('word_cards')).toBe('낱');
-    expect(activityEmoji('reading_cards')).toBe('글');
+  it('config.renderer 가 있으면 그것을 쓴다', () => {
+    // 더하기 놀이·수 세기 놀이·맞춤법 탐험대는 셋 다 choice_quiz 라,
+    // 종류만 보면 세 카드에 같은 그림이 붙는다.
+    expect(activityIconId({ activity_kind: 'choice_quiz', config: { renderer: 'add_play' } })).toBe(
+      'add_play',
+    );
+    expect(
+      activityIconId({ activity_kind: 'choice_quiz', config: { renderer: 'count_play' } }),
+    ).toBe('count_play');
   });
 
-  it('쓰기 연습지는 연필 그림을 그대로 둔다', () => {
-    // 화면에서 읽는 활동이 아니라 인쇄해서 연필로 하는 것이다.
-    expect(activityEmoji('worksheet')).toBe('✏️');
+  it('renderer 가 문자열이 아니면 종류로 되돌아간다', () => {
+    expect(activityIconId({ activity_kind: 'choice_quiz', config: { renderer: 7 } })).toBe(
+      'choice_quiz',
+    );
+    expect(activityIconId({ activity_kind: 'choice_quiz', config: { renderer: '' } })).toBe(
+      'choice_quiz',
+    );
   });
 });
