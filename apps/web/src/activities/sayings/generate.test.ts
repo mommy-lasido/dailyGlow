@@ -3,6 +3,7 @@ import { SAYINGS, sayingsOf } from './content';
 import {
   choiceText,
   makeSayingProblem,
+  makeSayingSet,
   pickDistractors,
   poolFor,
   sayingHint,
@@ -99,6 +100,35 @@ describe('makeSayingProblem', () => {
     for (let i = 0; i < 100; i += 1) {
       const p = makeSayingProblem(poolFor('idiom'));
       for (const c of p.choices) expect(c.kind).toBe('idiom');
+    }
+  });
+});
+
+describe('makeSayingSet', () => {
+  it('한 판 안에서 같은 표현이 두 번 나오지 않는다', () => {
+    // 하나씩 따로 뽑으면 16개에서 열 번을 뽑는 셈이라 오히려 겹치는 쪽이 흔했다.
+    for (let i = 0; i < 200; i += 1) {
+      const set = makeSayingSet(poolFor('proverb'));
+      const texts = set.map((p) => p.answer.text);
+      expect(new Set(texts).size).toBe(texts.length);
+    }
+  });
+
+  it('속담은 열 문제를 낸다', () => {
+    expect(makeSayingSet(poolFor('proverb'))).toHaveLength(10);
+  });
+
+  it('표현이 모자라면 있는 만큼만 낸다', () => {
+    // 사자성어는 아직 여덟 개다. 억지로 열을 채우면 다시 겹친다.
+    const set = makeSayingSet(poolFor('idiom'));
+    expect(set).toHaveLength(8);
+    expect(new Set(set.map((p) => p.answer.text)).size).toBe(8);
+  });
+
+  it('문제마다 보기 3개가 제대로 붙는다', () => {
+    for (const p of makeSayingSet(poolFor('proverb'))) {
+      expect(new Set(p.choices.map((c) => c.text)).size).toBe(3);
+      expect(p.choices).toContain(p.answer);
     }
   });
 });

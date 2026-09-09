@@ -13,9 +13,9 @@ import {
 import type { SayingKind } from './content';
 import {
   choiceText,
-  makeSayingProblem,
-  poolFor,
+  makeSayingSet,
   SAYING_PROBLEM_COUNT,
+  poolFor,
   sayingHint,
   sayingQuestion,
   type SayingProblem,
@@ -45,10 +45,10 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
   const [retryMessage, setRetryMessage] = useState('');
 
   function begin() {
-    setProblems(
-      Array.from({ length: SAYING_PROBLEM_COUNT }, () => makeSayingProblem(pool)),
-    );
-    setQuiz(createQuiz(SAYING_PROBLEM_COUNT));
+    // 한 판 분량을 한꺼번에 만든다 — 하나씩 뽑으면 같은 표현이 겹쳐 나온다.
+    const set = makeSayingSet(pool);
+    setProblems(set);
+    setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());
     setRetryMessage('');
   }
@@ -94,7 +94,7 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
       <Card className="flex flex-col items-center gap-4 text-center">
         <h1 className="text-3xl font-bold text-glow-600">{lesson.title}</h1>
         {/* 자료를 어디서 골랐는지는 아이에게 아무 쓸모가 없다. 무엇을 하게 되는지만 쓴다. */}
-        <p className="text-slate-500">열 문제를 풀어봐요.</p>
+        <p className="text-slate-500">{Math.min(SAYING_PROBLEM_COUNT, pool.length)}문제를 풀어봐요.</p>
         <Button size="lg" onClick={begin}>
           시작하기
         </Button>
@@ -108,7 +108,7 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
       <Card className="flex flex-col items-center gap-4 text-center">
         <span className="text-6xl">🎉📜✨</span>
         <h2 className="text-2xl font-bold text-glow-600">
-          {SAYING_PROBLEM_COUNT}문제 중 {quiz.firstTryCorrect}개 맞혔어요!
+          {quiz.total}문제 중 {quiz.firstTryCorrect}개 맞혔어요!
         </h2>
         {quiz.roundScores.length > 1 ? (
           <p className="text-slate-500">

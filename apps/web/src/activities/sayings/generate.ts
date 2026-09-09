@@ -75,6 +75,30 @@ export function makeSayingProblem(
   return { answer, direction, choices: shuffle([answer, ...wrong], rand) };
 }
 
+/**
+ * 한 판에 낼 문제를 한꺼번에 만든다.
+ *
+ * 문제를 하나씩 따로 뽑으면 **같은 속담이 한 판에 두세 번 나온다.** 표현 16개에서
+ * 열 번을 따로 뽑으면 겹치지 않을 확률이 오히려 낮다. 아이 입장에서는 방금 푼 것을
+ * 또 푸는 셈이라 열 문제가 열 문제 몫을 못 한다.
+ *
+ * 그래서 먼저 섞은 뒤 앞에서부터 하나씩 가져다 쓴다. 표현이 문제 수보다 적으면
+ * (사자성어는 아직 여덟 개다) **있는 만큼만 낸다** — 억지로 채우면 다시 겹친다.
+ */
+export function makeSayingSet(
+  pool: Saying[],
+  count = SAYING_PROBLEM_COUNT,
+  rand: () => number = Math.random,
+): SayingProblem[] {
+  return shuffle(pool, rand)
+    .slice(0, Math.min(count, pool.length))
+    .map((answer) => {
+      const direction: SayingDirection = rand() < 0.5 ? 'toMeaning' : 'toText';
+      const wrong = pickDistractors(answer, pool, rand);
+      return { answer, direction, choices: shuffle([answer, ...wrong], rand) };
+    });
+}
+
 /** 이 과목에서 낼 표현들. 지금은 세 권 모두에 실린 것만 담겨 있다. */
 export function poolFor(kind: SayingKind): Saying[] {
   return sayingsOf(kind);

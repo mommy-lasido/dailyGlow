@@ -146,6 +146,32 @@ export function makeJamoProblem(
 /** 한 판에 낼 문제 수. 이 활동을 하는 아이는 만 3~5세라 짧게 끝나야 한다. */
 export const JAMO_PROBLEM_COUNT = 5;
 
+/**
+ * 한 판에 낼 문제를 한꺼번에 만든다.
+ *
+ * 문제를 하나씩 따로 뽑으면 **같은 글자가 한 판에 두 번 나온다.** 방금 찾은 글자를
+ * 또 찾는 셈이라 다섯 문제가 다섯 문제 몫을 못 한다. 먼저 섞은 뒤 앞에서부터
+ * 가져다 쓰고, 글자가 문제 수보다 적으면 있는 만큼만 낸다.
+ */
+export function makeJamoSet(
+  items: JamoItem[],
+  count = JAMO_PROBLEM_COUNT,
+  rand: () => number = Math.random,
+): JamoProblem[] {
+  return shuffle(items, rand)
+    .slice(0, Math.min(count, items.length))
+    .map((answer) => {
+      const others = shuffle(
+        items.filter((i) => i.letter !== answer.letter),
+        rand,
+      );
+      return {
+        answer,
+        choices: shuffle([answer, others[0]!, others[1]!], rand),
+      };
+    });
+}
+
 /** 3차(힌트 라운드)에 띄울 안내 */
 export function jamoHint(p: JamoProblem): string {
   return `'${p.answer.sound}' 소리는 이렇게 생겼어요.`;

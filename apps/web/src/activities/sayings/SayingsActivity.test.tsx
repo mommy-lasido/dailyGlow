@@ -61,13 +61,30 @@ describe('SayingsActivity', () => {
   it('무엇을 하게 되는지만 알려주고 시작한다', () => {
     renderActivity('proverb');
     expect(screen.getByText('속담 배우기')).toBeInTheDocument();
-    expect(screen.getByText('열 문제를 풀어봐요.')).toBeInTheDocument();
+    expect(screen.getByText('10문제를 풀어봐요.')).toBeInTheDocument();
   });
 
   it('자료를 어디서 골랐는지는 아이 화면에 쓰지 않는다', () => {
     // 라윤이는 그 교재를 갖고 있지 않고, 알아도 문제를 더 잘 풀게 되지 않는다.
     const { container } = renderActivity('proverb');
     expect(container.textContent).not.toMatch(/교재|출판사|하루 한장|바빠|썬더/);
+  });
+
+  it('사자성어는 표현이 여덟 개뿐이라 여덟 문제만 낸다', () => {
+    // 억지로 열을 채우면 같은 사자성어가 한 판에 두 번 나온다.
+    renderActivity('idiom');
+    expect(screen.getByText('8문제를 풀어봐요.')).toBeInTheDocument();
+  });
+
+  it('한 판 안에서 같은 표현이 다시 나오지 않는다', () => {
+    renderActivity('proverb');
+    start();
+    const seen: string[] = [];
+    for (let i = 0; i < 10; i += 1) {
+      seen.push(answerText());
+      clickCorrect();
+    }
+    expect(new Set(seen).size).toBe(10);
   });
 
   it('사자성어 판은 사자성어만 낸다', () => {
@@ -122,7 +139,8 @@ describe('SayingsActivity', () => {
     renderActivity('idiom');
     start();
     clickWrong('idiom');
-    for (let i = 0; i < 9; i += 1) clickCorrect('idiom');
+    // 사자성어는 여덟 문제다.
+    for (let i = 0; i < 7; i += 1) clickCorrect('idiom');
     fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 풀기' }));
     clickWrong('idiom');
     fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 풀기' }));

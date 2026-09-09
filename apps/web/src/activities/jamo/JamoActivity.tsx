@@ -15,10 +15,9 @@ import {
 import {
   consonantsForStage,
   JAMO_MAX_STAGE,
-  JAMO_PROBLEM_COUNT,
   jamoHint,
   lettersForStage,
-  makeJamoProblem,
+  makeJamoSet,
   BASIC_VOWELS,
   type JamoItem,
   type JamoProblem,
@@ -139,10 +138,10 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   }
 
   function startQuiz() {
-    setProblems(
-      Array.from({ length: JAMO_PROBLEM_COUNT }, () => makeJamoProblem(items)),
-    );
-    setQuiz(createQuiz(JAMO_PROBLEM_COUNT));
+    // 한 판 분량을 한꺼번에 만든다 — 하나씩 뽑으면 같은 글자가 겹쳐 나온다.
+    const set = makeJamoSet(items);
+    setProblems(set);
+    setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());
     setRetryMessage('');
     setPhase('quiz');
@@ -268,7 +267,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
       <Card className="flex flex-col items-center gap-4 text-center">
         <span className="text-6xl">🎉🔤✨</span>
         <h2 className="text-2xl font-bold text-glow-600">
-          {JAMO_PROBLEM_COUNT}문제 중 {quiz.firstTryCorrect}개 맞혔어요!
+          {quiz.total}문제 중 {quiz.firstTryCorrect}개 맞혔어요!
         </h2>
         {quiz.roundScores.length > 1 ? (
           <p className="text-slate-500">

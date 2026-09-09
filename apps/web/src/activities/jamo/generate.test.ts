@@ -7,6 +7,7 @@ import {
   jamoHint,
   lettersForStage,
   makeJamoProblem,
+  makeJamoSet,
   stageLetter,
 } from './generate';
 
@@ -107,6 +108,31 @@ describe('makeJamoProblem', () => {
       for (const c of makeJamoProblem(items).choices) {
         expect(allowed.has(c.letter)).toBe(true);
       }
+    }
+  });
+});
+
+describe('makeJamoSet', () => {
+  it('한 판 안에서 같은 글자가 두 번 나오지 않는다', () => {
+    for (let i = 0; i < 200; i += 1) {
+      const set = makeJamoSet(lettersForStage(1));
+      const letters = set.map((p) => p.answer.letter);
+      expect(new Set(letters).size).toBe(letters.length);
+    }
+  });
+
+  it('다섯 문제를 낸다', () => {
+    expect(makeJamoSet(lettersForStage(1))).toHaveLength(5);
+  });
+
+  it('글자가 모자라면 있는 만큼만 낸다', () => {
+    expect(makeJamoSet(BASIC_VOWELS.slice(0, 3))).toHaveLength(3);
+  });
+
+  it('문제마다 보기 3개가 제대로 붙는다', () => {
+    for (const p of makeJamoSet(lettersForStage(2))) {
+      expect(new Set(p.choices.map((c) => c.letter)).size).toBe(3);
+      expect(p.choices).toContain(p.answer);
     }
   });
 });
