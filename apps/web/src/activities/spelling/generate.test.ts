@@ -9,8 +9,16 @@ import {
 } from './generate';
 
 describe('자료', () => {
-  it('예전 앱의 101개 항목을 그대로 담는다', () => {
-    expect(SPELLING_ITEMS).toHaveLength(101);
+  it('예전 앱의 문항에서 너무 어려운 넷을 뺀 97개를 담는다', () => {
+    expect(SPELLING_ITEMS).toHaveLength(97);
+  });
+
+  it('초등 3학년에게 어려운 말은 빼 둔다', () => {
+    // 겪어 보지 못한 말은 뜻을 몰라 찍게 되고, 찍은 것은 1차 점수를 흐린다.
+    const words = SPELLING_ITEMS.flatMap((i) => i.options.map((o) => o.text));
+    for (const hard of ['으로서', '으로써', '삭이며', '되뇌었어요', '예삿일']) {
+      expect(words).not.toContain(hard);
+    }
   });
 
   it('모든 항목에 빈칸 문장이 있고 빈칸이 정확히 하나다', () => {
