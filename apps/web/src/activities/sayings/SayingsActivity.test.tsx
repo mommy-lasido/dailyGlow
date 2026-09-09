@@ -58,15 +58,20 @@ function clickWrong(kind: 'proverb' | 'idiom' = 'proverb') {
 }
 
 describe('SayingsActivity', () => {
-  it('무엇을 배우는지 알려주고 시작한다', () => {
+  it('무엇을 하게 되는지만 알려주고 시작한다', () => {
     renderActivity('proverb');
     expect(screen.getByText('속담 배우기')).toBeInTheDocument();
-    expect(screen.getByText(/교재 세 권에 모두 실린 16개/)).toBeInTheDocument();
+    expect(screen.getByText('열 문제를 풀어봐요.')).toBeInTheDocument();
+  });
+
+  it('자료를 어디서 골랐는지는 아이 화면에 쓰지 않는다', () => {
+    // 라윤이는 그 교재를 갖고 있지 않고, 알아도 문제를 더 잘 풀게 되지 않는다.
+    const { container } = renderActivity('proverb');
+    expect(container.textContent).not.toMatch(/교재|출판사|하루 한장|바빠|썬더/);
   });
 
   it('사자성어 판은 사자성어만 낸다', () => {
     renderActivity('idiom');
-    expect(screen.getByText(/모두 실린 8개/)).toBeInTheDocument();
     start();
     const idioms = new Set(sayingsOf('idiom').map((s) => s.text));
     for (const b of screen.getAllByTestId('choice')) {

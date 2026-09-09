@@ -93,9 +93,8 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
         <h1 className="text-3xl font-bold text-glow-600">{lesson.title}</h1>
-        <p className="text-slate-500">
-          교재 세 권에 모두 실린 {pool.length}개예요. 열 문제를 풀어봐요.
-        </p>
+        {/* 자료를 어디서 골랐는지는 아이에게 아무 쓸모가 없다. 무엇을 하게 되는지만 쓴다. */}
+        <p className="text-slate-500">열 문제를 풀어봐요.</p>
         <Button size="lg" onClick={begin}>
           시작하기
         </Button>
