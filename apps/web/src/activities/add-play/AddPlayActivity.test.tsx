@@ -12,6 +12,7 @@ const lesson: ActivityLesson = {
   title: '더하기 놀이',
   activity_kind: 'choice_quiz',
   config: { renderer: 'add_play' },
+  childLevel: 1,
 };
 
 function profile(readingLevel: string): ProfileRow {

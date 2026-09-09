@@ -26,22 +26,26 @@ function Notice({ emoji, title, body }: { emoji: string; title: string; body: st
 export function ActivityPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const profile = useProfile((s) => s.profile);
+  const levels = useProfile((s) => s.levels);
 
   const {
     data: lesson,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ['activity-lesson', lessonId],
+    queryKey: ['activity-lesson', lessonId, levels],
     enabled: Boolean(lessonId),
     queryFn: async (): Promise<ActivityLesson | null> => {
       const { data, error } = await supabase
         .from('lessons')
-        .select('id, title, activity_kind, config')
+        .select('id, title, activity_kind, config, subject_id')
         .eq('id', lessonId!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      if (!data) return null;
+      // 아이의 과목 단계를 함께 실어 보낸다 — 한글처럼 단계마다 배울 것이 다른
+      // 활동이 이 값으로 무엇을 낼지 정한다. 기록이 없으면 1단계.
+      return { ...data, childLevel: levels[data.subject_id]?.level ?? 1 };
     },
   });
 

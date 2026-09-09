@@ -13,6 +13,7 @@ const lesson: ActivityLesson = {
   title: '수 세기 놀이',
   activity_kind: 'choice_quiz',
   config: { renderer: 'count_play' },
+  childLevel: 1,
 };
 
 function renderActivity(onFinish: (r: ActivityResult) => void = () => {}) {

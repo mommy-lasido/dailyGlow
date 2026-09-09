@@ -1,0 +1,343 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button, Card } from '@dailyglow/ui';
+import { hangulStage } from '@dailyglow/utils';
+import { spawnConfetti } from '@/lib/confetti';
+import { canSpeak, speak } from '@/lib/speak';
+import type { ActivityProps } from '@/activities/types';
+import {
+  createQuiz,
+  currentIndex,
+  nextRound,
+  submit,
+  type QuizState,
+} from '@/activities/quiz-flow';
+import {
+  JAMO_MAX_STAGE,
+  JAMO_PROBLEM_COUNT,
+  jamoHint,
+  lettersForStage,
+  makeJamoProblem,
+  type JamoItem,
+  type JamoProblem,
+} from './generate';
+
+const ROUND_TITLE: Record<number, string> = {
+  2: '틀린 글자를 다시 찾아봐요',
+  3: '이번엔 글자를 보면서 찾아봐요',
+};
+
+/**
+ * 자음모음 배우기.
+ *
+ * 먼저 **보고 듣고**, 그다음에 **찾는다.** 한 번도 본 적 없는 글자를 바로
+ * 문제로 내면 아이는 찍을 수밖에 없다. 카드의 이름이 "배우기" 인 이유다.
+ */
+export function JamoActivity({ lesson, onFinish }: ActivityProps) {
+  // 아이가 배운 데까지의 글자. 15단계를 넘긴 아이는 자음·모음을 이미 뗐으므로
+  // 마지막 자음으로 맞춰 복습이 된다.
+  const stage = Math.min(Math.max(lesson.childLevel, 1), JAMO_MAX_STAGE);
+  const stageLabel = hangulStage(stage)?.label ?? '자음과 모음';
+  const items = lettersForStage(stage);
+
+  const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
+  /** 배우기 화면에서 지금 보고 있는 글자 */
+  const [card, setCard] = useState(0);
+  /** 배우기 화면에서 한 번이라도 소리를 들은 글자들 */
+  const [heard, setHeard] = useState<Set<number>>(new Set());
+
+  const [problems, setProblems] = useState<JamoProblem[]>([]);
+  const [quiz, setQuiz] = useState<QuizState | null>(null);
+  const [startedAt, setStartedAt] = useState(0);
+  const [retryMessage, setRetryMessage] = useState('');
+
+  const speechOk = canSpeak();
+
+  function playCard(index: number) {
+    speak(items[index]!.sound);
+    setHeard((prev) => new Set(prev).add(index));
+  }
+
+  function startQuiz() {
+    setProblems(
+      Array.from({ length: JAMO_PROBLEM_COUNT }, () => makeJamoProblem(items)),
+    );
+    setQuiz(createQuiz(JAMO_PROBLEM_COUNT));
+    setStartedAt(Date.now());
+    setRetryMessage('');
+    setPhase('quiz');
+  }
+
+  function finish(state: QuizState) {
+    spawnConfetti();
+    onFinish({
+      totalCount: state.total,
+      correctCount: state.firstTryCorrect,
+      durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
+      meta: { stage, roundScores: state.roundScores },
+    });
+  }
+
+  function pick(letter: string) {
+    if (!quiz) return;
+    const index = currentIndex(quiz);
+    if (index === null) return;
+
+    const isCorrect = letter === problems[index]!.answer.letter;
+    setRetryMessage(quiz.round === 3 && !isCorrect ? '괜찮아요, 다시 들어볼까? 🤔' : '');
+    if (isCorrect) spawnConfetti(6);
+
+    // 다 맞혔으면 채점 화면을 건너뛴다.
+    const next = submit(quiz, isCorrect);
+    const settled =
+      next.phase === 'grading' && next.missed.length === 0 ? nextRound(next) : next;
+    setQuiz(settled);
+    if (settled.phase === 'done') finish(settled);
+  }
+
+  function goOn() {
+    if (!quiz) return;
+    const next = nextRound(quiz);
+    setQuiz(next);
+    setRetryMessage('');
+    if (next.phase === 'done') finish(next);
+  }
+
+  // ── ① 배우기 ──────────────────────────────────────────
+  if (phase === 'learn') {
+    const item = items[card]!;
+    const last = card === items.length - 1;
+    return (
+      <div className="flex flex-col gap-5">
+        <p className="text-center text-slate-500">
+          {stage}단계 · {stageLabel}
+        </p>
+
+        <Card className="flex flex-col items-center gap-5 text-center">
+          <button
+            type="button"
+            onClick={() => playCard(card)}
+            aria-label={`${item.sound} 소리 듣기`}
+            className="min-h-touch rounded-3xl bg-glow-50 px-10 py-6 transition-transform active:scale-95"
+          >
+            <span data-testid="letter" className="block text-8xl font-bold text-slate-700">
+              {item.letter}
+            </span>
+            <span className="mt-2 block text-2xl text-glow-600">🔊 {item.sound}</span>
+          </button>
+
+          <p className="text-slate-500">글자를 누르면 소리가 나요</p>
+
+          <div className="flex w-full items-center justify-between gap-3">
+            <Button
+              variant="ghost"
+              disabled={card === 0}
+              onClick={() => setCard((c) => c - 1)}
+            >
+              ← 앞으로
+            </Button>
+            <span className="text-slate-400">
+              {card + 1} / {items.length}
+            </span>
+            {last ? (
+              <Button onClick={startQuiz}>다 봤어요</Button>
+            ) : (
+              <Button onClick={() => setCard((c) => c + 1)}>다음 →</Button>
+            )}
+          </div>
+        </Card>
+
+        {/* 어디까지 들어봤는지 보여준다. 소리를 안 들은 글자는 흐리게. */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {items.map((it, i) => (
+            <button
+              key={it.letter}
+              onClick={() => setCard(i)}
+              aria-label={it.letter}
+              className={`min-h-touch min-w-touch rounded-2xl px-3 text-2xl font-bold transition-transform active:scale-95 ${
+                i === card
+                  ? 'bg-glow-500 text-white'
+                  : heard.has(i)
+                    ? 'bg-glow-100 text-slate-700'
+                    : 'bg-white text-slate-300'
+              }`}
+            >
+              {it.letter}
+            </button>
+          ))}
+        </div>
+
+        {!speechOk ? (
+          <p className="text-center text-sm text-slate-400">
+            이 기기에서는 소리가 안 나요. 옆에서 읽어주세요.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (!quiz) return null;
+
+  // ── 끝 ────────────────────────────────────────────────
+  if (quiz.phase === 'done') {
+    return (
+      <Card className="flex flex-col items-center gap-4 text-center">
+        <span className="text-6xl">🎉🔤✨</span>
+        <h2 className="text-2xl font-bold text-glow-600">
+          {JAMO_PROBLEM_COUNT}문제 중 {quiz.firstTryCorrect}개 맞혔어요!
+        </h2>
+        {quiz.roundScores.length > 1 ? (
+          <p className="text-slate-500">
+            처음엔 {quiz.roundScores[0]}개였는데 끝까지 다 찾았어요. 잘했어요!
+          </p>
+        ) : (
+          <p className="text-slate-500">한 번에 다 맞혔어요. 정말 대단해요!</p>
+        )}
+        <Link to="/">
+          <Button size="lg">홈으로</Button>
+        </Link>
+      </Card>
+    );
+  }
+
+  // ── 채점 ──────────────────────────────────────────────
+  // 다 맞힌 판은 pick 에서 곧장 끝으로 보내므로, 이 화면은 틀린 글자가 있을 때만 뜬다.
+  if (quiz.phase === 'grading') {
+    const scored = quiz.roundScores[quiz.roundScores.length - 1] ?? 0;
+    const asked = scored + quiz.missed.length;
+    return (
+      <Card className="flex flex-col items-center gap-4 text-center">
+        <span className="text-6xl">📋</span>
+        <h2 className="text-2xl font-bold text-glow-600">
+          {asked}개 중 {scored}개 맞았어요!
+        </h2>
+        <p className="text-slate-500">틀린 {quiz.missed.length}개를 다시 찾아볼까요?</p>
+        <Button size="lg" onClick={goOn}>
+          틀린 {quiz.missed.length}개 다시 찾기
+        </Button>
+      </Card>
+    );
+  }
+
+  // ── ② 찾기 ────────────────────────────────────────────
+  const index = currentIndex(quiz);
+  if (index === null) return null;
+  const problem = problems[index]!;
+  const done = quiz.cursor;
+  const left = quiz.queue.length - quiz.cursor;
+
+  return (
+    <JamoQuestion
+      problem={problem}
+      round={quiz.round}
+      roundTitle={ROUND_TITLE[quiz.round]}
+      queueLength={quiz.queue.length}
+      done={done}
+      left={left}
+      retryMessage={retryMessage}
+      speechOk={speechOk}
+      onPick={pick}
+    />
+  );
+}
+
+/**
+ * 소리를 듣고 글자를 고르는 화면.
+ *
+ * 문제가 바뀔 때마다 소리를 한 번 내준다. 이 활동에서 소리는 거들어 주는 것이
+ * 아니라 **문제 그 자체**라, 누르기를 기다리면 아이는 무엇을 고를지 알 수 없다.
+ * 별도 컴포넌트로 뺀 것은 문제가 바뀔 때만 소리가 나게 하기 위해서다.
+ */
+function JamoQuestion({
+  problem,
+  round,
+  roundTitle,
+  queueLength,
+  done,
+  left,
+  retryMessage,
+  speechOk,
+  onPick,
+}: {
+  problem: JamoProblem;
+  round: number;
+  roundTitle: string | undefined;
+  queueLength: number;
+  done: number;
+  left: number;
+  retryMessage: string;
+  speechOk: boolean;
+  onPick: (letter: string) => void;
+}) {
+  const sound = problem.answer.sound;
+  const spokenFor = useRef('');
+
+  useEffect(() => {
+    // 같은 문제에 머무는 동안(3차에서 틀렸을 때) 소리가 거듭 나지 않게 한다.
+    const key = `${round}:${sound}`;
+    if (spokenFor.current === key) return;
+    spokenFor.current = key;
+    speak(sound);
+  }, [round, sound]);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {roundTitle ? (
+        <p className="text-center font-bold text-glow-600">{roundTitle}</p>
+      ) : null}
+
+      <div className="flex flex-wrap justify-center gap-1 text-xl" aria-label="진행">
+        {Array.from({ length: queueLength }).map((_, i) => (
+          <span key={i}>{i < done ? '🐾' : '·'}</span>
+        ))}
+      </div>
+
+      <Card className="flex flex-col items-center gap-5 text-center">
+        <button
+          type="button"
+          onClick={() => speak(sound)}
+          aria-label="다시 듣기"
+          className="min-h-touch rounded-full bg-glow-100 px-8 py-4 text-5xl shadow-md transition-transform active:scale-95"
+        >
+          🔊
+        </button>
+        <p className="text-2xl font-bold text-slate-700">어느 글자일까?</p>
+
+        {round === 3 ? (
+          <p
+            data-testid="hint"
+            className="flex flex-col items-center gap-2 rounded-2xl bg-glow-50 px-4 py-3 text-lg text-glow-700"
+          >
+            <span>💡 {jamoHint(problem)}</span>
+            <span className="text-6xl font-bold">{problem.answer.letter}</span>
+          </p>
+        ) : null}
+
+        <div className="flex justify-center gap-4">
+          {problem.choices.map((c: JamoItem) => (
+            <button
+              key={c.letter}
+              data-testid="choice"
+              data-letter={c.letter}
+              onClick={() => onPick(c.letter)}
+              aria-label={c.letter}
+              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-6 py-4 text-5xl font-bold text-slate-700 shadow-md transition-transform active:scale-95"
+            >
+              {c.letter}
+            </button>
+          ))}
+        </div>
+
+        <p className="min-h-[1.75rem] font-bold text-glow-600">
+          {retryMessage || (round === 1 ? `${left}개 남았어요` : '')}
+        </p>
+
+        {!speechOk ? (
+          <p className="text-sm text-slate-400">
+            이 기기에서는 소리가 안 나요. 옆에서 &lsquo;{sound}&rsquo; 라고 읽어주세요.
+          </p>
+        ) : null}
+      </Card>
+    </div>
+  );
+}

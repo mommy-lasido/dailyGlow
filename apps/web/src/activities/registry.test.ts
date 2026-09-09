@@ -3,7 +3,14 @@ import { resolveRendererId } from './registry';
 import type { ActivityLesson } from './types';
 
 function lesson(over: Partial<ActivityLesson> = {}): ActivityLesson {
-  return { id: 'l1', title: '더하기 놀이', activity_kind: 'choice_quiz', config: {}, ...over };
+  return {
+    id: 'l1',
+    title: '더하기 놀이',
+    activity_kind: 'choice_quiz',
+    config: {},
+    childLevel: 1,
+    ...over,
+  };
 }
 
 describe('resolveRendererId', () => {
