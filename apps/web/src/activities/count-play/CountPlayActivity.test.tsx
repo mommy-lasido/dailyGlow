@@ -101,8 +101,8 @@ describe('CountPlayActivity', () => {
     clickWrong();
     clickWrong();
     for (let i = 0; i < 3; i += 1) clickCorrect();
-    expect(screen.getByText('5개 중 3개 맞았어요!')).toBeInTheDocument();
-    expect(screen.getByText(/틀린 2개를 다시 세어볼까요/)).toBeInTheDocument();
+    expect(screen.getByTestId('grading-title')).toHaveTextContent('5문제 중 3개 맞혔어요!');
+    expect(screen.getByTestId('grading-detail')).toHaveTextContent('틀린 2개를 다시 해볼까요?');
     // 버튼은 무엇을 하게 되는지 그대로 말한다 — "계속하기" 는 문제를 더 푸는 것처럼 읽힌다.
     expect(screen.getByRole('button', { name: '틀린 2개 다시 세기' })).toBeInTheDocument();
   });
@@ -118,7 +118,7 @@ describe('CountPlayActivity', () => {
     expect(screen.queryByTestId('hint')).not.toBeInTheDocument();
     clickCorrect();
     // 남은 것을 다 맞혔으므로 채점 화면 없이 끝난다.
-    expect(screen.getByText(/5문제 중 4개 맞혔어요/)).toBeInTheDocument();
+    expect(screen.getByTestId('finish-title')).toHaveTextContent('끝까지 해내서 다 맞혔어요!');
   });
 
   it('2차에 맞혀도 점수는 1차 것 그대로다', () => {

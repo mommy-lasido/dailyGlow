@@ -104,7 +104,7 @@ describe('AddPlayActivity', () => {
     start();
     clickWrong();
     for (let i = 0; i < 9; i += 1) clickCorrect();
-    expect(screen.getByText(/10개 중 9개 맞았어요/)).toBeInTheDocument();
+    expect(screen.getByTestId('grading-title')).toHaveTextContent('10문제 중 9개 맞혔어요!');
   });
 
   it('다 맞히면 채점 화면을 거치지 않고 바로 끝난다', () => {
@@ -126,7 +126,7 @@ describe('AddPlayActivity', () => {
     start();
     clickWrong();
     for (let i = 0; i < 9; i += 1) clickCorrect();
-    expect(screen.getByText(/10개 중 9개 맞았어요/)).toBeInTheDocument();
+    expect(screen.getByTestId('grading-title')).toHaveTextContent('10문제 중 9개 맞혔어요!');
     goOn();
     expect(screen.getByText(/틀린 문제를 다시 풀어봐요/)).toBeInTheDocument();
     expect(screen.getByTestId('equation')).toBeInTheDocument();
@@ -174,7 +174,9 @@ describe('AddPlayActivity', () => {
     const r = onFinish.mock.calls[0]![0];
     expect(r.correctCount).toBe(9);
     expect(r.meta?.roundScores).toEqual([9, 0, 1]);
-    expect(screen.getByText(/9개 맞혔어요/)).toBeInTheDocument();
+    // 3차까지 붙잡고 풀어서 결국 다 맞혔다. 못 맞힌 개수를 크게 띄우지 않는다.
+    expect(screen.getByTestId('finish-title')).toHaveTextContent('끝까지 해내서 다 맞혔어요!');
+    expect(screen.getByTestId('finish-detail')).toHaveTextContent('처음엔 9개였는데');
   });
 
   it('아직 못 읽는 아이에게는 식을 더 크게 보여준다', () => {

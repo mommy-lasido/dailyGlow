@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import type { ActivityProps } from '@/activities/types';
+import { Finished } from '@/activities/Finished';
+import { Grading } from '@/activities/Grading';
+import { Progress } from '@/activities/Progress';
 import {
   createQuiz,
   currentIndex,
@@ -137,43 +139,18 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
   // ── 끝 ────────────────────────────────────────────────
   if (quiz.phase === 'done') {
     return (
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">🎉🔍✨</span>
-        <h2 className="text-2xl font-bold text-glow-600">
-          {quiz.total}문제 중 {quiz.firstTryCorrect}개 맞혔어요!
-        </h2>
-        {quiz.roundScores.length > 1 ? (
-          <p className="text-slate-500">
-            처음엔 {quiz.roundScores[0]}개였는데 끝까지 다 찾아냈어요. 잘했어요!
-          </p>
-        ) : (
-          <p className="text-slate-500">한 번에 다 맞혔어요. 정말 대단해요!</p>
-        )}
+      <Finished emoji="🎉🔍✨" quiz={quiz}>
         <Review problems={problems} />
-        <Link to="/">
-          <Button size="lg">홈으로</Button>
-        </Link>
-      </Card>
+      </Finished>
     );
   }
 
   // ── 채점 ──────────────────────────────────────────────
   if (quiz.phase === 'grading') {
-    const scored = quiz.roundScores[quiz.roundScores.length - 1] ?? 0;
-    const asked = scored + quiz.missed.length;
     return (
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">📋</span>
-        <h2 className="text-2xl font-bold text-glow-600">
-          {asked}개 중 {scored}개 맞았어요!
-        </h2>
-        <p className="text-slate-500">틀린 {quiz.missed.length}개를 다시 풀어볼까요?</p>
-        {/* 이번 회차에 나온 문제들의 풀이. 다시 풀기 전에 읽어보라고 위에 둔다. */}
+      <Grading quiz={quiz} retryLabel="다시 풀기" onNext={goOn}>
         <Review problems={quiz.queue.map((i) => problems[i]!)} />
-        <Button size="lg" onClick={goOn}>
-          틀린 {quiz.missed.length}개 다시 풀기
-        </Button>
-      </Card>
+      </Grading>
     );
   }
 
@@ -190,12 +167,7 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
         <p className="text-center font-bold text-glow-600">{ROUND_TITLE[quiz.round]}</p>
       ) : null}
 
-      {/* 1·2차에는 정답 여부를 알려주지 않으므로 진행 정도만 보여준다. */}
-      <div className="flex flex-wrap justify-center gap-1 text-xl" aria-label="진행">
-        {quiz.queue.map((_, i) => (
-          <span key={i}>{i < done ? '🐾' : '·'}</span>
-        ))}
-      </div>
+      <Progress total={quiz.queue.length} done={done} />
 
       <Card className="flex flex-col gap-5">
         <Sentence text={problem.sentence} />

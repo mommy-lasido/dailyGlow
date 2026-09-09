@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Card } from '@dailyglow/ui';
+import { Card } from '@dailyglow/ui';
 import { useProfile } from '@/stores/profile';
 import { spawnConfetti } from '@/lib/confetti';
 import type { ActivityProps } from '@/activities/types';
+import { Finished } from '@/activities/Finished';
+import { Grading } from '@/activities/Grading';
+import { Progress } from '@/activities/Progress';
 import {
   createQuiz,
   currentIndex,
@@ -115,44 +117,13 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
 
   // ── 끝 ────────────────────────────────────────────────
   if (quiz.phase === 'done') {
-    return (
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">🎉➕✨</span>
-        <h2 className="text-2xl font-bold text-glow-600">
-          10문제 중 {quiz.firstTryCorrect}개 맞혔어요!
-        </h2>
-        {quiz.roundScores.length > 1 ? (
-          <p className="text-slate-500">
-            처음엔 {quiz.roundScores[0]}개였는데 끝까지 다 이해했어요. 잘했어요!
-          </p>
-        ) : (
-          <p className="text-slate-500">한 번에 다 맞혔어요. 정말 대단해요!</p>
-        )}
-        <Link to="/">
-          <Button size="lg">홈으로</Button>
-        </Link>
-      </Card>
-    );
+    return <Finished emoji="🎉➕✨" quiz={quiz} />;
   }
 
   // ── 채점 ──────────────────────────────────────────────
   // 다 맞힌 판은 pick 에서 곧장 끝으로 보내므로, 이 화면은 틀린 문제가 있을 때만 뜬다.
   if (quiz.phase === 'grading') {
-    const scored = quiz.roundScores[quiz.roundScores.length - 1] ?? 0;
-    const asked = scored + quiz.missed.length;
-    return (
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">📋</span>
-        <h2 className="text-2xl font-bold text-glow-600">
-          {asked}개 중 {scored}개 맞았어요!
-        </h2>
-        <p className="text-slate-500">틀린 {quiz.missed.length}개를 다시 풀어볼까요?</p>
-        {/* "계속하기" 는 문제를 더 풀라는 말처럼 읽힌다. 무엇을 하게 되는지 그대로 쓴다. */}
-        <Button size="lg" onClick={goOn}>
-          틀린 {quiz.missed.length}개 다시 풀기
-        </Button>
-      </Card>
-    );
+    return <Grading quiz={quiz} retryLabel="다시 풀기" onNext={goOn} />;
   }
 
   // ── 문제 풀기 ─────────────────────────────────────────
@@ -168,12 +139,7 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
         <p className="text-center font-bold text-glow-600">{ROUND_TITLE[quiz.round]}</p>
       ) : null}
 
-      {/* 1·2차에는 정답 여부를 알려주지 않으므로 진행 정도만 보여준다. */}
-      <div className="flex flex-wrap justify-center gap-1 text-xl" aria-label="진행">
-        {quiz.queue.map((_, i) => (
-          <span key={i}>{i < done ? '🐾' : '·'}</span>
-        ))}
-      </div>
+      <Progress total={quiz.queue.length} done={done} />
 
       <Card className="flex flex-col items-center gap-5 text-center">
         <div className="flex min-h-[3.5rem] flex-wrap items-center justify-center gap-3 text-3xl">

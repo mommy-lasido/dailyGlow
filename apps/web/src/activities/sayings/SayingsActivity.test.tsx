@@ -170,7 +170,7 @@ describe('SayingsActivity', () => {
     start();
     clickWrong();
     for (let i = 0; i < 9; i += 1) clickCorrect();
-    expect(screen.getByText('10개 중 9개 맞았어요!')).toBeInTheDocument();
+    expect(screen.getByTestId('grading-title')).toHaveTextContent('10문제 중 9개 맞혔어요!');
     fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 풀기' }));
     clickCorrect();
     expect(onFinish.mock.calls[0]![0].correctCount).toBe(9);
