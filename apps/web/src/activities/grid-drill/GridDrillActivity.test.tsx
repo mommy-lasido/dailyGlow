@@ -195,6 +195,94 @@ describe('GridDrillActivity — 화면에서 풀기', () => {
   });
 });
 
+describe('GridDrillActivity — 미리보기', () => {
+  it('시작하기 전에 어떤 문제가 나오는지 보여준다', () => {
+    renderActivity();
+    expect(screen.getByText('이런 문제가 나와요')).toBeInTheDocument();
+    expect(screen.getByTestId('drill-table')).toBeInTheDocument();
+  });
+
+  it('푸는 곳을 고르기 전에 보여준다', () => {
+    // 인쇄할지 화면에서 풀지는 문제를 보고 정하는 것이 자연스럽다.
+    renderActivity();
+    const body = document.body.textContent!;
+    expect(body.indexOf('이런 문제가 나와요')).toBeLessThan(body.indexOf('어디서 풀까요'));
+  });
+
+  it('칸 수를 바꾸면 미리보기도 바뀐다', () => {
+    renderActivity();
+    expect(screen.getAllByTestId('cell')).toHaveLength(100);
+    choose('size', 'data-cells', '25');
+    expect(screen.getAllByTestId('cell')).toHaveLength(25);
+  });
+
+  it('다른 문제로 바꿔 볼 수 있다', () => {
+    renderActivity();
+    choose('size', 'data-cells', '25');
+    const before = readTable().cols.join(',');
+    let changed = false;
+    for (let i = 0; i < 20 && !changed; i += 1) {
+      fireEvent.click(screen.getByRole('button', { name: '다른 문제로' }));
+      changed = readTable().cols.join(',') !== before;
+    }
+    expect(changed).toBe(true);
+  });
+
+  it('보고 있던 그 표를 그대로 푼다', () => {
+    renderActivity();
+    choose('size', 'data-cells', '25');
+    const shown = readTable();
+    fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
+    expect(readTable().cols).toEqual(shown.cols);
+    expect(readTable().rowHeaders).toEqual(shown.rowHeaders);
+  });
+});
+
+describe('GridDrillActivity — 종이로 푼 기록', () => {
+  it('스톱워치와 맞은 개수를 적는 자리가 있다', () => {
+    // 인쇄한 종이는 앱이 손을 댈 수 없으니 옆에서 재고 적어 넣는다.
+    renderActivity();
+    begin({ cells: '25', mode: 'paper' });
+    expect(screen.getByTestId('paper-timer')).toHaveTextContent('0:00');
+    expect(screen.getByTestId('paper-correct')).toBeInTheDocument();
+  });
+
+  it('시간을 재지 않으면 저장할 수 없다', () => {
+    renderActivity();
+    begin({ cells: '25', mode: 'paper' });
+    fireEvent.change(screen.getByTestId('paper-correct'), { target: { value: '20' } });
+    expect(screen.getByRole('button', { name: '기록 저장' })).toBeDisabled();
+  });
+
+  it('칸 수보다 많은 개수는 저장할 수 없다', () => {
+    renderActivity();
+    begin({ cells: '25', mode: 'paper' });
+    fireEvent.click(screen.getByRole('button', { name: '시작' }));
+    fireEvent.change(screen.getByTestId('paper-correct'), { target: { value: '99' } });
+    expect(screen.getByRole('button', { name: '기록 저장' })).toBeDisabled();
+  });
+
+  it('종이 기록은 화면 기록과 따로 남는다', async () => {
+    const onFinish = vi.fn();
+    renderActivity(onFinish);
+    begin({ cells: '25', mode: 'paper' });
+    fireEvent.click(screen.getByRole('button', { name: '시작' }));
+    // 스톱워치가 1초 이상 흐른 것처럼 만든다.
+    await new Promise((r) => setTimeout(r, 1100));
+    fireEvent.click(screen.getByRole('button', { name: '멈춤' }));
+    fireEvent.change(screen.getByTestId('paper-correct'), { target: { value: '20' } });
+    fireEvent.click(screen.getByRole('button', { name: '기록 저장' }));
+
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    const r = onFinish.mock.calls[0]![0] as ActivityResult;
+    expect(r.mode).toBe('paper');
+    expect(r.correctCount).toBe(20);
+    expect(r.totalCount).toBe(25);
+    expect(r.durationSec).toBeGreaterThan(0);
+    expect(screen.getByTestId('paper-saved')).toBeInTheDocument();
+  });
+});
+
 describe('GridDrillActivity — 인쇄해서 풀기', () => {
   it('인쇄 화면에는 입력칸이 없다', () => {
     // 종이에 연필로 푸는 것이라 화면에서 채우지 않는다.

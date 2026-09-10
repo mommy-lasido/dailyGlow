@@ -55,7 +55,7 @@ export function ActivityPage() {
       profileId: profile.id,
       lessonId: lesson.id,
       activityKind: lesson.activity_kind,
-      mode: 'screen',
+      mode: result.mode ?? 'screen',
       durationSec: result.durationSec,
       totalCount: result.totalCount,
       correctCount: result.correctCount,

@@ -40,6 +40,12 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
   const [mode, setMode] = useState<DrillMode>('screen');
 
   const [puzzle, setPuzzle] = useState<DrillPuzzle | null>(null);
+  /**
+   * 시작하기 전에 보여주는 표. 어떤 수가 나오는지 보고 단계와 칸 수를 고를 수 있어야
+   * 한다 — 특히 인쇄할 때는 뽑기 전에 확인하는 편이 종이를 아낀다.
+   * 시작하면 **보고 있던 그 표**를 그대로 푼다.
+   */
+  const [preview, setPreview] = useState<DrillPuzzle>(() => makePuzzle('+', 100, 1));
   const [wrote, setWrote] = useState<Record<number, CellInput>>({});
   const [graded, setGraded] = useState(false);
   /** 처음 채점했을 때 맞은 칸 수. 실력은 이 숫자로 잰다. */
@@ -52,18 +58,55 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
   const [now, setNow] = useState(0);
   const [finalSec, setFinalSec] = useState<number | null>(null);
 
+  /**
+   * 종이로 풀 때의 기록.
+   *
+   * 인쇄한 종이에는 앱이 손을 댈 수 없으므로, 옆에서 스톱워치를 눌러 시간을 재고
+   * 채점한 개수를 적어 넣는다. 아이가 종이에 푸는 동안 어른이 눌러 주면 된다.
+   */
+  const paperStart = useRef<number | null>(null);
+  const [paperRunning, setPaperRunning] = useState(false);
+  const [paperSec, setPaperSec] = useState(0);
+  const [paperCorrect, setPaperCorrect] = useState('');
+  const [paperSaved, setPaperSaved] = useState(false);
+
+  useEffect(() => {
+    setPreview(makePuzzle(op, cells, levelId));
+  }, [op, cells, levelId]);
+
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(id);
   }, [running]);
 
+  useEffect(() => {
+    if (!paperRunning) return;
+    const id = setInterval(() => {
+      if (paperStart.current !== null) {
+        setPaperSec(Math.round((Date.now() - paperStart.current) / 1000));
+      }
+    }, 200);
+    return () => clearInterval(id);
+  }, [paperRunning]);
+
   function start() {
-    setPuzzle(makePuzzle(op, cells, levelId));
+    setPuzzle(preview);
     setWrote({});
     setGraded(false);
     setFirstScore(null);
     setShowAnswers(false);
+    startedAt.current = null;
+    setRunning(false);
+    setFinalSec(null);
+  }
+
+  /** 같은 설정으로 새 표를 만들어 처음부터 다시 푼다. */
+  function restart() {
+    setPuzzle(makePuzzle(op, cells, levelId));
+    setWrote({});
+    setGraded(false);
+    setFirstScore(null);
     startedAt.current = null;
     setRunning(false);
     setFinalSec(null);
@@ -177,6 +220,19 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
         </Card>
 
         <Card className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <p className="font-bold text-slate-700">이런 문제가 나와요</p>
+            <Button
+              variant="ghost"
+              onClick={() => setPreview(makePuzzle(op, cells, levelId))}
+            >
+              다른 문제로
+            </Button>
+          </div>
+          <PuzzleTable puzzle={preview} wrote={{}} readOnly compact />
+        </Card>
+
+        <Card className="flex flex-col gap-3">
           <p className="font-bold text-slate-700">어디서 풀까요?</p>
           <div className="flex gap-2">
             {(
@@ -216,6 +272,10 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
 
   // ── 인쇄해서 풀기 ─────────────────────────────────────
   if (mode === 'paper') {
+    const typed = Number(paperCorrect);
+    const canSave =
+      paperCorrect !== '' && typed >= 0 && typed <= puzzle.cells && paperSec > 0;
+
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -224,16 +284,93 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
             <Button variant="ghost" onClick={() => setShowAnswers((v) => !v)}>
               {showAnswers ? '답 숨기기' : '답 보기'}
             </Button>
-            <Button variant="ghost" onClick={start}>
+            <Button
+              variant="ghost"
+              onClick={() => setPuzzle(makePuzzle(op, cells, levelId))}
+            >
               새 문제
             </Button>
             <Button onClick={() => window.print()}>🖨️ 인쇄하기</Button>
           </div>
         </div>
-        <p className="text-slate-500 print:hidden">
-          인쇄해서 연필로 풀어요. 다 풀면 여기서 &lsquo;답 보기&rsquo; 로 맞춰봐요.
-        </p>
+
         <PuzzleTable puzzle={puzzle} wrote={{}} readOnly showAnswers={showAnswers} />
+
+        {/* 종이로 푼 기록은 앱이 저절로 알 수 없다. 옆에서 재고 적어 넣는다. */}
+        <Card className="flex flex-col gap-4 print:hidden">
+          <p className="font-bold text-slate-700">종이로 푼 기록 남기기</p>
+
+          <div className="flex items-center justify-between gap-3">
+            <span data-testid="paper-timer" className="text-3xl font-bold text-glow-600">
+              {formatTime(paperSec)}
+            </span>
+            <div className="flex gap-2">
+              {paperRunning ? (
+                <Button onClick={() => setPaperRunning(false)}>멈춤</Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    paperStart.current = Date.now() - paperSec * 1000;
+                    setPaperRunning(true);
+                  }}
+                >
+                  {paperSec > 0 ? '이어서' : '시작'}
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setPaperRunning(false);
+                  paperStart.current = null;
+                  setPaperSec(0);
+                }}
+              >
+                되돌리기
+              </Button>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-3">
+            <span className="text-slate-600">{puzzle.cells}칸 중 맞은 개수</span>
+            <input
+              data-testid="paper-correct"
+              inputMode="numeric"
+              value={paperCorrect}
+              onChange={(e) =>
+                setPaperCorrect(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))
+              }
+              className="min-h-touch w-24 rounded-2xl bg-glow-50 px-4 text-center text-2xl font-bold text-slate-700 outline-none"
+            />
+          </label>
+
+          {paperSaved ? (
+            <p data-testid="paper-saved" className="font-bold text-glow-600">
+              기록했어요! {formatTime(paperSec)} 만에 {typed}칸 맞았어요.
+            </p>
+          ) : (
+            <Button
+              size="lg"
+              disabled={!canSave}
+              onClick={() => {
+                setPaperSaved(true);
+                spawnConfetti();
+                onFinish({
+                  totalCount: puzzle.cells,
+                  correctCount: typed,
+                  durationSec: paperSec,
+                  mode: 'paper',
+                  meta: { op: puzzle.op, cells: puzzle.cells, levelId, elapsedSec: paperSec },
+                });
+              }}
+            >
+              기록 저장
+            </Button>
+          )}
+          <p className="text-sm text-slate-400">
+            시간을 재고 맞은 개수를 적으면 화면에서 푼 기록과 따로 남아요.
+          </p>
+        </Card>
+
         <Link to="/" className="print:hidden">
           <Button variant="ghost">홈으로</Button>
         </Link>
@@ -268,7 +405,7 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
             </p>
           ) : null}
           <div className="flex gap-3">
-            <Button onClick={start}>새 문제</Button>
+            <Button onClick={restart}>새 문제</Button>
             <Link to="/">
               <Button variant="ghost">홈으로</Button>
             </Link>
@@ -287,7 +424,7 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
             <Button size="lg" onClick={grade}>
               채점하기
             </Button>
-            <Button variant="ghost" onClick={start}>
+            <Button variant="ghost" onClick={restart}>
               새 문제
             </Button>
           </div>
@@ -316,6 +453,7 @@ function PuzzleTable({
   graded = false,
   readOnly = false,
   showAnswers = false,
+  compact = false,
   onType,
 }: {
   puzzle: DrillPuzzle;
@@ -323,9 +461,12 @@ function PuzzleTable({
   graded?: boolean;
   readOnly?: boolean;
   showAnswers?: boolean;
+  /** 미리보기용 작은 표 */
+  compact?: boolean;
   onType?: (index: number, field: 'value' | 'remainder', text: string) => void;
 }) {
   const side = sideOf(puzzle.cells);
+  const box = compact ? 'h-7 w-7 text-xs' : 'h-12 w-12';
 
   /** 엔터를 누르면 다음 칸으로. 예전 앱과 같다. */
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -344,13 +485,15 @@ function PuzzleTable({
       <table data-testid="drill-table" className="mx-auto border-collapse">
         <tbody>
           <tr>
-            <td className="h-12 w-12 border border-glow-300 bg-glow-500 text-center text-lg font-bold text-white">
+            <td
+              className={`${box} border border-glow-300 bg-glow-500 text-center font-bold text-white`}
+            >
               {puzzle.op}
             </td>
             {puzzle.colHeaders.map((c, ci) => (
               <td
                 key={ci}
-                className="h-12 w-12 border border-glow-300 bg-glow-100 text-center font-bold text-glow-700"
+                className={`${box} border border-glow-300 bg-glow-100 text-center font-bold text-glow-700`}
               >
                 {c}
               </td>
@@ -358,7 +501,9 @@ function PuzzleTable({
           </tr>
           {puzzle.rowHeaders.map((r, ri) => (
             <tr key={ri}>
-              <td className="h-12 w-12 border border-glow-300 bg-glow-100 text-center font-bold text-glow-700">
+              <td
+                className={`${box} border border-glow-300 bg-glow-100 text-center font-bold text-glow-700`}
+              >
                 {r}
               </td>
               {puzzle.colHeaders.map((_, ci) => {
@@ -372,7 +517,7 @@ function PuzzleTable({
                     key={ci}
                     data-testid="cell"
                     data-index={index}
-                    className={`h-12 w-12 border border-glow-300 text-center ${
+                    className={`${box} border border-glow-300 text-center ${
                       wrong ? 'bg-red-50' : ''
                     }`}
                   >
