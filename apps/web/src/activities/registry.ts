@@ -4,6 +4,7 @@ import { CountPlayActivity } from './count-play/CountPlayActivity';
 import { JamoActivity } from './jamo/JamoActivity';
 import { SayingsActivity } from './sayings/SayingsActivity';
 import { SpellingActivity } from './spelling/SpellingActivity';
+import { GridDrillActivity } from './grid-drill/GridDrillActivity';
 
 /**
  * 어떤 컴포넌트로 그릴지 정하는 열쇠.
@@ -32,4 +33,5 @@ export const ACTIVITY_RENDERERS: Record<string, ActivityRenderer> = {
   letter_cards: JamoActivity,
   sayings: SayingsActivity,
   choice_quiz: SpellingActivity,
+  grid_drill: GridDrillActivity,
 };
