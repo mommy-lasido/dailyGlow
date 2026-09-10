@@ -65,3 +65,10 @@
     page-break-inside: avoid;
   }
 }
+
+/* 쓰기 연습지 — 한 줄이 쪽 경계에서 잘리면 아이가 그 줄을 못 쓴다. */
+@media print {
+  [data-testid='sheet-row'] {
+    page-break-inside: avoid;
+  }
+}

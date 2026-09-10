@@ -102,10 +102,21 @@ export interface LevelSuggestion {
   unlocksTitle: string | null;
 }
 
+/**
+ * 점수로 재지 않는 활동인가.
+ *
+ * 쓰기 연습지는 종이에 쓴 글씨를 앱이 채점하지 않는다. "했다" 만 남기므로 늘
+ * 만점처럼 보이는데, 이것을 단계 판단에 넣으면 쓰기만 몇 번 해도 한글 단계가
+ * 올라가 버린다.
+ */
+export function isScored(s: SessionSummary): boolean {
+  return s.meta?.scored !== false;
+}
+
 function byLesson(sessions: SessionSummary[]): Map<string, SessionSummary[]> {
   const map = new Map<string, SessionSummary[]>();
   for (const s of sessions) {
-    if (!s.lessonId) continue;
+    if (!s.lessonId || !isScored(s)) continue;
     const list = map.get(s.lessonId);
     if (list) list.push(s);
     else map.set(s.lessonId, [s]);

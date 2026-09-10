@@ -57,6 +57,24 @@ describe('judgeLevel', () => {
   });
 });
 
+describe('점수로 재지 않는 활동', () => {
+  it('쓰기 연습지처럼 채점하지 않는 기록은 단계 판단에서 뺀다', () => {
+    // 종이에 쓴 글씨는 앱이 채점하지 않아 늘 만점처럼 보인다. 이것을 넣으면
+    // 쓰기만 몇 번 해도 한글 단계가 올라가 버린다.
+    const unscored = [
+      session(5, 5, { meta: { scored: false } }),
+      session(5, 5, { meta: { scored: false } }),
+      session(5, 5, { meta: { scored: false } }),
+    ];
+    expect(buildSuggestion(MATH, LEVEL1, unscored, 'preschool')).toBeNull();
+  });
+
+  it('점수로 재는 기록은 그대로 센다', () => {
+    const scored = [session(5), session(5), session(5)];
+    expect(buildSuggestion(MATH, LEVEL1, scored, 'preschool')?.kind).toBe('promote');
+  });
+});
+
 describe('countsForPromotion', () => {
   it('수 세기는 가장 어려운 단계에서 한 것만 센다', () => {
     // 셋까지 세기만 반복하면서 덧셈으로 넘어가면 안 된다.

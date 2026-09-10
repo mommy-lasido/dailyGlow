@@ -7,6 +7,7 @@ import { SpellingActivity } from './spelling/SpellingActivity';
 import { GridDrillActivity } from './grid-drill/GridDrillActivity';
 import { WordsActivity } from './words/WordsActivity';
 import { SentencesActivity } from './sentences/SentencesActivity';
+import { WorksheetActivity } from './worksheet/WorksheetActivity';
 
 /**
  * 어떤 컴포넌트로 그릴지 정하는 열쇠.
@@ -38,4 +39,5 @@ export const ACTIVITY_RENDERERS: Record<string, ActivityRenderer> = {
   grid_drill: GridDrillActivity,
   word_cards: WordsActivity,
   reading_cards: SentencesActivity,
+  worksheet: WorksheetActivity,
 };
