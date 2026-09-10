@@ -13,6 +13,10 @@
   command = "pnpm build"
   publish = "apps/web/dist"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [build.environment]
   # package.json 의 engines 와 맞춘다.
   NODE_VERSION = "20"

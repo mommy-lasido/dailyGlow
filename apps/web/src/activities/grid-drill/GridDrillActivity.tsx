@@ -22,6 +22,7 @@ import {
   type DrillPuzzle,
 } from './generate';
 import { compareToHistory, fetchDrillRecords, matching, summarize } from './records';
+import { photoGradingAvailable, readAndGrade, type PhotoResult } from './photo';
 
 /**
  * 화면의 세 걸음.
@@ -72,6 +73,36 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
   const [paperSec, setPaperSec] = useState(0);
   const [paperCorrect, setPaperCorrect] = useState('');
   const [paperSaved, setPaperSaved] = useState(false);
+
+  /**
+   * 사진으로 채점하기. 열쇠가 넷리파이에 없으면 이 칸은 아예 나타나지 않는다.
+   * 열쇠를 쓰지 않고 물어보는 것이라 이 확인에는 돈이 들지 않는다.
+   */
+  const { data: photoReady = false } = useQuery({
+    queryKey: ['photo-grading-available'],
+    queryFn: photoGradingAvailable,
+    staleTime: 1000 * 60 * 60,
+  });
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const [photo, setPhoto] = useState<PhotoResult | null>(null);
+
+  async function onPhoto(file: File | undefined) {
+    if (!file || !puzzle) return;
+    setPhotoBusy(true);
+    setPhotoError('');
+    setPhoto(null);
+    try {
+      const result = await readAndGrade(puzzle, file);
+      setPhoto(result);
+      // 읽어 온 개수를 기록 칸에 미리 채워 준다. 부모가 보고 고칠 수 있다.
+      setPaperCorrect(String(result.correct));
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : '사진을 읽지 못했어요.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
 
   /**
    * 지난 기록. 목표 시간을 들이대는 대신 **자기 기록이 줄어드는지**만 본다.
@@ -287,7 +318,13 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
           </div>
         </Card>
 
-        <PuzzleTable puzzle={puzzle} wrote={{}} readOnly showAnswers={showAnswers} />
+        <PuzzleTable
+          puzzle={puzzle}
+          wrote={{}}
+          readOnly
+          showAnswers={showAnswers}
+          photoWrong={photo?.wrongIndexes}
+        />
 
         {/* 종이로 푼 기록은 앱이 저절로 알 수 없다. 옆에서 재고 적어 넣는다. */}
         <Card className="flex flex-col gap-4 print:hidden">
@@ -324,6 +361,52 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
               </Button>
             </div>
           </div>
+
+          {/* 사진으로 채점하기. 읽어 온 개수를 아래 칸에 미리 채워 준다. */}
+          {photoReady ? (
+            <div data-testid="photo" className="flex flex-col gap-2 rounded-2xl bg-glow-50 p-3">
+              <label className="flex flex-wrap items-center gap-3">
+                <span className="min-h-touch flex cursor-pointer items-center rounded-2xl bg-glow-500 px-5 font-bold text-white">
+                  📷 사진으로 채점하기
+                  <input
+                    data-testid="photo-input"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => void onPhoto(e.target.files?.[0])}
+                  />
+                </span>
+                {photoBusy ? (
+                  <span className="text-slate-500">사진을 읽는 중이에요…</span>
+                ) : null}
+              </label>
+
+              {photoError ? (
+                <p data-testid="photo-error" className="font-bold text-red-500">
+                  {photoError}
+                </p>
+              ) : null}
+
+              {photo ? (
+                <div data-testid="photo-result" className="text-slate-600">
+                  <p className="font-bold text-glow-700">
+                    {photo.total}칸 중 {photo.correct}칸 맞았어요.
+                  </p>
+                  {photo.unreadIndexes.length > 0 ? (
+                    <p className="text-sm text-slate-500">
+                      {photo.unreadIndexes.length}칸은 흐려서 못 읽었어요. 눈으로 보고
+                      개수를 고쳐주세요.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <p className="text-sm text-slate-400">
+                표 전체가 나오게, 밝은 곳에서 똑바로 찍어주세요.
+              </p>
+            </div>
+          ) : null}
 
           <label className="flex items-center gap-3">
             <span className="text-slate-600">{puzzle.cells}칸 중 맞은 개수</span>
@@ -483,6 +566,7 @@ function PuzzleTable({
   graded = false,
   readOnly = false,
   showAnswers = false,
+  photoWrong,
   onType,
 }: {
   puzzle: DrillPuzzle;
@@ -490,6 +574,8 @@ function PuzzleTable({
   graded?: boolean;
   readOnly?: boolean;
   showAnswers?: boolean;
+  /** 사진으로 채점했을 때 틀린 칸 */
+  photoWrong?: number[];
   onType?: (index: number, field: 'value' | 'remainder', text: string) => void;
 }) {
   const side = sideOf(puzzle.cells);
@@ -532,7 +618,9 @@ function PuzzleTable({
                 const index = ri * side + ci;
                 const a = answerAt(puzzle, index);
                 const mine = wrote[index] ?? { value: '' };
-                const wrong = graded && !isCellCorrect(puzzle, index, mine);
+                const wrong =
+                  (graded && !isCellCorrect(puzzle, index, mine)) ||
+                  (photoWrong?.includes(index) ?? false);
                 const { row, col } = cellAt(puzzle, index);
                 return (
                   <td
@@ -545,7 +633,7 @@ function PuzzleTable({
                   >
                     {readOnly ? (
                       <span className="text-sm font-bold text-glow-700">
-                        {showAnswers
+                        {showAnswers || (photoWrong?.includes(index) ?? false)
                           ? puzzle.op === '÷'
                             ? `${a.quotient}…${a.remainder}`
                             : a.value

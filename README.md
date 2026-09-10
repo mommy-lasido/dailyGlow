@@ -86,5 +86,5 @@ pnpm dev              # http://localhost:5173
 - [x] Phase 2d: 맞춤법 탐험대 + 속담·사자성어 배우기
 - [x] Phase 3a: 100칸 계산 — 화면에서 숫자판으로
 - [ ] Phase 3b: 100칸 계산 인쇄 (종이로 풀기)
-- [ ] Phase 4: 사진 채점 (Edge Function, `ANTHROPIC_API_KEY` 필요)
+- [x] Phase 4: 사진 채점 — 넷리파이 함수. `ANTHROPIC_API_KEY` 를 넷리파이에 넣으면 켜진다
 ```
