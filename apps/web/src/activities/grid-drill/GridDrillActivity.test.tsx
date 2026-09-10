@@ -200,6 +200,47 @@ describe('GridDrillActivity — 화면에서 풀기', () => {
   });
 });
 
+describe('GridDrillActivity — 목표 시간', () => {
+  it('칸 수를 고르는 자리에 목표 시간을 함께 보여준다', () => {
+    renderActivity();
+    expect(screen.getByTestId('targets')).toHaveTextContent('100칸 2:00');
+    expect(screen.getByTestId('targets')).toHaveTextContent('25칸 0:30');
+  });
+
+  it('단계 단추에는 목표 시간을 쓰지 않는다', () => {
+    renderActivity();
+    for (const b of screen.getAllByTestId('level')) {
+      expect(b.textContent).not.toMatch(/\d:\d\d/);
+    }
+  });
+
+  it('셈을 바꾸면 목표 시간도 바뀐다', () => {
+    renderActivity();
+    choose('op', 'data-op', '÷');
+    expect(screen.getByTestId('targets')).not.toHaveTextContent('100칸 2:00');
+  });
+
+  it('문제 화면에도 목표 시간이 보인다', () => {
+    renderActivity();
+    showProblem({ cells: '25' });
+    expect(screen.getByTestId('target')).toHaveTextContent('목표 0:30');
+  });
+
+  it('풀 때 시계 옆에 목표를 함께 보여준다', () => {
+    renderActivity();
+    begin({ cells: '25' });
+    expect(screen.getByTestId('target')).toHaveTextContent('목표 0:30');
+  });
+
+  it('다 맞히면 목표와 견주어 알려준다', () => {
+    renderActivity();
+    begin({ cells: '25' });
+    fillAll();
+    fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
+    expect(screen.getByTestId('target-result')).toHaveTextContent(/목표/);
+  });
+});
+
 describe('GridDrillActivity — 문제 화면', () => {
   it('고르는 화면에는 표를 얹지 않는다', () => {
     // 고르는 화면에 표까지 두었더니 너무 번잡했다.

@@ -188,6 +188,30 @@ export function isCellFilled(op: DrillOp, wrote: CellInput | undefined): boolean
   return wrote.value !== '';
 }
 
+/**
+ * 목표 시간 — 칸 하나를 몇 초 안에 채우면 되는가.
+ *
+ * **기준으로 삼은 값은 하나뿐이다.** 영숙님이 알려준 "기본 덧셈 100칸은 2분 안에" 다.
+ * 100칸 ÷ 120초 = 칸당 1.2초. 나머지 칸은 그 값에서 셈의 무게에 따라 늘려 잡은
+ * 어림이다 — 실제 교재의 기준이 아니라 내가 가늠한 것이므로, 아이들이 해 보고
+ * 너무 빡빡하거나 헐거우면 이 표를 고치면 된다.
+ *
+ * 나눗셈이 가장 느린 이유는 몫과 나머지를 둘 다 적어야 해서다.
+ */
+const SECONDS_PER_CELL: Record<DrillOp, Record<number, number>> = {
+  // 1단계 1.2초는 영숙님이 준 기준값이다.
+  '+': { 1: 1.2, 2: 1.5, 3: 1.8, 4: 2.2 },
+  '-': { 1: 1.3, 2: 1.7, 3: 2.0, 4: 2.5 },
+  '×': { 1: 1.2, 2: 2.0 },
+  '÷': { 1: 2.0, 2: 2.5, 3: 3.0 },
+};
+
+/** 이 문제를 몇 초 안에 채우면 되는가 */
+export function targetSeconds(op: DrillOp, levelId: number, cells: number): number {
+  const perCell = SECONDS_PER_CELL[op][levelId] ?? SECONDS_PER_CELL[op][1]!;
+  return Math.round(perCell * cells);
+}
+
 /** 걸린 시간을 "1:23" 으로. 예전 앱과 같은 모양이다. */
 export function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);

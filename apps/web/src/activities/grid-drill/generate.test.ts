@@ -12,6 +12,7 @@ import {
   makePuzzle,
   pickHeaders,
   sideOf,
+  targetSeconds,
   type DrillOp,
 } from './generate';
 
@@ -154,6 +155,32 @@ describe('isCellCorrect / isCellFilled', () => {
     expect(isCellFilled('÷', { value: '3', remainder: '0' })).toBe(true);
     expect(isCellFilled('+', { value: '3' })).toBe(true);
     expect(isCellFilled('+', undefined)).toBe(false);
+  });
+});
+
+describe('targetSeconds', () => {
+  it('기본 덧셈 100칸은 2분이다', () => {
+    // 영숙님이 알려준 기준값. 나머지는 여기서 칸당 시간으로 늘려 잡았다.
+    expect(targetSeconds('+', 1, 100)).toBe(120);
+  });
+
+  it('칸이 적으면 목표도 그만큼 짧다', () => {
+    expect(targetSeconds('+', 1, 25)).toBe(30);
+    expect(targetSeconds('+', 1, 64)).toBe(77);
+  });
+
+  it('단계가 높을수록 목표가 길어진다', () => {
+    const t = [1, 2, 3, 4].map((lv) => targetSeconds('+', lv, 100));
+    for (let i = 1; i < t.length; i += 1) expect(t[i]!).toBeGreaterThan(t[i - 1]!);
+  });
+
+  it('나눗셈이 가장 넉넉하다 — 몫과 나머지를 둘 다 적어야 한다', () => {
+    expect(targetSeconds('÷', 1, 100)).toBeGreaterThan(targetSeconds('+', 1, 100));
+    expect(targetSeconds('÷', 1, 100)).toBeGreaterThan(targetSeconds('×', 1, 100));
+  });
+
+  it('없는 단계를 물으면 첫 단계 기준으로 답한다', () => {
+    expect(targetSeconds('+', 99, 100)).toBe(targetSeconds('+', 1, 100));
   });
 });
 

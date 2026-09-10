@@ -14,6 +14,7 @@ import {
   levelsOf,
   makePuzzle,
   sideOf,
+  targetSeconds,
   type CellInput,
   type DrillCells,
   type DrillOp,
@@ -205,6 +206,12 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
               </button>
             ))}
           </div>
+          {/* 목표 시간은 고른 셈과 단계에 따라 달라진다. 칸 수를 고르는 자리에
+              함께 보여줘야 "몇 칸을 몇 분 안에" 가 한눈에 들어온다. */}
+          <p data-testid="targets" className="text-sm text-slate-500">
+            목표 시간 —{' '}
+            {DRILL_SIZES.map((s) => `${s.cells}칸 ${formatTime(targetSeconds(op, levelId, s.cells))}`).join(' · ')}
+          </p>
           <p className="text-sm text-slate-400">
             100칸이 버거우면 25칸부터 시작해도 괜찮아요.
           </p>
@@ -223,6 +230,7 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
     );
   }
 
+  const target = targetSeconds(puzzle.op, levelId, puzzle.cells);
   const typed = Number(paperCorrect);
   const canSavePaper =
     paperCorrect !== '' && typed >= 0 && typed <= puzzle.cells && paperSec > 0;
@@ -234,6 +242,9 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
         <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
           <h1 className="text-2xl font-bold text-glow-600">
             {puzzle.op} {puzzle.cells}칸
+            <span data-testid="target" className="ml-3 text-lg text-slate-500">
+              목표 {formatTime(target)}
+            </span>
           </h1>
           <Button variant="ghost" onClick={() => setStep('setup')}>
             ← 다시 고르기
@@ -263,7 +274,12 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
 
         {/* 종이로 푼 기록은 앱이 저절로 알 수 없다. 옆에서 재고 적어 넣는다. */}
         <Card className="flex flex-col gap-4 print:hidden">
-          <p className="font-bold text-slate-700">종이로 풀었다면 기록 남기기</p>
+          <p className="font-bold text-slate-700">
+            종이로 풀었다면 기록 남기기
+            <span className="ml-2 text-sm font-normal text-slate-400">
+              목표 {formatTime(target)}
+            </span>
+          </p>
 
           <div className="flex items-center justify-between gap-3">
             <span data-testid="paper-timer" className="text-3xl font-bold text-glow-600">
@@ -311,6 +327,9 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
           {paperSaved ? (
             <p data-testid="paper-saved" className="font-bold text-glow-600">
               기록했어요! {formatTime(paperSec)} 만에 {typed}칸 맞았어요.
+              {paperSec <= target
+                ? ' 목표 안에 해냈어요! 🎯'
+                : ` 목표는 ${formatTime(target)} 이에요.`}
             </p>
           ) : (
             <Button
@@ -359,8 +378,18 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
         <span className="text-slate-500">
           {filledCount} / {puzzle.cells}칸
         </span>
-        <span data-testid="timer" className="text-xl font-bold text-glow-600">
-          {formatTime(elapsed)}
+        <span className="flex items-baseline gap-2">
+          <span
+            data-testid="timer"
+            className={`text-xl font-bold ${
+              elapsed > target ? 'text-slate-400' : 'text-glow-600'
+            }`}
+          >
+            {formatTime(elapsed)}
+          </span>
+          <span data-testid="target" className="text-sm text-slate-400">
+            / 목표 {formatTime(target)}
+          </span>
         </span>
       </div>
 
@@ -372,6 +401,11 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
           <h2 className="text-2xl font-bold text-glow-600">다 맞혔어요!</h2>
           <p data-testid="result" className="text-slate-600">
             {formatTime(finalSec!)} 만에 {puzzle.cells}칸을 다 채웠어요.
+          </p>
+          <p data-testid="target-result" className="font-bold text-glow-600">
+            {finalSec! <= target
+              ? `목표 ${formatTime(target)} 안에 해냈어요! 🎯`
+              : `목표는 ${formatTime(target)} 이에요. ${formatTime(finalSec! - target)} 만 줄이면 돼요.`}
           </p>
           {firstScore !== null && firstScore < puzzle.cells ? (
             <p className="text-sm text-slate-400">
