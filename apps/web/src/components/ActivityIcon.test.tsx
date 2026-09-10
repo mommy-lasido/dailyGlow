@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ACTIVITY_ICONS, ActivityIcon } from './ActivityIcon';
+import { ACTIVITY_ART, ACTIVITY_ICONS, ActivityIcon } from './ActivityIcon';
 
 /** 지금 앱에 있는 활동 전부. 하나라도 그림이 없으면 카드가 밋밋해진다. */
 /** 영숙님이 그려 준 그림을 쓰는 활동 — 이것들은 <svg> 가 아니라 <img> 로 그려진다. */
@@ -63,6 +64,17 @@ describe('ActivityIcon', () => {
       const { container, unmount } = render(<Icon />);
       expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 64 64');
       unmount();
+    }
+  });
+
+  it('모든 그림이 똑같은 정사각형이다', () => {
+    // 원본 그림들의 가로세로 비율이 제각각이라 카드마다 크기가 달라 보였다.
+    // 파일 자체를 같은 정사각형으로 맞춰 두고, 어긋나면 여기서 걸리게 한다.
+    for (const id of ART_IDS) {
+      const file = ACTIVITY_ART[id]!.replace(/^\//, '');
+      const png = readFileSync(`public/${file}`);
+      // PNG 는 IHDR 청크의 16번째 바이트부터 가로·세로를 4바이트씩 담는다.
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([256, 256]);
     }
   });
 

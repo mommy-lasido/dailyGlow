@@ -221,8 +221,11 @@ function DefaultIcon() {
  * 카드의 제목은 앱이 글씨로 얹는다.
  *
  * 아래 SVG 는 그림이 아직 없는 활동을 위해 남겨 둔다.
+ *
+ * 모든 그림 파일은 256×256 정사각형으로 맞춰 두었다. 원본은 세로로 긴 것과
+ * 정사각형에 가까운 것이 섞여 있어, 그대로 쓰면 카드마다 그림 크기가 달라 보인다.
  */
-const ACTIVITY_ART: Record<string, string> = {
+export const ACTIVITY_ART: Record<string, string> = {
   letter_cards: '/activity-art/letter_cards.png',
   word_cards: '/activity-art/word_cards.png',
   reading_cards: '/activity-art/reading_cards.png',
