@@ -28,11 +28,17 @@ function choose(testid: string, attr: string, value: string) {
   );
 }
 
-function begin(opts: { op?: string; cells?: string; mode?: string } = {}) {
+/** 설정을 고르고 문제 화면까지 간다. */
+function showProblem(opts: { op?: string; cells?: string } = {}) {
   if (opts.op) choose('op', 'data-op', opts.op);
   if (opts.cells) choose('size', 'data-cells', opts.cells);
-  if (opts.mode) choose('mode', 'data-mode', opts.mode);
-  fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
+  fireEvent.click(screen.getByRole('button', { name: '문제 보기' }));
+}
+
+/** 문제 화면을 지나 화면에서 풀기까지 간다. */
+function begin(opts: { op?: string; cells?: string } = {}) {
+  showProblem(opts);
+  fireEvent.click(screen.getByRole('button', { name: /화면에서 풀기/ }));
 }
 
 /** 화면의 표에서 머리줄 숫자를 읽어 답을 직접 셈한다. */
@@ -78,11 +84,10 @@ function fillAll(correct = true) {
 }
 
 describe('GridDrillActivity — 고르기', () => {
-  it('예전 앱처럼 셈·단계·칸 수·푸는 곳을 고르게 한다', () => {
+  it('예전 앱처럼 셈·단계·칸 수를 고르게 한다', () => {
     renderActivity();
     expect(screen.getAllByTestId('op')).toHaveLength(4);
     expect(screen.getAllByTestId('size')).toHaveLength(3);
-    expect(screen.getAllByTestId('mode')).toHaveLength(2);
     expect(screen.getAllByTestId('level').length).toBeGreaterThan(0);
   });
 
@@ -195,34 +200,42 @@ describe('GridDrillActivity — 화면에서 풀기', () => {
   });
 });
 
-describe('GridDrillActivity — 미리보기', () => {
-  it('시작하기 전에 어떤 문제가 나오는지 보여준다', () => {
+describe('GridDrillActivity — 문제 화면', () => {
+  it('고르는 화면에는 표를 얹지 않는다', () => {
+    // 고르는 화면에 표까지 두었더니 너무 번잡했다.
     renderActivity();
-    expect(screen.getByText('이런 문제가 나와요')).toBeInTheDocument();
-    expect(screen.getByTestId('drill-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('drill-table')).not.toBeInTheDocument();
   });
 
-  it('푸는 곳을 고르기 전에 보여준다', () => {
-    // 인쇄할지 화면에서 풀지는 문제를 보고 정하는 것이 자연스럽다.
+  it('칸 수까지 정하면 문제 화면으로 넘어간다', () => {
     renderActivity();
-    const body = document.body.textContent!;
-    expect(body.indexOf('이런 문제가 나와요')).toBeLessThan(body.indexOf('어디서 풀까요'));
-  });
-
-  it('칸 수를 바꾸면 미리보기도 바뀐다', () => {
-    renderActivity();
-    expect(screen.getAllByTestId('cell')).toHaveLength(100);
-    choose('size', 'data-cells', '25');
+    showProblem({ cells: '25' });
     expect(screen.getAllByTestId('cell')).toHaveLength(25);
+    expect(screen.queryAllByTestId('op')).toHaveLength(0);
   });
 
-  it('다른 문제로 바꿔 볼 수 있다', () => {
+  it('문제를 보면서 무엇을 할지 정한다', () => {
     renderActivity();
-    choose('size', 'data-cells', '25');
+    showProblem({ cells: '25' });
+    expect(screen.getByRole('button', { name: /화면에서 풀기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /인쇄하기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /새 문제 만들기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '답 보기' })).toBeInTheDocument();
+  });
+
+  it('문제 화면에는 입력칸이 없다', () => {
+    renderActivity();
+    showProblem({ cells: '25' });
+    expect(screen.queryAllByTestId('input')).toHaveLength(0);
+  });
+
+  it('새 문제를 만들 수 있다', () => {
+    renderActivity();
+    showProblem({ cells: '25' });
     const before = readTable().cols.join(',');
     let changed = false;
     for (let i = 0; i < 20 && !changed; i += 1) {
-      fireEvent.click(screen.getByRole('button', { name: '다른 문제로' }));
+      fireEvent.click(screen.getByRole('button', { name: /새 문제 만들기/ }));
       changed = readTable().cols.join(',') !== before;
     }
     expect(changed).toBe(true);
@@ -230,11 +243,18 @@ describe('GridDrillActivity — 미리보기', () => {
 
   it('보고 있던 그 표를 그대로 푼다', () => {
     renderActivity();
-    choose('size', 'data-cells', '25');
+    showProblem({ cells: '25' });
     const shown = readTable();
-    fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
+    fireEvent.click(screen.getByRole('button', { name: /화면에서 풀기/ }));
     expect(readTable().cols).toEqual(shown.cols);
     expect(readTable().rowHeaders).toEqual(shown.rowHeaders);
+  });
+
+  it('다시 고르기로 돌아갈 수 있다', () => {
+    renderActivity();
+    showProblem({ cells: '25' });
+    fireEvent.click(screen.getByRole('button', { name: /다시 고르기/ }));
+    expect(screen.getAllByTestId('op')).toHaveLength(4);
   });
 });
 
@@ -242,21 +262,21 @@ describe('GridDrillActivity — 종이로 푼 기록', () => {
   it('스톱워치와 맞은 개수를 적는 자리가 있다', () => {
     // 인쇄한 종이는 앱이 손을 댈 수 없으니 옆에서 재고 적어 넣는다.
     renderActivity();
-    begin({ cells: '25', mode: 'paper' });
+    showProblem({ cells: '25' });
     expect(screen.getByTestId('paper-timer')).toHaveTextContent('0:00');
     expect(screen.getByTestId('paper-correct')).toBeInTheDocument();
   });
 
   it('시간을 재지 않으면 저장할 수 없다', () => {
     renderActivity();
-    begin({ cells: '25', mode: 'paper' });
+    showProblem({ cells: '25' });
     fireEvent.change(screen.getByTestId('paper-correct'), { target: { value: '20' } });
     expect(screen.getByRole('button', { name: '기록 저장' })).toBeDisabled();
   });
 
   it('칸 수보다 많은 개수는 저장할 수 없다', () => {
     renderActivity();
-    begin({ cells: '25', mode: 'paper' });
+    showProblem({ cells: '25' });
     fireEvent.click(screen.getByRole('button', { name: '시작' }));
     fireEvent.change(screen.getByTestId('paper-correct'), { target: { value: '99' } });
     expect(screen.getByRole('button', { name: '기록 저장' })).toBeDisabled();
@@ -265,7 +285,7 @@ describe('GridDrillActivity — 종이로 푼 기록', () => {
   it('종이 기록은 화면 기록과 따로 남는다', async () => {
     const onFinish = vi.fn();
     renderActivity(onFinish);
-    begin({ cells: '25', mode: 'paper' });
+    showProblem({ cells: '25' });
     fireEvent.click(screen.getByRole('button', { name: '시작' }));
     // 스톱워치가 1초 이상 흐른 것처럼 만든다.
     await new Promise((r) => setTimeout(r, 1100));
@@ -284,23 +304,9 @@ describe('GridDrillActivity — 종이로 푼 기록', () => {
 });
 
 describe('GridDrillActivity — 인쇄해서 풀기', () => {
-  it('인쇄 화면에는 입력칸이 없다', () => {
-    // 종이에 연필로 푸는 것이라 화면에서 채우지 않는다.
-    renderActivity();
-    begin({ cells: '25', mode: 'paper' });
-    expect(screen.queryAllByTestId('input')).toHaveLength(0);
-    expect(screen.getAllByTestId('cell')).toHaveLength(25);
-  });
-
-  it('인쇄 단추가 있다', () => {
-    renderActivity();
-    begin({ cells: '25', mode: 'paper' });
-    expect(screen.getByRole('button', { name: /인쇄하기/ })).toBeInTheDocument();
-  });
-
   it('답 보기로 맞춰볼 수 있다', () => {
     renderActivity();
-    begin({ op: '+', cells: '25', mode: 'paper' });
+    showProblem({ op: '+', cells: '25' });
     // 처음에는 칸이 비어 있다.
     expect(screen.getAllByTestId('cell')[0]!.textContent).toBe('');
     fireEvent.click(screen.getByRole('button', { name: '답 보기' }));
@@ -309,9 +315,9 @@ describe('GridDrillActivity — 인쇄해서 풀기', () => {
     expect(screen.getAllByTestId('cell')[0]!.textContent).toBe('');
   });
 
-  it('인쇄할 때 앱 껍데기는 감춘다', () => {
+  it('인쇄할 때 표만 남기고 나머지는 감춘다', () => {
     renderActivity();
-    begin({ cells: '25', mode: 'paper' });
+    showProblem({ cells: '25' });
     const bar = screen.getByRole('button', { name: /인쇄하기/ }).closest('div')!.parentElement!;
     expect(bar.className).toContain('print:hidden');
   });
