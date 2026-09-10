@@ -214,17 +214,25 @@ function DefaultIcon() {
 }
 
 /**
- * 영숙님이 그려 준 그림이 있는 활동.
+ * 영숙님이 그려 준 그림.
  *
- * 그림 안에 활동 이름이 들어 있지만, 카드의 제목 글씨는 그대로 둔다 — 그림 속
- * 글씨는 이 크기에서 읽으라고 있는 것이 아니라 장식이고, 아직 그림이 없는
- * 다섯 활동과 카드 모양이 어긋나면 안 되기 때문이다.
+ * 처음 받은 것은 그림 안에 활동 이름이 적혀 있었는데, 이름을 바꾸면 그림도 다시
+ * 만들어야 한다. 두 번째로 받은 것은 글씨가 없어 이름을 바꿔도 그대로 쓸 수 있다.
+ * 카드의 제목은 앱이 글씨로 얹는다.
+ *
+ * 아래 SVG 는 그림이 아직 없는 활동을 위해 남겨 둔다.
  */
 const ACTIVITY_ART: Record<string, string> = {
+  letter_cards: '/activity-art/letter_cards.png',
+  word_cards: '/activity-art/word_cards.png',
+  reading_cards: '/activity-art/reading_cards.png',
+  worksheet: '/activity-art/worksheet.png',
   choice_quiz: '/activity-art/spelling.png',
   'sayings:proverb': '/activity-art/proverb.png',
   'sayings:idiom': '/activity-art/idiom.png',
-  grid_drill: '/activity-art/grid.png',
+  count_play: '/activity-art/count_play.png',
+  add_play: '/activity-art/add_play.png',
+  grid_drill: '/activity-art/grid_drill.png',
 };
 
 export const ACTIVITY_ICONS: Record<string, () => JSX.Element> = {
