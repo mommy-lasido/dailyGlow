@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { GridDrillActivity } from './GridDrillActivity';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
@@ -15,10 +16,16 @@ const lesson: ActivityLesson = {
 };
 
 function renderActivity(onFinish: (r: ActivityResult) => void = () => {}) {
+  // 지난 기록을 읽어오므로 질의 상자가 필요하다. 기록이 없는 아이로 그린다.
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
   return render(
-    <MemoryRouter>
-      <GridDrillActivity lesson={lesson} onFinish={onFinish} />
-    </MemoryRouter>,
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <GridDrillActivity lesson={lesson} onFinish={onFinish} />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -200,44 +207,27 @@ describe('GridDrillActivity — 화면에서 풀기', () => {
   });
 });
 
-describe('GridDrillActivity — 목표 시간', () => {
-  it('칸 수를 고르는 자리에 목표 시간을 함께 보여준다', () => {
+describe('GridDrillActivity — 지난 기록', () => {
+  it('목표 시간을 적어 두지 않는다', () => {
+    // 4분 걸리는 아이에게 2분을 들이밀면 닿지 않는 목표라 포기하게 된다.
     renderActivity();
-    expect(screen.getByTestId('targets')).toHaveTextContent('100칸 2:00');
-    expect(screen.getByTestId('targets')).toHaveTextContent('25칸 0:30');
+    expect(screen.queryByTestId('targets')).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('목표 시간');
   });
 
-  it('단계 단추에는 목표 시간을 쓰지 않는다', () => {
-    renderActivity();
-    for (const b of screen.getAllByTestId('level')) {
-      expect(b.textContent).not.toMatch(/\d:\d\d/);
-    }
-  });
-
-  it('셈을 바꾸면 목표 시간도 바뀐다', () => {
-    renderActivity();
-    choose('op', 'data-op', '÷');
-    expect(screen.getByTestId('targets')).not.toHaveTextContent('100칸 2:00');
-  });
-
-  it('문제 화면에도 목표 시간이 보인다', () => {
-    renderActivity();
-    showProblem({ cells: '25' });
-    expect(screen.getByTestId('target')).toHaveTextContent('목표 0:30');
-  });
-
-  it('풀 때 시계 옆에 목표를 함께 보여준다', () => {
+  it('푸는 화면에도 목표 시간이 없다', () => {
     renderActivity();
     begin({ cells: '25' });
-    expect(screen.getByTestId('target')).toHaveTextContent('목표 0:30');
+    expect(screen.queryByTestId('target')).not.toBeInTheDocument();
+    expect(screen.getByTestId('timer')).toBeInTheDocument();
   });
 
-  it('다 맞히면 목표와 견주어 알려준다', () => {
+  it('첫 판을 마치면 첫 기록이라고 알려준다', () => {
     renderActivity();
     begin({ cells: '25' });
     fillAll();
     fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
-    expect(screen.getByTestId('target-result')).toHaveTextContent(/목표/);
+    expect(screen.getByTestId('record-result')).toHaveTextContent('첫 기록이에요');
   });
 });
 

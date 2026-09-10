@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
+import { useProfile } from '@/stores/profile';
 import type { ActivityProps } from '@/activities/types';
 import {
   answerAt,
@@ -14,12 +16,12 @@ import {
   levelsOf,
   makePuzzle,
   sideOf,
-  targetSeconds,
   type CellInput,
   type DrillCells,
   type DrillOp,
   type DrillPuzzle,
 } from './generate';
+import { compareToHistory, fetchDrillRecords, matching, summarize } from './records';
 
 /**
  * 화면의 세 걸음.
@@ -41,7 +43,8 @@ type Step = 'setup' | 'problem' | 'solve';
  * 다른 활동의 3단계 흐름은 쓰지 않는다. 백 칸을 한 칸씩 물어보면 표를 채우는 맛이
  * 사라지고 빠르기를 재는 일도 어그러진다. 다 채우고 채점한 뒤 틀린 칸만 고친다.
  */
-export function GridDrillActivity({ onFinish }: ActivityProps) {
+export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
+  const profile = useProfile((st) => st.profile);
   const [step, setStep] = useState<Step>('setup');
   const [op, setOp] = useState<DrillOp>('+');
   const [levelId, setLevelId] = useState(1);
@@ -69,6 +72,17 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
   const [paperSec, setPaperSec] = useState(0);
   const [paperCorrect, setPaperCorrect] = useState('');
   const [paperSaved, setPaperSaved] = useState(false);
+
+  /**
+   * 지난 기록. 목표 시간을 들이대는 대신 **자기 기록이 줄어드는지**만 본다.
+   * 기록을 못 읽어도 문제는 풀 수 있어야 하므로 화면을 막지 않는다.
+   */
+  const { data: records = [], refetch: refetchRecords } = useQuery({
+    queryKey: ['drill-records', profile?.id, lesson.id],
+    enabled: Boolean(profile),
+    queryFn: () => fetchDrillRecords(profile!.id, lesson.id),
+  });
+  const history = summarize(matching(records, op, levelId, cells));
 
   useEffect(() => {
     if (!running) return;
@@ -132,6 +146,8 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
     setFinalSec(sec);
     setRunning(false);
     spawnConfetti();
+    // 새 기록이 남았으니 다음 판에서는 그것과 견준다.
+    setTimeout(() => void refetchRecords(), 1500);
     onFinish({
       totalCount: puzzle.cells,
       // 실력은 처음 채점했을 때의 점수로 잰다 — 고친 뒤의 만점으로는 재지 못한다.
@@ -206,12 +222,12 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
               </button>
             ))}
           </div>
-          {/* 목표 시간은 고른 셈과 단계에 따라 달라진다. 칸 수를 고르는 자리에
-              함께 보여줘야 "몇 칸을 몇 분 안에" 가 한눈에 들어온다. */}
-          <p data-testid="targets" className="text-sm text-slate-500">
-            목표 시간 —{' '}
-            {DRILL_SIZES.map((s) => `${s.cells}칸 ${formatTime(targetSeconds(op, levelId, s.cells))}`).join(' · ')}
-          </p>
+          {/* 목표 시간은 적지 않는다. 견줄 상대는 남이 아니라 어제의 자기다. */}
+          {history.bestSec !== null ? (
+            <p data-testid="my-record" className="text-sm text-slate-500">
+              지금까지 가장 빠른 기록 {formatTime(history.bestSec)} · {history.count}번 했어요
+            </p>
+          ) : null}
           <p className="text-sm text-slate-400">
             100칸이 버거우면 25칸부터 시작해도 괜찮아요.
           </p>
@@ -230,7 +246,6 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
     );
   }
 
-  const target = targetSeconds(puzzle.op, levelId, puzzle.cells);
   const typed = Number(paperCorrect);
   const canSavePaper =
     paperCorrect !== '' && typed >= 0 && typed <= puzzle.cells && paperSec > 0;
@@ -242,9 +257,11 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
         <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
           <h1 className="text-2xl font-bold text-glow-600">
             {puzzle.op} {puzzle.cells}칸
-            <span data-testid="target" className="ml-3 text-lg text-slate-500">
-              목표 {formatTime(target)}
-            </span>
+            {history.bestSec !== null ? (
+              <span data-testid="my-record" className="ml-3 text-lg text-slate-500">
+                내 기록 {formatTime(history.bestSec)}
+              </span>
+            ) : null}
           </h1>
           <Button variant="ghost" onClick={() => setStep('setup')}>
             ← 다시 고르기
@@ -276,9 +293,6 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
         <Card className="flex flex-col gap-4 print:hidden">
           <p className="font-bold text-slate-700">
             종이로 풀었다면 기록 남기기
-            <span className="ml-2 text-sm font-normal text-slate-400">
-              목표 {formatTime(target)}
-            </span>
           </p>
 
           <div className="flex items-center justify-between gap-3">
@@ -327,9 +341,6 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
           {paperSaved ? (
             <p data-testid="paper-saved" className="font-bold text-glow-600">
               기록했어요! {formatTime(paperSec)} 만에 {typed}칸 맞았어요.
-              {paperSec <= target
-                ? ' 목표 안에 해냈어요! 🎯'
-                : ` 목표는 ${formatTime(target)} 이에요.`}
             </p>
           ) : (
             <Button
@@ -379,17 +390,14 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
           {filledCount} / {puzzle.cells}칸
         </span>
         <span className="flex items-baseline gap-2">
-          <span
-            data-testid="timer"
-            className={`text-xl font-bold ${
-              elapsed > target ? 'text-slate-400' : 'text-glow-600'
-            }`}
-          >
+          <span data-testid="timer" className="text-xl font-bold text-glow-600">
             {formatTime(elapsed)}
           </span>
-          <span data-testid="target" className="text-sm text-slate-400">
-            / 목표 {formatTime(target)}
-          </span>
+          {history.bestSec !== null ? (
+            <span data-testid="my-record" className="text-sm text-slate-400">
+              / 내 기록 {formatTime(history.bestSec)}
+            </span>
+          ) : null}
         </span>
       </div>
 
@@ -402,10 +410,14 @@ export function GridDrillActivity({ onFinish }: ActivityProps) {
           <p data-testid="result" className="text-slate-600">
             {formatTime(finalSec!)} 만에 {puzzle.cells}칸을 다 채웠어요.
           </p>
-          <p data-testid="target-result" className="font-bold text-glow-600">
-            {finalSec! <= target
-              ? `목표 ${formatTime(target)} 안에 해냈어요! 🎯`
-              : `목표는 ${formatTime(target)} 이에요. ${formatTime(finalSec! - target)} 만 줄이면 돼요.`}
+          <p data-testid="record-result" className="font-bold text-glow-600">
+            {(() => {
+              const c = compareToHistory(finalSec!, history);
+              if (c.kind === 'first') return '첫 기록이에요! 다음엔 이 시간을 줄여봐요.';
+              if (c.kind === 'best')
+                return `내 기록을 ${formatTime(c.deltaSec)} 이나 줄였어요! 🎉`;
+              return `가장 빠른 기록은 ${formatTime(history.bestSec!)} 이에요. 다음에 줄여봐요.`;
+            })()}
           </p>
           {firstScore !== null && firstScore < puzzle.cells ? (
             <p className="text-sm text-slate-400">

@@ -188,38 +188,6 @@ export function isCellFilled(op: DrillOp, wrote: CellInput | undefined): boolean
   return wrote.value !== '';
 }
 
-/**
- * 목표 시간 — 칸 하나를 몇 초 안에 채우면 되는가.
- *
- * **1단계 값은 가게야마 히데오(陰山英男) 본인이 인터뷰에서 말한 숫자다.**
- * 덧셈·뺄셈·곱셈 100칸은 2분, 나눗셈 100문제는 5분.
- * (조사 원본: `docs/research/2026-09-10-가게야마-100칸계산-시간기준.md`)
- * 100칸 ÷ 120초 = 칸당 1.2초, 나눗셈은 300초 ÷ 100 = 칸당 3초.
- *
- * 2단계 위로는 예전 앱이 두 자리 수까지 넓혀 둔 것이라 가게야마 쪽에 대응하는
- * 기준이 없다. 1단계 값에서 자릿수가 늘어난 만큼 늘려 잡은 **어림**이다.
- * 25칸·64칸의 공식 기준도 찾지 못해 칸당 시간으로 나눠 쓴다.
- *
- * 조사에서 함께 확인된 것 — 지금은 쓰지 않지만 알아 둘 것.
- *   · 충분히 숙달된 뒤의 최종 목표는 덧셈·뺄셈·곱셈 모두 1분.
- *   · 처음 하는 아이에게는 절대 시간보다 "첫날 잰 시간의 절반" 을 1차 목표로 삼으라고 한다.
- *   · 학년별 기준도 있으나 자료마다 다르고, 가게야마 본인 책도 판마다 숫자가 달라
- *     하나로 확정하지 못했다.
- */
-const SECONDS_PER_CELL: Record<DrillOp, Record<number, number>> = {
-  // 1단계는 근거가 있는 값, 2단계부터는 어림이다.
-  '+': { 1: 1.2, 2: 1.5, 3: 1.8, 4: 2.2 },
-  '-': { 1: 1.2, 2: 1.6, 3: 1.9, 4: 2.3 },
-  '×': { 1: 1.2, 2: 2.0 },
-  '÷': { 1: 3.0, 2: 3.6, 3: 4.2 },
-};
-
-/** 이 문제를 몇 초 안에 채우면 되는가 */
-export function targetSeconds(op: DrillOp, levelId: number, cells: number): number {
-  const perCell = SECONDS_PER_CELL[op][levelId] ?? SECONDS_PER_CELL[op][1]!;
-  return Math.round(perCell * cells);
-}
-
 /** 걸린 시간을 "1:23" 으로. 예전 앱과 같은 모양이다. */
 export function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
