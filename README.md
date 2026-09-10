@@ -78,7 +78,12 @@ pnpm dev              # http://localhost:5173
 - [ ] 문제 유형별 렌더러 / 채점기 (`LessonPage` 의 자리표시자 대체)
 - [ ] 오프라인 콘텐츠 프리페치 (lessons/problems → Dexie)
 - [ ] `wrong_type_stats` ↔ Dexie `typeStats` 동기화
-- [ ] Phase 2: 활동 렌더러 (맞춤법 · 자음모음 배우기 · 낱말/문장 읽기 · 더하기) + 한글 35단계 시스템
-- [ ] Phase 3: 100칸 계산 + 인쇄
+- [x] Phase 2a: 활동 실행 구조(레지스트리·세션 기록) + 3단계 풀이 흐름 + 더하기 놀이
+- [x] Phase 2b: 유아 수학 — 수 세기 놀이 + 단계 승급 제안 (앱이 제안, 부모가 승인)
+- [x] Phase 2c-1: 자음모음 배우기 (보고 듣기 → 소리 듣고 찾기)
+- [ ] Phase 2c-2: 한글 자모 분해 시스템 + 낱말 읽기 · 문장 읽기 · 쓰기 연습지
+- [x] Phase 2d: 맞춤법 탐험대 + 속담·사자성어 배우기
+- [x] Phase 3a: 100칸 계산 — 화면에서 숫자판으로
+- [ ] Phase 3b: 100칸 계산 인쇄 (종이로 풀기)
 - [ ] Phase 4: 사진 채점 (Edge Function, `ANTHROPIC_API_KEY` 필요)
 ```

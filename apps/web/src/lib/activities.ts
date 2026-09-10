@@ -27,7 +27,8 @@ export interface ActivityCard {
   activityKind: string;
   subjectSlug: string;
   subjectTitle: string;
-  emoji: string;
+  /** 카드에 그릴 그림의 이름. ActivityIcon 이 이 이름으로 그림을 고른다. */
+  iconId: string;
   /**
    * 카드 제목 밑에 붙일 한 줄 예시. config.hint 가 없으면 null.
    * 지금은 "낱말 읽기" 에만 붙는다 — 제목만으로는 "자음모음 배우기" 와
@@ -43,17 +44,28 @@ export function activityHint(config: unknown): string | null {
   return typeof hint === 'string' && hint.length > 0 ? hint : null;
 }
 
-const EMOJI: Record<string, string> = {
-  letter_cards: '🔤',
-  word_cards: '📗',
-  reading_cards: '📖',
-  worksheet: '✏️',
-  choice_quiz: '📝',
-  grid_drill: '🔢',
-};
-
-export function activityEmoji(kind: string): string {
-  return EMOJI[kind] ?? '📘';
+/**
+ * 어떤 그림을 그릴지 정하는 이름.
+ *
+ * 화면을 고를 때(`resolveRendererId`)와 같은 규칙을 쓴다 — `config.renderer` 가
+ * 있으면 그것을, 없으면 `activity_kind` 를. 더하기 놀이와 수 세기 놀이와
+ * 맞춤법 탐험대는 셋 다 `choice_quiz` 라, 종류만 보면 세 카드에 같은 그림이 붙는다.
+ */
+export function activityIconId(row: {
+  activity_kind: string;
+  config: unknown;
+}): string {
+  const config = row.config;
+  if (config && typeof config === 'object') {
+    const renderer = (config as { renderer?: unknown }).renderer;
+    if (typeof renderer === 'string' && renderer.length > 0) {
+      // 속담과 사자성어는 화면은 같지만 그림이 다르다. config.kind 로 더 좁힌다.
+      const kind = (config as { kind?: unknown }).kind;
+      if (typeof kind === 'string' && kind.length > 0) return `${renderer}:${kind}`;
+      return renderer;
+    }
+  }
+  return row.activity_kind;
 }
 
 /**
@@ -87,7 +99,7 @@ export function selectActivities(
       activityKind: r.activity_kind,
       subjectSlug: r.subject_slug,
       subjectTitle: r.subject_title,
-      emoji: activityEmoji(r.activity_kind),
+      iconId: activityIconId(r),
       hint: activityHint(r.config),
     }));
 }
