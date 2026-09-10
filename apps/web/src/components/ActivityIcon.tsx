@@ -227,8 +227,7 @@ function DefaultIcon() {
  *
  * 세로로 긴 그림은 대개 가운데를 잘라도 인물의 얼굴이 가운데에 있어 괜찮았지만,
  * 자음모음 배우기만은 ㄱ·ㅏ 가 맨 위에 토끼가 맨 아래에 있어 양쪽이 다 잘렸다.
- * 이 한 장만 자르는 대신 좌우를 흰색으로 채워 정사각형으로 만들었다 — 카드가
- * 조금 좁아 보이지만 그림이 잘리는 것보다 낫다.
+ * 영숙님이 이 한 장을 정사각형으로 다시 그려 주어 그대로 쓴다.
  */
 export const ACTIVITY_ART: Record<string, string> = {
   letter_cards: '/activity-art/letter_cards.png',
