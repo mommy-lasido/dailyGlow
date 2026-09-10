@@ -88,6 +88,21 @@ describe('WorksheetActivity — 연습지', () => {
     for (const b of boxes.slice(1)) expect(b.className).toContain('text-transparent');
   });
 
+  it('문장은 사이띄개 자리를 칸 없이 벌린다', () => {
+    // 띄어쓰기도 같이 익히게 한다.
+    renderActivity(35);
+    choose('sentence');
+    const row = screen.getAllByTestId('sheet-row')[0]!;
+    expect(row.querySelectorAll('[data-testid="gap"]').length).toBeGreaterThan(0);
+  });
+
+  it('1단계 아이는 ㄱ ㄴ ㄷ ㄹ 을 쓴다', () => {
+    renderActivity(1);
+    choose('consonant');
+    const shown = screen.getAllByTestId('sheet-row').map((r) => r.textContent);
+    expect(shown.join('')).toMatch(/[ㄱㄴㄷㄹ]/);
+  });
+
   it('인쇄 단추가 있다', () => {
     renderActivity(5);
     choose('vowel');

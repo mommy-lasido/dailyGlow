@@ -5,9 +5,9 @@ import { spawnConfetti } from '@/lib/confetti';
 import { speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
 import {
+  layoutFor,
   makeSheet,
   optionsForStage,
-  WRITES_PER_ROW,
   type SheetKind,
   type SheetRow,
 } from './generate';
@@ -81,7 +81,7 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
         </Button>
       </Card>
 
-      <Sheet rows={rows} onSpeak={(t) => speak(t)} />
+      <Sheet rows={rows} kind={kind} onSpeak={(t) => speak(t)} />
 
       <Card className="flex flex-col items-center gap-3 text-center print:hidden">
         {saved ? (
@@ -125,7 +125,17 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
  * 나이라 칸이 작으면 글씨가 삐져나가고, 줄이 붙어 있으면 어디에 쓸지 헷갈린다.
  * 첫 칸은 따라 쓰도록 흐리게 본보기를 보여주고 나머지는 비운다.
  */
-function Sheet({ rows, onSpeak }: { rows: SheetRow[]; onSpeak: (text: string) => void }) {
+function Sheet({
+  rows,
+  kind,
+  onSpeak,
+}: {
+  rows: SheetRow[];
+  kind: SheetKind;
+  onSpeak: (text: string) => void;
+}) {
+  const { writes, stacked } = layoutFor(kind);
+
   return (
     <div data-testid="sheet" className="flex flex-col gap-6 print:gap-10">
       {rows.map((row) => (
@@ -138,21 +148,33 @@ function Sheet({ rows, onSpeak }: { rows: SheetRow[]; onSpeak: (text: string) =>
           >
             🔊 {row.sound}
           </button>
-          <div className="flex flex-wrap gap-3 print:gap-4">
-            {Array.from({ length: WRITES_PER_ROW }).map((_, i) => (
-              <span key={i} className="flex gap-1">
-                {[...row.text].map((ch, ci) => (
-                  <span
-                    key={ci}
-                    data-testid="box"
-                    className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-dashed border-glow-300 text-5xl font-bold print:h-28 print:w-28 print:text-6xl"
-                  >
-                    {/* 첫 칸만 본보기. 흐리게 보여줘 따라 쓰게 한다. */}
-                    <span className={i === 0 ? 'text-glow-300' : 'text-transparent'}>
-                      {ch}
+
+          {/* 문장은 길어서 옆으로 다섯 번 쓸 수 없다. 본보기 한 줄 밑에 따라 쓸
+              줄을 쌓는다. 짧은 글자·낱말은 한 줄에 나란히 쓴다. */}
+          <div
+            className={
+              stacked ? 'flex flex-col gap-3 print:gap-5' : 'flex flex-wrap gap-3 print:gap-4'
+            }
+          >
+            {Array.from({ length: writes }).map((_, i) => (
+              <span key={i} className="flex flex-wrap gap-1">
+                {[...row.text].map((ch, ci) =>
+                  ch === ' ' ? (
+                    // 사이띄개는 칸을 두지 않고 자리만 벌린다.
+                    <span key={ci} data-testid="gap" className="w-6 print:w-8" />
+                  ) : (
+                    <span
+                      key={ci}
+                      data-testid="box"
+                      className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-dashed border-glow-300 text-5xl font-bold print:h-28 print:w-28 print:text-6xl"
+                    >
+                      {/* 첫 번째만 본보기. 흐리게 보여줘 따라 쓰게 한다. */}
+                      <span className={i === 0 ? 'text-glow-300' : 'text-transparent'}>
+                        {ch}
+                      </span>
                     </span>
-                  </span>
-                ))}
+                  ),
+                )}
               </span>
             ))}
           </div>

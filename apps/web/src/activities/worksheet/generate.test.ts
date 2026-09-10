@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  layoutFor,
   makeSheet,
   optionsForStage,
   ROWS_PER_SHEET,
@@ -19,6 +20,16 @@ describe('optionsForStage', () => {
   it('5단계부터 낱말을 쓴다', () => {
     expect(optionsForStage(4).map((o) => o.kind)).not.toContain('word');
     expect(optionsForStage(5).map((o) => o.kind)).toContain('word');
+  });
+
+  it('14단계부터 문장을 쓴다', () => {
+    // 못 읽는 문장을 베껴 쓰는 것은 글자 모양 그리기일 뿐이다.
+    expect(optionsForStage(13).map((o) => o.kind)).not.toContain('sentence');
+    expect(optionsForStage(14).map((o) => o.kind)).toContain('sentence');
+  });
+
+  it('1단계 아이도 ㄱ ㄴ ㄷ ㄹ 은 쓸 수 있다', () => {
+    expect(sourceFor('consonant', 1).map((r) => r.text)).toEqual(['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ']);
   });
 
   it('자음이 맨 앞이다', () => {
@@ -57,6 +68,16 @@ describe('sourceFor', () => {
   });
 });
 
+describe('layoutFor', () => {
+  it('짧은 글자는 한 줄에 다섯 번 나란히 쓴다', () => {
+    expect(layoutFor('vowel')).toEqual({ writes: 5, rows: 8, stacked: false });
+  });
+
+  it('문장은 길어서 아래로 쌓고 한 장에 셋만 넣는다', () => {
+    expect(layoutFor('sentence')).toEqual({ writes: 3, rows: 3, stacked: true });
+  });
+});
+
 describe('makeSheet', () => {
   it('한 장에 여덟 줄까지 넣는다', () => {
     expect(makeSheet('word', 30)).toHaveLength(ROWS_PER_SHEET);
@@ -72,6 +93,10 @@ describe('makeSheet', () => {
       const rows = makeSheet('letter', 5).map((r) => r.text);
       expect(new Set(rows).size).toBe(rows.length);
     }
+  });
+
+  it('문장 연습지는 세 문장만 넣는다', () => {
+    expect(makeSheet('sentence', 35)).toHaveLength(3);
   });
 
   it('낼 때마다 글자가 달라진다', () => {

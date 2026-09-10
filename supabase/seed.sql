@@ -68,7 +68,9 @@ from (values
   ('hangul', 'letter-cards',  '자음모음 배우기', 1, 1, 'letter_cards',  1,  0, 1, '{}'::jsonb),
   ('hangul', 'word-cards',    '낱말 읽기',      1, 2, 'word_cards',    4,  0, 1, '{}'::jsonb),
   ('hangul', 'reading-cards', '문장 읽기',      1, 3, 'reading_cards', 14, 0, 1, '{}'::jsonb),
-  ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',     14, 0, 1, '{}'::jsonb),
+  -- 쓰기 연습지는 아이 단계에 맞춰 자음·모음·글자·낱말·문장으로 갈라진다.
+  -- 1단계 아이도 ㄱ ㄴ ㄷ ㄹ 을 써 볼 수 있어야 하므로 문턱을 1로 둔다.
+  ('hangul', 'worksheet',     '쓰기 연습지',    1, 4, 'worksheet',      1, 0, 1, '{}'::jsonb),
   ('korean', 'spelling',      '맞춤법 탐험대',  1, 1, 'choice_quiz',   1,  1, 6, '{}'::jsonb),
   -- 속담·사자성어는 초등 교재 세 권(하루 한장·바빠·썬더키즈)의 목차를 모아 만들었다.
   -- 세 권 모두에 실린 표현이 1단계, 두 권이 2단계, 한 권이 3단계다.

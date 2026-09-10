@@ -12,8 +12,9 @@
 
 import { BASIC_VOWELS, consonantsForStage, lettersForStage } from '@/activities/jamo/generate';
 import { poolForStage as wordsForStage } from '@/activities/words/generate';
+import { poolForStage as sentencesForStage } from '@/activities/sentences/generate';
 
-export type SheetKind = 'vowel' | 'consonant' | 'letter' | 'word';
+export type SheetKind = 'vowel' | 'consonant' | 'letter' | 'word' | 'sentence';
 
 export interface SheetOption {
   kind: SheetKind;
@@ -29,6 +30,9 @@ export const SHEET_OPTIONS: SheetOption[] = [
   { kind: 'letter', label: '글자 쓰기', minStage: 2 },
   // 낱말은 읽을 수 있는 것이 몇 개는 되어야 쓸 거리가 된다.
   { kind: 'word', label: '낱말 쓰기', minStage: 5 },
+  // 문장은 문장 읽기가 열리는 단계에 맞춘다. 읽지 못하는 문장을 베껴 쓰는 것은
+  // 글자 모양 그리기일 뿐이라 쓰기 연습이 되지 않는다.
+  { kind: 'sentence', label: '문장 쓰기', minStage: 14 },
 ];
 
 export function optionsForStage(stage: number): SheetOption[] {
@@ -39,6 +43,17 @@ export function optionsForStage(stage: number): SheetOption[] {
 export const ROWS_PER_SHEET = 8;
 /** 한 줄에 몇 번 쓰는가. 첫 번째는 따라 쓰도록 흐리게 보여주는 본보기다. */
 export const WRITES_PER_ROW = 5;
+
+/**
+ * 갈래마다 몇 번 쓰고 몇 줄을 넣을지.
+ *
+ * 문장은 길어서 한 줄에 다섯 번 쓸 수 없다. 한 장에 문장 세 개만 넣고,
+ * 각 문장은 본보기 한 줄에 따라 쓸 줄 둘을 붙여 **아래로 쌓는다**.
+ */
+export function layoutFor(kind: SheetKind): { writes: number; rows: number; stacked: boolean } {
+  if (kind === 'sentence') return { writes: 3, rows: 3, stacked: true };
+  return { writes: WRITES_PER_ROW, rows: ROWS_PER_SHEET, stacked: false };
+}
 
 export interface SheetRow {
   /** 쓸 글자나 낱말 */
@@ -54,6 +69,8 @@ export function sourceFor(kind: SheetKind, stage: number): SheetRow[] {
     return consonantsForStage(stage).map((c) => ({ text: c.letter, sound: c.sound }));
   if (kind === 'letter')
     return lettersForStage(stage).map((l) => ({ text: l.letter, sound: l.sound }));
+  if (kind === 'sentence')
+    return sentencesForStage(stage).map((s) => ({ text: s.sentence, sound: s.sentence }));
   return wordsForStage(stage).map((w) => ({ text: w.word, sound: w.word }));
 }
 
@@ -78,5 +95,6 @@ export function makeSheet(
   rand: () => number = Math.random,
 ): SheetRow[] {
   const source = sourceFor(kind, stage);
-  return shuffle(source, rand).slice(0, Math.min(ROWS_PER_SHEET, source.length));
+  const { rows } = layoutFor(kind);
+  return shuffle(source, rand).slice(0, Math.min(rows, source.length));
 }
