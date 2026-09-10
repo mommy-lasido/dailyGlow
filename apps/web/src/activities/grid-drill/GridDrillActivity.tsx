@@ -268,8 +268,6 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
           </Button>
         </div>
 
-        <PuzzleTable puzzle={puzzle} wrote={{}} readOnly showAnswers={showAnswers} />
-
         <Card className="flex flex-col gap-3 print:hidden">
           <div className="flex flex-wrap gap-2">
             <Button size="lg" onClick={() => setStep('solve')}>
@@ -288,6 +286,8 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
             </Button>
           </div>
         </Card>
+
+        <PuzzleTable puzzle={puzzle} wrote={{}} readOnly showAnswers={showAnswers} />
 
         {/* 종이로 푼 기록은 앱이 저절로 알 수 없다. 옆에서 재고 적어 넣는다. */}
         <Card className="flex flex-col gap-4 print:hidden">

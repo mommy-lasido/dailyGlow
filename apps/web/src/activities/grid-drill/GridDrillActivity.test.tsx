@@ -254,6 +254,17 @@ describe('GridDrillActivity — 문제 화면', () => {
     expect(screen.getByRole('button', { name: '답 보기' })).toBeInTheDocument();
   });
 
+  it('할 일 단추는 표보다 위에 있다', () => {
+    // 표가 100칸이면 아래로 길어서, 단추가 표 밑에 있으면 한참 내려가야 보인다.
+    renderActivity();
+    showProblem({ cells: '100' });
+    const body = document.body.textContent!;
+    expect(body.indexOf('화면에서 풀기')).toBeLessThan(body.indexOf('종이로 풀었다면'));
+    const buttons = screen.getByRole('button', { name: /화면에서 풀기/ });
+    const table = screen.getByTestId('drill-table');
+    expect(buttons.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('문제 화면에는 입력칸이 없다', () => {
     renderActivity();
     showProblem({ cells: '25' });
