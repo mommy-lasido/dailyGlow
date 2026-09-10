@@ -1,142 +1,167 @@
 import { describe, expect, it } from 'vitest';
 import {
   answerAt,
-  answerOf,
+  cellAnswer,
   cellAt,
-  DRILL_CELLS,
   DRILL_OPS,
-  DRILL_SIZE,
-  formatDuration,
-  makeTable,
-  needsConfirm,
-  opSign,
-  possibleAnswers,
+  DRILL_SIZES,
+  formatTime,
+  isCellCorrect,
+  isCellFilled,
+  levelsOf,
+  makePuzzle,
+  pickHeaders,
+  sideOf,
   type DrillOp,
 } from './generate';
 
-const OPS: DrillOp[] = ['add', 'sub', 'mul'];
+const OPS: DrillOp[] = ['+', '-', '×', '÷'];
 
-describe('makeTable', () => {
-  it.each(OPS)('%s — 가로·세로 머리줄이 열 개씩이고 겹치지 않는다', (op) => {
-    const t = makeTable(op);
-    expect(t.cols).toHaveLength(DRILL_SIZE);
-    expect(t.rows).toHaveLength(DRILL_SIZE);
-    expect(new Set(t.cols).size).toBe(DRILL_SIZE);
-    expect(new Set(t.rows).size).toBe(DRILL_SIZE);
+describe('설정', () => {
+  it('예전 앱과 같은 네 가지 셈을 낸다', () => {
+    expect(DRILL_OPS.map((o) => o.op)).toEqual(['+', '-', '×', '÷']);
   });
 
-  it('더하기와 곱하기는 0~9 를 쓴다', () => {
-    for (const op of ['add', 'mul'] as DrillOp[]) {
-      const t = makeTable(op);
-      expect([...t.rows].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-      expect([...t.cols].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  it('예전 앱과 같은 세 가지 칸 수를 낸다', () => {
+    expect(DRILL_SIZES.map((s) => s.cells)).toEqual([25, 64, 100]);
+    expect(sideOf(25)).toBe(5);
+    expect(sideOf(64)).toBe(8);
+    expect(sideOf(100)).toBe(10);
+  });
+
+  it('셈마다 단계가 있다', () => {
+    for (const op of OPS) expect(levelsOf(op).length).toBeGreaterThan(0);
+    expect(levelsOf('+')).toHaveLength(4);
+    expect(levelsOf('×')).toHaveLength(2);
+  });
+});
+
+describe('pickHeaders', () => {
+  it('바라는 개수만큼 뽑는다', () => {
+    expect(pickHeaders(0, 9, 5)).toHaveLength(5);
+    expect(pickHeaders(0, 9, 10)).toHaveLength(10);
+    expect(pickHeaders(20, 49, 8)).toHaveLength(8);
+  });
+
+  it('범위 안의 수만 쓴다', () => {
+    for (const n of pickHeaders(10, 19, 8)) {
+      expect(n).toBeGreaterThanOrEqual(10);
+      expect(n).toBeLessThanOrEqual(19);
     }
   });
 
-  it('빼기는 세로 머리줄이 10~19 라 답이 음수로 내려가지 않는다', () => {
-    const t = makeTable('sub');
-    expect([...t.rows].sort((a, b) => a - b)).toEqual([10, 11, 12, 13, 14, 15, 16, 17, 18, 19]);
-    for (let i = 0; i < DRILL_CELLS; i += 1) {
-      expect(answerAt(t, i)).toBeGreaterThan(0);
-    }
+  it('범위가 넉넉하면 겹치지 않는다', () => {
+    expect(new Set(pickHeaders(0, 9, 10)).size).toBe(10);
+  });
+
+  it('범위가 칸 수보다 좁으면 다시 쓴다', () => {
+    // 1~9 는 아홉 개뿐인데 열 칸을 채워야 한다.
+    expect(pickHeaders(1, 9, 10)).toHaveLength(10);
   });
 
   it('순서가 섞여 나온다', () => {
-    // 늘 같은 순서면 답을 외워 버려서 셈을 하지 않는다.
+    // 늘 같은 순서면 답을 외워 버려 셈을 하지 않는다.
     const seen = new Set<string>();
-    for (let i = 0; i < 50; i += 1) seen.add(makeTable('add').cols.join(','));
+    for (let i = 0; i < 50; i += 1) seen.add(pickHeaders(0, 9, 10).join(','));
     expect(seen.size).toBeGreaterThan(1);
   });
 });
 
-describe('answerOf', () => {
-  it('셈을 바르게 한다', () => {
-    expect(answerOf('add', 7, 5)).toBe(12);
-    expect(answerOf('sub', 13, 5)).toBe(8);
-    expect(answerOf('mul', 7, 6)).toBe(42);
+describe('cellAnswer', () => {
+  it('네 가지 셈을 바르게 한다', () => {
+    expect(cellAnswer('+', 7, 5).value).toBe(12);
+    expect(cellAnswer('-', 13, 5).value).toBe(8);
+    expect(cellAnswer('×', 7, 6).value).toBe(42);
+  });
+
+  it('나눗셈은 몫과 나머지를 함께 낸다', () => {
+    const a = cellAnswer('÷', 17, 5);
+    expect(a.quotient).toBe(3);
+    expect(a.remainder).toBe(2);
+  });
+
+  it('나머지가 없으면 0 이다', () => {
+    expect(cellAnswer('÷', 20, 5).remainder).toBe(0);
   });
 });
 
-describe('cellAt / answerAt', () => {
-  it('왼쪽 위에서 오른쪽 아래로 백 칸을 훑는다', () => {
-    const t = makeTable('add');
-    expect(cellAt(t, 0)).toEqual({ row: t.rows[0], col: t.cols[0] });
-    expect(cellAt(t, 9)).toEqual({ row: t.rows[0], col: t.cols[9] });
-    expect(cellAt(t, 10)).toEqual({ row: t.rows[1], col: t.cols[0] });
-    expect(cellAt(t, 99)).toEqual({ row: t.rows[9], col: t.cols[9] });
-  });
-
-  it('백 칸이 모두 서로 다른 셈이다', () => {
-    const t = makeTable('add');
-    const pairs = new Set<string>();
-    for (let i = 0; i < DRILL_CELLS; i += 1) {
-      const { row, col } = cellAt(t, i);
-      pairs.add(`${row}+${col}`);
-      expect(answerAt(t, i)).toBe(row + col);
+describe('makePuzzle', () => {
+  it.each(OPS)('%s — 칸 수에 맞는 표를 만든다', (op) => {
+    for (const cells of [25, 64, 100] as const) {
+      const p = makePuzzle(op, cells, 1);
+      expect(p.rowHeaders).toHaveLength(sideOf(cells));
+      expect(p.colHeaders).toHaveLength(sideOf(cells));
+      expect(p.cells).toBe(cells);
     }
-    expect(pairs.size).toBe(DRILL_CELLS);
-  });
-});
-
-describe('possibleAnswers', () => {
-  it('더하기는 0~18', () => {
-    expect(possibleAnswers('add')).toEqual([...Array(19).keys()]);
   });
 
-  it('빼기는 1~19', () => {
-    expect(possibleAnswers('sub')[0]).toBe(1);
-    expect(possibleAnswers('sub').at(-1)).toBe(19);
-  });
-
-  it('곱하기는 0 부터 81 까지', () => {
-    const a = possibleAnswers('mul');
-    expect(a[0]).toBe(0);
-    expect(a.at(-1)).toBe(81);
-  });
-});
-
-describe('needsConfirm', () => {
-  it('더 눌러야 할 수도 있으면 확인을 기다린다', () => {
-    // 더하기에서 1 은 1 일 수도 12 일 수도 있다.
-    expect(needsConfirm('add', '1')).toBe(true);
-  });
-
-  it('더 이어질 수 없으면 바로 넘어간다', () => {
-    // 빠르기를 재는 활동이라 확인 단추를 누르는 손짓 하나가 아깝다.
-    for (const d of ['2', '3', '4', '5', '6', '7', '8', '9', '0']) {
-      expect(needsConfirm('add', d)).toBe(false);
+  it('뺄셈은 답이 음수로 내려가지 않는다', () => {
+    for (const level of levelsOf('-')) {
+      const p = makePuzzle('-', 100, level.id);
+      for (let i = 0; i < p.cells; i += 1) {
+        expect(answerAt(p, i).value).toBeGreaterThanOrEqual(0);
+      }
     }
-    expect(needsConfirm('add', '12')).toBe(false);
   });
 
-  it('빈칸은 확인할 것이 없다', () => {
-    expect(needsConfirm('add', '')).toBe(true);
+  it('나눗셈은 0 으로 나누지 않는다', () => {
+    for (const level of levelsOf('÷')) {
+      const p = makePuzzle('÷', 100, level.id);
+      for (const c of p.colHeaders) expect(c).toBeGreaterThan(0);
+    }
   });
 
-  it('곱하기는 한 자리 숫자 대부분이 이어질 수 있다', () => {
-    // 8 은 8 일 수도 80·81 일 수도 있다.
-    expect(needsConfirm('mul', '8')).toBe(true);
-    expect(needsConfirm('mul', '81')).toBe(false);
-    // 9 로 시작하는 답은 없다.
-    expect(needsConfirm('mul', '9')).toBe(false);
-  });
-});
-
-describe('opSign / DRILL_OPS', () => {
-  it('세 가지 셈을 고를 수 있다', () => {
-    expect(DRILL_OPS.map((o) => o.op)).toEqual(['add', 'sub', 'mul']);
-    expect(opSign('add')).toBe('＋');
-    expect(opSign('mul')).toBe('×');
+  it('없는 단계를 부르면 첫 단계로 만든다', () => {
+    const p = makePuzzle('+', 25, 99);
+    for (const r of p.rowHeaders) expect(r).toBeLessThanOrEqual(9);
   });
 });
 
-describe('formatDuration', () => {
-  it('1분이 안 되면 초만 말한다', () => {
-    expect(formatDuration(45)).toBe('45초');
+describe('cellAt', () => {
+  it('왼쪽 위에서 오른쪽 아래로 훑는다', () => {
+    const p = makePuzzle('+', 25, 1);
+    expect(cellAt(p, 0)).toEqual({ row: p.rowHeaders[0], col: p.colHeaders[0] });
+    expect(cellAt(p, 4)).toEqual({ row: p.rowHeaders[0], col: p.colHeaders[4] });
+    expect(cellAt(p, 5)).toEqual({ row: p.rowHeaders[1], col: p.colHeaders[0] });
+    expect(cellAt(p, 24)).toEqual({ row: p.rowHeaders[4], col: p.colHeaders[4] });
+  });
+});
+
+describe('isCellCorrect / isCellFilled', () => {
+  it('적은 값이 답과 같아야 맞다', () => {
+    const p = makePuzzle('+', 25, 1);
+    const a = answerAt(p, 0);
+    expect(isCellCorrect(p, 0, { value: String(a.value) })).toBe(true);
+    expect(isCellCorrect(p, 0, { value: String(a.value + 1) })).toBe(false);
   });
 
-  it('1분이 넘으면 분과 초를 함께 말한다', () => {
-    expect(formatDuration(83)).toBe('1분 23초');
-    expect(formatDuration(120)).toBe('2분 0초');
+  it('빈칸은 틀린 것으로 본다', () => {
+    const p = makePuzzle('+', 25, 1);
+    expect(isCellCorrect(p, 0, { value: '' })).toBe(false);
+  });
+
+  it('나눗셈은 몫과 나머지가 둘 다 맞아야 한다', () => {
+    const p = makePuzzle('÷', 25, 1);
+    const a = answerAt(p, 0);
+    expect(
+      isCellCorrect(p, 0, { value: String(a.quotient), remainder: String(a.remainder) }),
+    ).toBe(true);
+    expect(isCellCorrect(p, 0, { value: String(a.quotient), remainder: '9' })).toBe(false);
+  });
+
+  it('나눗셈은 두 칸을 다 채워야 채운 것이다', () => {
+    expect(isCellFilled('÷', { value: '3' })).toBe(false);
+    expect(isCellFilled('÷', { value: '3', remainder: '0' })).toBe(true);
+    expect(isCellFilled('+', { value: '3' })).toBe(true);
+    expect(isCellFilled('+', undefined)).toBe(false);
+  });
+});
+
+describe('formatTime', () => {
+  it('예전 앱과 같은 0:00 모양으로 적는다', () => {
+    expect(formatTime(0)).toBe('0:00');
+    expect(formatTime(45)).toBe('0:45');
+    expect(formatTime(83)).toBe('1:23');
+    expect(formatTime(600)).toBe('10:00');
   });
 });

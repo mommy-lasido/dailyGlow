@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { GridDrillActivity } from './GridDrillActivity';
-import { DRILL_CELLS } from './generate';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
 
 vi.mock('@/lib/confetti', () => ({ spawnConfetti: () => {} }));
@@ -23,169 +22,209 @@ function renderActivity(onFinish: (r: ActivityResult) => void = () => {}) {
   );
 }
 
-function start(name: RegExp = /더하기 100칸/) {
-  fireEvent.click(screen.getByRole('button', { name }));
-}
-
-/** 지금 화면의 셈에서 답을 계산한다. */
-function answerNow(): number {
-  const text = screen.getByTestId('problem').textContent ?? '';
-  const [, a, sign, b] = text.match(/(\d+)\s*(＋|－|×)\s*(\d+)/) ?? [];
-  const x = Number(a);
-  const y = Number(b);
-  if (sign === '＋') return x + y;
-  if (sign === '－') return x - y;
-  return x * y;
-}
-
-function key(digit: string) {
+function choose(testid: string, attr: string, value: string) {
   fireEvent.click(
-    screen.getAllByTestId('key').find((b) => b.getAttribute('data-digit') === digit)!,
+    screen.getAllByTestId(testid).find((b) => b.getAttribute(attr) === value)!,
   );
 }
 
-/** 숫자를 눌러 넣는다. 확인이 필요한 경우 확인까지 누른다. */
-function typeNumber(n: number) {
-  for (const d of String(n)) key(d);
-  const confirm = screen.queryByRole('button', { name: '확인' });
-  if (confirm && !(confirm as HTMLButtonElement).disabled) fireEvent.click(confirm);
+function begin(opts: { op?: string; cells?: string; mode?: string } = {}) {
+  if (opts.op) choose('op', 'data-op', opts.op);
+  if (opts.cells) choose('size', 'data-cells', opts.cells);
+  if (opts.mode) choose('mode', 'data-mode', opts.mode);
+  fireEvent.click(screen.getByRole('button', { name: '시작하기' }));
 }
 
-function answerCorrectly() {
-  typeNumber(answerNow());
+/** 화면의 표에서 머리줄 숫자를 읽어 답을 직접 셈한다. */
+function readTable() {
+  const rows = Array.from(screen.getByTestId('drill-table').querySelectorAll('tr'));
+  const head = Array.from(rows[0]!.querySelectorAll('td'));
+  const op = head[0]!.textContent!;
+  const cols = head.slice(1).map((td) => Number(td.textContent));
+  const rowHeaders = rows.slice(1).map((tr) => Number(tr.querySelector('td')!.textContent));
+  return { op, cols, rowHeaders };
 }
 
-function answerWrong() {
-  const wrong = answerNow() === 0 ? 5 : 0;
-  typeNumber(wrong);
+function fillAll(correct = true) {
+  const { op, cols, rowHeaders } = readTable();
+  const side = cols.length;
+  for (let ri = 0; ri < side; ri += 1) {
+    for (let ci = 0; ci < side; ci += 1) {
+      const index = ri * side + ci;
+      const r = rowHeaders[ri]!;
+      const c = cols[ci]!;
+      const value =
+        op === '+' ? r + c : op === '-' ? r - c : op === '×' ? r * c : Math.floor(r / c);
+      const box = screen
+        .getAllByTestId('input')
+        .find(
+          (el) =>
+            el.getAttribute('data-index') === String(index) &&
+            el.getAttribute('data-field') === 'value',
+        )!;
+      fireEvent.change(box, { target: { value: String(correct ? value : value + 1) } });
+      if (op === '÷') {
+        const rem = screen
+          .getAllByTestId('input')
+          .find(
+            (el) =>
+              el.getAttribute('data-index') === String(index) &&
+              el.getAttribute('data-field') === 'remainder',
+          )!;
+        fireEvent.change(rem, { target: { value: String(r % c) } });
+      }
+    }
+  }
 }
 
-describe('GridDrillActivity', () => {
-  it('어떤 셈을 할지 먼저 고르게 한다', () => {
+describe('GridDrillActivity — 고르기', () => {
+  it('예전 앱처럼 셈·단계·칸 수·푸는 곳을 고르게 한다', () => {
     renderActivity();
-    expect(screen.getByRole('button', { name: /더하기 100칸/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /빼기 100칸/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /곱하기 100칸/ })).toBeInTheDocument();
-    expect(screen.queryByTestId('drill-table')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('op')).toHaveLength(4);
+    expect(screen.getAllByTestId('size')).toHaveLength(3);
+    expect(screen.getAllByTestId('mode')).toHaveLength(2);
+    expect(screen.getAllByTestId('level').length).toBeGreaterThan(0);
   });
 
-  it('표에 백 칸이 있다', () => {
+  it('셈을 바꾸면 단계도 그 셈의 것으로 바뀐다', () => {
     renderActivity();
-    start();
-    expect(screen.getAllByTestId('cell')).toHaveLength(DRILL_CELLS);
+    expect(screen.getAllByTestId('level')).toHaveLength(4); // 덧셈
+    choose('op', 'data-op', '×');
+    expect(screen.getAllByTestId('level')).toHaveLength(2); // 곱셈
   });
 
-  it('지금 채울 칸을 표에서 짚어준다', () => {
+  it('25칸을 고르면 25칸이 나온다', () => {
     renderActivity();
-    start();
-    const highlighted = screen
-      .getAllByTestId('cell')
-      .filter((c) => c.className.includes('bg-glow-300'));
-    expect(highlighted).toHaveLength(1);
-    expect(highlighted[0]).toHaveAttribute('data-index', '0');
+    begin({ cells: '25' });
+    expect(screen.getAllByTestId('cell')).toHaveLength(25);
   });
 
-  it('숫자를 누르면 칸이 채워지고 다음 칸으로 넘어간다', () => {
+  it('64칸도 있다', () => {
     renderActivity();
-    start();
-    expect(screen.getByText('0 / 100칸')).toBeInTheDocument();
-    answerCorrectly();
-    expect(screen.getByText('1 / 100칸')).toBeInTheDocument();
+    begin({ cells: '64' });
+    expect(screen.getAllByTestId('cell')).toHaveLength(64);
   });
 
-  it('더 눌러야 할 수도 있는 숫자는 확인을 기다린다', () => {
-    // 더하기에서 1 은 1 일 수도 12 일 수도 있다.
+  it('100칸이 기본이다', () => {
     renderActivity();
-    start();
-    key('1');
-    expect(screen.getByTestId('problem')).toHaveTextContent('1');
-    expect(screen.getByText('0 / 100칸')).toBeInTheDocument();
+    begin();
+    expect(screen.getAllByTestId('cell')).toHaveLength(100);
+  });
+});
+
+describe('GridDrillActivity — 화면에서 풀기', () => {
+  it('식을 따로 보여주지 않는다 — 표에서 두 수를 스스로 찾아야 한다', () => {
+    // 아래에 식을 적어 주면 그냥 연산 문제 100개를 푸는 것과 다를 바 없다.
+    renderActivity();
+    begin({ cells: '25' });
+    expect(screen.queryByTestId('problem')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('input')).toHaveLength(25);
   });
 
-  it('지우기를 누르면 눌렀던 숫자가 사라진다', () => {
+  it('시계는 첫 글자를 적을 때 시작한다', () => {
+    // 표를 들여다보는 시간까지 세면 기록이 부정확해진다.
     renderActivity();
-    start();
-    key('1');
-    fireEvent.click(screen.getByRole('button', { name: '지우기' }));
-    expect(screen.getByTestId('problem')).toHaveTextContent('?');
+    begin({ cells: '25' });
+    expect(screen.getByTestId('timer')).toHaveTextContent('0:00');
+    fireEvent.change(screen.getAllByTestId('input')[0]!, { target: { value: '3' } });
+    // 시작했다는 것은 이후 기록이 남는 것으로 확인한다.
+    expect(screen.getByTestId('timer')).toBeInTheDocument();
   });
 
-  it('1차에서는 맞았는지 알려주지 않는다', () => {
+  it('숫자가 아닌 것은 받지 않는다', () => {
     renderActivity();
-    start();
-    answerWrong();
-    expect(screen.queryByText(/다시 볼까/)).not.toBeInTheDocument();
-    expect(screen.queryByTestId('hint')).not.toBeInTheDocument();
-    expect(screen.getByText('1 / 100칸')).toBeInTheDocument();
+    begin({ cells: '25' });
+    const box = screen.getAllByTestId('input')[0]! as HTMLInputElement;
+    fireEvent.change(box, { target: { value: 'ㄱ3ㄴ' } });
+    expect(box.value).toBe('3');
   });
 
-  it('백 칸을 다 맞히면 걸린 시간을 알려주고 끝난다', () => {
+  it('채점하면 틀린 칸이 빨갛게 표시된다', () => {
+    renderActivity();
+    begin({ cells: '25' });
+    fillAll(false);
+    fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
+    expect(screen.getByTestId('score')).toHaveTextContent('25칸 중 0칸 맞았어요');
+    expect(
+      screen.getAllByTestId('cell').filter((c) => c.className.includes('bg-red-50')),
+    ).toHaveLength(25);
+  });
+
+  it('다 맞히면 걸린 시간을 알려주고 기록한다', () => {
     const onFinish = vi.fn();
     renderActivity(onFinish);
-    start();
-    for (let i = 0; i < DRILL_CELLS; i += 1) answerCorrectly();
-    expect(screen.getByTestId('elapsed')).toHaveTextContent(/처음 백 칸을 .+ 만에 채웠어요/);
+    begin({ cells: '25' });
+    fillAll();
+    fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
+    expect(screen.getByTestId('result')).toHaveTextContent('25칸을 다 채웠어요');
     expect(onFinish).toHaveBeenCalledTimes(1);
     const r = onFinish.mock.calls[0]![0] as ActivityResult;
-    expect(r.totalCount).toBe(100);
-    expect(r.correctCount).toBe(100);
-    expect(r.meta?.op).toBe('add');
-    expect(r.meta?.firstRoundSec).toBeGreaterThan(0);
+    expect(r.totalCount).toBe(25);
+    expect(r.correctCount).toBe(25);
+    expect(r.meta?.cells).toBe(25);
   });
 
-  it('틀린 칸이 있으면 채점 화면에서 바른 답을 보여준다', () => {
-    renderActivity();
-    start();
-    answerWrong();
-    for (let i = 1; i < DRILL_CELLS; i += 1) answerCorrectly();
-
-    expect(screen.getByTestId('grading-title')).toHaveTextContent('100문제 중 99개 맞혔어요!');
-    // 틀린 칸은 빨갛게, 그 자리에 바른 답이 적힌다.
-    const wrong = screen.getAllByTestId('cell').filter((c) => c.className.includes('bg-red-50'));
-    expect(wrong).toHaveLength(1);
-    expect(wrong[0]).toHaveAttribute('data-index', '0');
-  });
-
-  it('2차에 고쳐도 점수는 1차 것 그대로다', () => {
+  it('고쳐서 맞혀도 실력은 처음 채점 점수로 잰다', () => {
     const onFinish = vi.fn();
     renderActivity(onFinish);
-    start();
-    answerWrong();
-    for (let i = 1; i < DRILL_CELLS; i += 1) answerCorrectly();
-    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 채우기' }));
-    answerCorrectly();
-    expect(onFinish.mock.calls[0]![0].correctCount).toBe(99);
+    begin({ cells: '25' });
+    fillAll(false);
+    fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
+    fillAll(true);
+    fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
+    expect(onFinish.mock.calls[0]![0].correctCount).toBe(0);
   });
 
-  it('3차에는 답을 보여주고, 맞힐 때까지 같은 칸에 머문다', () => {
+  it('나눗셈은 몫과 나머지를 따로 적는다', () => {
     renderActivity();
-    start();
-    answerWrong();
-    for (let i = 1; i < DRILL_CELLS; i += 1) answerCorrectly();
-    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 채우기' }));
-    answerWrong();
-    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 채우기' }));
-
-    expect(screen.getByTestId('hint')).toHaveTextContent(`답은 ${answerNow()} 이에요`);
-    const stuck = screen.getByTestId('problem').textContent;
-    answerWrong();
-    expect(screen.getByText(/답을 다시 볼까/)).toBeInTheDocument();
-    expect(screen.getByTestId('problem').textContent).toBe(stuck);
+    begin({ op: '÷', cells: '25' });
+    const first = screen
+      .getAllByTestId('input')
+      .filter((el) => el.getAttribute('data-index') === '0');
+    expect(first.map((el) => el.getAttribute('data-field'))).toEqual(['value', 'remainder']);
   });
 
-  it('빼기는 답이 음수로 내려가지 않는다', () => {
+  it('나눗셈은 몫과 나머지가 둘 다 맞아야 맞다', () => {
+    const onFinish = vi.fn();
+    renderActivity(onFinish);
+    begin({ op: '÷', cells: '25' });
+    fillAll();
+    fireEvent.click(screen.getByRole('button', { name: '채점하기' }));
+    expect(onFinish).toHaveBeenCalledTimes(1);
+    expect(onFinish.mock.calls[0]![0].correctCount).toBe(25);
+  });
+});
+
+describe('GridDrillActivity — 인쇄해서 풀기', () => {
+  it('인쇄 화면에는 입력칸이 없다', () => {
+    // 종이에 연필로 푸는 것이라 화면에서 채우지 않는다.
     renderActivity();
-    start(/빼기 100칸/);
-    for (let i = 0; i < 20; i += 1) {
-      expect(answerNow()).toBeGreaterThan(0);
-      answerCorrectly();
-    }
+    begin({ cells: '25', mode: 'paper' });
+    expect(screen.queryAllByTestId('input')).toHaveLength(0);
+    expect(screen.getAllByTestId('cell')).toHaveLength(25);
   });
 
-  it('곱하기도 백 칸을 낸다', () => {
+  it('인쇄 단추가 있다', () => {
     renderActivity();
-    start(/곱하기 100칸/);
-    expect(screen.getAllByTestId('cell')).toHaveLength(DRILL_CELLS);
-    expect(screen.getByTestId('problem')).toHaveTextContent('×');
+    begin({ cells: '25', mode: 'paper' });
+    expect(screen.getByRole('button', { name: /인쇄하기/ })).toBeInTheDocument();
+  });
+
+  it('답 보기로 맞춰볼 수 있다', () => {
+    renderActivity();
+    begin({ op: '+', cells: '25', mode: 'paper' });
+    // 처음에는 칸이 비어 있다.
+    expect(screen.getAllByTestId('cell')[0]!.textContent).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: '답 보기' }));
+    expect(screen.getAllByTestId('cell')[0]!.textContent).not.toBe('');
+    fireEvent.click(screen.getByRole('button', { name: '답 숨기기' }));
+    expect(screen.getAllByTestId('cell')[0]!.textContent).toBe('');
+  });
+
+  it('인쇄할 때 앱 껍데기는 감춘다', () => {
+    renderActivity();
+    begin({ cells: '25', mode: 'paper' });
+    const bar = screen.getByRole('button', { name: /인쇄하기/ }).closest('div')!.parentElement!;
+    expect(bar.className).toContain('print:hidden');
   });
 });

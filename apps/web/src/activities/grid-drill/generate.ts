@@ -1,36 +1,85 @@
 /**
  * 100칸 계산의 표 만들기.
  *
- * 이 활동의 목적은 새로운 셈을 배우는 것이 아니라 **이미 아는 셈을 빠르고
- * 정확하게** 하는 것이다. 그래서 문제를 어렵게 만들지 않는다 — 한 자리 수끼리의
- * 셈 백 개를 순서 없이 늘어놓고, 얼마나 빨리 채우는지를 본다.
+ * 영숙님이 직접 만든 예전 앱(`files_라윤/index.html`)의 짜임을 그대로 옮겼다 —
+ * 네 가지 셈, 세 가지 칸 수, 셈마다의 단계별 수 범위까지 같다.
  *
- * 종이로 하는 100칸 계산과 같은 짜임이다. 가로 머리줄과 세로 머리줄에 숫자가
- * 하나씩 있고, 두 수를 셈한 값을 칸에 적는다.
+ * 이 활동의 목적은 새로운 셈을 배우는 것이 아니라 **이미 아는 셈을 빠르고
+ * 정확하게** 하는 것이다. 그래서 문제를 어렵게 만들지 않고, 얼마나 빨리
+ * 채우는지를 잰다.
  */
 
-export type DrillOp = 'add' | 'sub' | 'mul';
-
-export const DRILL_SIZE = 10;
-/** 표의 칸 수. 10×10 이라 백 칸이다. */
-export const DRILL_CELLS = DRILL_SIZE * DRILL_SIZE;
+export type DrillOp = '+' | '-' | '×' | '÷';
 
 export const DRILL_OPS = [
-  { op: 'add' as DrillOp, sign: '＋', name: '더하기 100칸' },
-  { op: 'sub' as DrillOp, sign: '－', name: '빼기 100칸' },
-  { op: 'mul' as DrillOp, sign: '×', name: '곱하기 100칸' },
+  { op: '+' as DrillOp, label: '덧셈' },
+  { op: '-' as DrillOp, label: '뺄셈' },
+  { op: '×' as DrillOp, label: '곱셈' },
+  { op: '÷' as DrillOp, label: '나눗셈' },
 ] as const;
 
-export function opSign(op: DrillOp): string {
-  return DRILL_OPS.find((o) => o.op === op)!.sign;
+/** 칸 수와 한 줄의 길이. 100칸이 버거우면 25칸부터 해도 된다. */
+export const DRILL_SIZES = [
+  { cells: 25, side: 5, label: '25칸 (5×5)' },
+  { cells: 64, side: 8, label: '64칸 (8×8)' },
+  { cells: 100, side: 10, label: '100칸 (10×10)' },
+] as const;
+
+export type DrillCells = (typeof DRILL_SIZES)[number]['cells'];
+
+export function sideOf(cells: DrillCells): number {
+  return DRILL_SIZES.find((s) => s.cells === cells)!.side;
 }
 
-export interface DrillTable {
+export interface DrillRange {
+  rowMin: number;
+  rowMax: number;
+  colMin: number;
+  colMax: number;
+}
+
+export interface DrillLevel {
+  id: number;
+  badge: string;
+  label: string;
+  range: DrillRange;
+}
+
+/** 셈마다의 단계. 예전 앱의 값을 그대로 옮겼다. */
+export const DRILL_LEVELS: Record<DrillOp, DrillLevel[]> = {
+  '+': [
+    { id: 1, badge: '🌱', label: '0~9 + 0~9', range: { rowMin: 0, rowMax: 9, colMin: 0, colMax: 9 } },
+    { id: 2, badge: '🌿', label: '10~19 + 0~9', range: { rowMin: 10, rowMax: 19, colMin: 0, colMax: 9 } },
+    { id: 3, badge: '🌳', label: '10~19 + 10~19', range: { rowMin: 10, rowMax: 19, colMin: 10, colMax: 19 } },
+    { id: 4, badge: '🌟', label: '20~49 + 10~19', range: { rowMin: 20, rowMax: 49, colMin: 10, colMax: 19 } },
+  ],
+  '-': [
+    { id: 1, badge: '🌱', label: '9~18 − 0~9', range: { rowMin: 9, rowMax: 18, colMin: 0, colMax: 9 } },
+    { id: 2, badge: '🌿', label: '20~29 − 10~19', range: { rowMin: 20, rowMax: 29, colMin: 10, colMax: 19 } },
+    { id: 3, badge: '🌳', label: '30~49 − 10~29', range: { rowMin: 30, rowMax: 49, colMin: 10, colMax: 29 } },
+    { id: 4, badge: '🌟', label: '50~99 − 10~49', range: { rowMin: 50, rowMax: 99, colMin: 10, colMax: 49 } },
+  ],
+  '×': [
+    { id: 1, badge: '🌱', label: '구구단 (0~9 × 0~9)', range: { rowMin: 0, rowMax: 9, colMin: 0, colMax: 9 } },
+    { id: 2, badge: '🌟', label: '10~19 × 0~9', range: { rowMin: 10, rowMax: 19, colMin: 0, colMax: 9 } },
+  ],
+  '÷': [
+    { id: 1, badge: '🌱', label: '10~19 ÷ 1~9', range: { rowMin: 10, rowMax: 19, colMin: 1, colMax: 9 } },
+    { id: 2, badge: '🌿', label: '20~49 ÷ 1~9', range: { rowMin: 20, rowMax: 49, colMin: 1, colMax: 9 } },
+    { id: 3, badge: '🌟', label: '50~99 ÷ 1~9', range: { rowMin: 50, rowMax: 99, colMin: 1, colMax: 9 } },
+  ],
+};
+
+export function levelsOf(op: DrillOp): DrillLevel[] {
+  return DRILL_LEVELS[op];
+}
+
+export interface DrillPuzzle {
   op: DrillOp;
-  /** 가로 머리줄 열 개 */
-  cols: number[];
-  /** 세로 머리줄 열 개 */
-  rows: number[];
+  cells: DrillCells;
+  side: number;
+  rowHeaders: number[];
+  colHeaders: number[];
 }
 
 function shuffle<T>(arr: T[], rand: () => number): T[] {
@@ -43,71 +92,105 @@ function shuffle<T>(arr: T[], rand: () => number): T[] {
 }
 
 /**
- * 빼기는 세로 머리줄을 10~19 로 둔다. 그래야 답이 음수로 내려가지 않는다.
- * 종이 교재도 같은 방식으로 짠다.
+ * 머리줄에 쓸 수를 뽑는다.
+ *
+ * 범위가 칸 수보다 좁을 수 있다 — 예를 들어 0~9 에서 여덟 개를 뽑으면 되지만,
+ * 열 개를 뽑으면 딱 맞고, 더 넓은 범위(20~49)에서는 그중 일부만 쓴다.
+ * 범위가 모자라면 앞에서부터 다시 쓴다.
  */
-function rowHeaders(op: DrillOp): number[] {
-  if (op === 'sub') return Array.from({ length: DRILL_SIZE }, (_, i) => i + 10);
-  return Array.from({ length: DRILL_SIZE }, (_, i) => i);
+export function pickHeaders(
+  min: number,
+  max: number,
+  count: number,
+  rand: () => number = Math.random,
+): number[] {
+  const pool = shuffle(
+    Array.from({ length: max - min + 1 }, (_, i) => min + i),
+    rand,
+  );
+  const out: number[] = [];
+  while (out.length < count) out.push(...pool.slice(0, count - out.length));
+  return out;
 }
 
-export function makeTable(op: DrillOp, rand: () => number = Math.random): DrillTable {
+export function makePuzzle(
+  op: DrillOp,
+  cells: DrillCells,
+  levelId: number,
+  rand: () => number = Math.random,
+): DrillPuzzle {
+  const side = sideOf(cells);
+  const level = levelsOf(op).find((l) => l.id === levelId) ?? levelsOf(op)[0]!;
+  const r = level.range;
   return {
     op,
-    cols: shuffle(
-      Array.from({ length: DRILL_SIZE }, (_, i) => i),
-      rand,
-    ),
-    rows: shuffle(rowHeaders(op), rand),
+    cells,
+    side,
+    rowHeaders: pickHeaders(r.rowMin, r.rowMax, side, rand),
+    colHeaders: pickHeaders(r.colMin, r.colMax, side, rand),
   };
-}
-
-export function answerOf(op: DrillOp, row: number, col: number): number {
-  if (op === 'add') return row + col;
-  if (op === 'sub') return row - col;
-  return row * col;
-}
-
-/** 표를 왼쪽 위에서 오른쪽 아래로 훑는 순서. 칸 번호 → (세로, 가로) */
-export function cellAt(table: DrillTable, index: number): { row: number; col: number } {
-  return {
-    row: table.rows[Math.floor(index / DRILL_SIZE)]!,
-    col: table.cols[index % DRILL_SIZE]!,
-  };
-}
-
-export function answerAt(table: DrillTable, index: number): number {
-  const { row, col } = cellAt(table, index);
-  return answerOf(table.op, row, col);
-}
-
-/** 이 셈에서 나올 수 있는 답 전부 */
-export function possibleAnswers(op: DrillOp): number[] {
-  const set = new Set<number>();
-  for (const r of rowHeaders(op)) {
-    for (let c = 0; c < DRILL_SIZE; c += 1) set.add(answerOf(op, r, c));
-  }
-  return [...set].sort((a, b) => a - b);
 }
 
 /**
- * 지금까지 누른 숫자가 답이 될 수도 있고, 더 눌러야 할 수도 있는가.
+ * 한 칸의 답.
  *
- * 더하기에서 '1' 을 눌렀으면 답이 1 일 수도 있고 12 일 수도 있다. 이럴 때는
- * 아이가 확인 단추를 눌러야 하고, 그렇지 않으면 누르는 즉시 다음 칸으로 넘어간다.
- * 빠르기를 재는 활동이라 확인 단추를 누르는 손짓 하나가 아깝다.
+ * 나눗셈만 답이 둘이다 — 몫과 나머지. 예전 앱과 같이 두 칸에 나눠 적는다.
  */
-export function needsConfirm(op: DrillOp, typed: string): boolean {
-  if (typed === '') return true;
-  return possibleAnswers(op).some((a) => {
-    const s = String(a);
-    return s.length > typed.length && s.startsWith(typed);
-  });
+export interface CellAnswer {
+  value: number;
+  /** 나눗셈일 때만 */
+  quotient?: number;
+  remainder?: number;
 }
 
-/** 걸린 시간을 "1분 23초" 로. 1분이 안 되면 초만. */
-export function formatDuration(sec: number): string {
+export function cellAnswer(op: DrillOp, row: number, col: number): CellAnswer {
+  if (op === '+') return { value: row + col };
+  if (op === '-') return { value: row - col };
+  if (op === '×') return { value: row * col };
+  return {
+    value: Math.floor(row / col),
+    quotient: Math.floor(row / col),
+    remainder: row % col,
+  };
+}
+
+/** 표를 왼쪽 위에서 오른쪽 아래로 훑는 순서 */
+export function cellAt(p: DrillPuzzle, index: number): { row: number; col: number } {
+  return {
+    row: p.rowHeaders[Math.floor(index / p.side)]!,
+    col: p.colHeaders[index % p.side]!,
+  };
+}
+
+export function answerAt(p: DrillPuzzle, index: number): CellAnswer {
+  const { row, col } = cellAt(p, index);
+  return cellAnswer(p.op, row, col);
+}
+
+/** 아이가 적은 것이 맞는가. 나눗셈은 몫과 나머지가 둘 다 맞아야 한다. */
+export function isCellCorrect(p: DrillPuzzle, index: number, wrote: CellInput): boolean {
+  const a = answerAt(p, index);
+  if (p.op === '÷') {
+    return Number(wrote.value) === a.quotient && Number(wrote.remainder) === a.remainder;
+  }
+  return wrote.value !== '' && Number(wrote.value) === a.value;
+}
+
+/** 한 칸에 아이가 적은 것. 나눗셈이면 나머지 칸도 쓴다. */
+export interface CellInput {
+  value: string;
+  remainder?: string;
+}
+
+export function isCellFilled(op: DrillOp, wrote: CellInput | undefined): boolean {
+  if (!wrote) return false;
+  if (op === '÷') return wrote.value !== '' && (wrote.remainder ?? '') !== '';
+  return wrote.value !== '';
+}
+
+/** 걸린 시간을 "1:23" 으로. 예전 앱과 같은 모양이다. */
+export function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
 }
