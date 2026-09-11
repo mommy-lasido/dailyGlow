@@ -34,7 +34,8 @@ export function LoginPage() {
             이름이 더 예쁘다고 해서 순서를 바꿨다. 영문은 장식 글씨(Pacifico)로 쓴다. */}
         <div className="mb-6 text-center">
           <h1 className="font-display text-5xl leading-tight text-glow-600">DailyGlow</h1>
-          <p className="mt-2 text-xl font-bold tracking-wide text-glow-700">하루배움</p>
+          {/* 흘림체는 아래로 삐치는 획이 있어, 간격을 넉넉히 둬야 한글과 안 붙는다. */}
+          <p className="mt-4 text-xl font-bold tracking-wide text-glow-700">하루배움</p>
         </div>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">

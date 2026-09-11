@@ -42,7 +42,7 @@ export function Button({
       type={type}
       className={cn(
         // 글자는 언제나 한가운데. 글자 수가 달라도 버튼마다 자리가 흔들리지 않는다.
-        'inline-flex items-center justify-center text-center rounded-full font-rounded font-bold',
+        'inline-flex items-center justify-center text-center rounded-full font-text font-bold',
         // 누르면 두께만큼 내려앉고 그림자가 사라진다 — 진짜 단추를 누르는 느낌.
         'transition-all duration-75 active:translate-y-[5px] active:shadow-none',
         'focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-sky-400',

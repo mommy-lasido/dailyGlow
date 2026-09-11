@@ -10,7 +10,7 @@
   }
 
   body {
-    @apply bg-glow-50 font-rounded text-slate-800 antialiased;
+    @apply bg-glow-50 font-text text-slate-800 antialiased;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
   }

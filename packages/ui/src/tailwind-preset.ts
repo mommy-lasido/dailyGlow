@@ -37,10 +37,20 @@ const preset = {
         '3xl': '2rem',
       },
       fontFamily: {
-        // 동글동글한 한글 글씨체. 획이 굵어 아이가 읽기 좋다.
-        rounded: ['Jua', 'Gaegu', 'system-ui', 'sans-serif'],
-        // 영문 이름(DailyGlow)에만 쓰는 장식 글씨
-        display: ['Pacifico', 'Jua', 'cursive'],
+        /**
+         * 본문 글씨체 — 나눔고딕.
+         *
+         * 동글동글한 글꼴(Jua·Dongle·Hi Melody)을 먼저 보다가 방향을 바꿨다.
+         * 한글을 배우는 앱이라 **자모가 또렷이 갈라져 보이는 것**이 귀여움보다
+         * 먼저다. 둥글린 글꼴은 ㄹ·ㅁ·ㅂ 이 서로 비슷해져, 맥락으로 읽어 낼 수 없는
+         * 아이에게는 글자 모양을 배우는 일 자체가 흐려진다.
+         * 나눔고딕은 교과서에서 익숙한 모양이고 획이 또렷하며 Jua 보다 얇다.
+         *
+         * 귀여움은 글꼴이 아니라 색·버튼·그림으로 낸다.
+         */
+        text: ['"Nanum Gothic"', 'system-ui', 'sans-serif'],
+        /** 로그인 화면의 영문 이름에만 쓰는 장식 글씨. 읽기를 가르치는 글자가 아니다. */
+        display: ['Pacifico', 'cursive'],
       },
       minHeight: {
         touch: '3.5rem',
