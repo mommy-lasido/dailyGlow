@@ -304,23 +304,16 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
           </Button>
         </div>
 
-        <Card className="flex flex-col gap-3 print:hidden">
-          <div className="flex flex-wrap gap-2">
-            <Button size="lg" onClick={() => setStep('solve')}>
-              💻 화면에서 풀기
-            </Button>
-            <Button size="lg" onClick={() => window.print()}>
-              🖨️ 인쇄하기
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={freshPuzzle}>
-              🔄 새 문제 만들기
-            </Button>
-            <Button variant="ghost" onClick={() => setShowAnswers((v) => !v)}>
-              {showAnswers ? '답 숨기기' : '답 보기'}
-            </Button>
-          </div>
+        {/* 네 가지를 한 줄에 둔다. 화면이 좁으면 저절로 다음 줄로 넘어간다. */}
+        <Card className="flex flex-wrap items-center gap-2 print:hidden">
+          <Button onClick={() => setStep('solve')}>💻 화면에서 풀기</Button>
+          <Button onClick={() => window.print()}>🖨️ 인쇄하기</Button>
+          <Button variant="ghost" onClick={freshPuzzle}>
+            🔄 새 문제 만들기
+          </Button>
+          <Button variant="ghost" onClick={() => setShowAnswers((v) => !v)}>
+            {showAnswers ? '답 숨기기' : '답 보기'}
+          </Button>
         </Card>
 
         <PuzzleTable
