@@ -37,7 +37,10 @@ const preset = {
         '3xl': '2rem',
       },
       fontFamily: {
-        rounded: ['"Baloo 2"', '"Gaegu"', 'system-ui', 'sans-serif'],
+        // 동글동글한 한글 글씨체. 획이 굵어 아이가 읽기 좋다.
+        rounded: ['Jua', 'Gaegu', 'system-ui', 'sans-serif'],
+        // 영문 이름(DailyGlow)에만 쓰는 장식 글씨
+        display: ['Pacifico', 'Jua', 'cursive'],
       },
       minHeight: {
         touch: '3.5rem',

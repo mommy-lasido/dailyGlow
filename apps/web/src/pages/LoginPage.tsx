@@ -30,10 +30,11 @@ export function LoginPage() {
   return (
     <div className="flex flex-1 items-center justify-center">
       <Card className="w-full max-w-md">
-        {/* 한국어 이름이 주인공이고, 영문 워드마크는 그 아래 작게 — 순전히 장식이다. */}
+        {/* 영문 이름이 위에 크게, 한글 이름은 그 아래. 영숙님이 "데일리글로우" 라는
+            이름이 더 예쁘다고 해서 순서를 바꿨다. 영문은 장식 글씨(Pacifico)로 쓴다. */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-glow-600">하루배움</h1>
-          <p className="mt-1 text-sm font-bold tracking-widest text-slate-400">DailyGlow</p>
+          <h1 className="font-display text-5xl leading-tight text-glow-600">DailyGlow</h1>
+          <p className="mt-2 text-xl font-bold tracking-wide text-glow-700">하루배움</p>
         </div>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm font-bold text-slate-600">
