@@ -11,11 +11,20 @@ import {
 } from './generate';
 
 describe('자료', () => {
-  it('세 권 모두에 실린 속담 16개와 사자성어 8개를 담는다', () => {
+  it('세 권 모두와 두 권에 실린 것을 담는다', () => {
     // 어느 표현을 넣을지는 교재 세 권의 목차가 정했다.
-    expect(sayingsOf('proverb')).toHaveLength(16);
-    expect(sayingsOf('idiom')).toHaveLength(8);
-    expect(SAYINGS.every((s) => s.books === 3)).toBe(true);
+    expect(sayingsOf('proverb')).toHaveLength(47);
+    expect(sayingsOf('idiom')).toHaveLength(57);
+    expect(SAYINGS.every((s) => s.books === 3 || s.books === 2)).toBe(true);
+  });
+
+  it('세 권에 실린 것이 먼저 온다', () => {
+    // books 숫자가 곧 난이도다. 나중에 단계를 나눌 때 쓴다.
+    for (const kind of ['proverb', 'idiom'] as const) {
+      const list = sayingsOf(kind);
+      const firstTwo = list.findIndex((s) => s.books === 2);
+      expect(list.slice(0, firstTwo).every((s) => s.books === 3)).toBe(true);
+    }
   });
 
   it('모든 표현에 아홉 살이 알아들을 뜻과 예문이 있다', () => {
@@ -114,15 +123,15 @@ describe('makeSayingSet', () => {
     }
   });
 
-  it('속담은 열 문제를 낸다', () => {
+  it('속담도 사자성어도 열 문제를 낸다', () => {
     expect(makeSayingSet(poolFor('proverb'))).toHaveLength(10);
+    expect(makeSayingSet(poolFor('idiom'))).toHaveLength(10);
   });
 
   it('표현이 모자라면 있는 만큼만 낸다', () => {
-    // 사자성어는 아직 여덟 개다. 억지로 열을 채우면 다시 겹친다.
-    const set = makeSayingSet(poolFor('idiom'));
-    expect(set).toHaveLength(8);
-    expect(new Set(set.map((p) => p.answer.text)).size).toBe(8);
+    // 억지로 채우면 같은 표현이 한 판에 두 번 나온다.
+    const few = poolFor('idiom').slice(0, 4);
+    expect(makeSayingSet(few)).toHaveLength(4);
   });
 
   it('문제마다 보기 3개가 제대로 붙는다', () => {
