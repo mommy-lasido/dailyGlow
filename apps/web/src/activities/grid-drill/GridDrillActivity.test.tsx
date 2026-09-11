@@ -8,9 +8,11 @@ import type { ActivityLesson, ActivityResult } from '@/activities/types';
 vi.mock('@/lib/confetti', () => ({ spawnConfetti: () => {} }));
 // 열쇠가 없는 상태를 기본으로 둔다 — 사진 칸이 감춰져야 한다.
 const photoGradingAvailable = vi.hoisted(() => vi.fn(async () => false));
+const readAndGrade = vi.hoisted(() => vi.fn());
 vi.mock('./photo', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./photo')>()),
   photoGradingAvailable,
+  readAndGrade,
 }));
 
 const lesson: ActivityLesson = {
@@ -314,6 +316,33 @@ describe('GridDrillActivity — 사진으로 채점하기', () => {
     expect(screen.queryByTestId('photo')).not.toBeInTheDocument();
     // 손으로 개수를 적는 길은 그대로 열려 있어야 한다.
     expect(screen.getByTestId('paper-correct')).toBeInTheDocument();
+  });
+
+  it('새 문제를 만들면 사진으로 읽어 온 것도 지운다', async () => {
+    // 새 표에는 지난 사진의 답이 아무 뜻이 없다. 그대로 두면 예전 숫자가
+    // 새 표 위에 얹혀 엉뚱하게 채점된다.
+    photoGradingAvailable.mockResolvedValue(true);
+    readAndGrade.mockResolvedValue({
+      cells: [['18', '', '', '', '']],
+      correct: 1,
+      total: 25,
+      wrongIndexes: [],
+      blankIndexes: [],
+      unreadIndexes: [],
+    });
+    renderActivity();
+    showProblem({ cells: '25' });
+    await screen.findByTestId('photo');
+
+    const file = new File(['x'], 'a.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByTestId('photo-input'), { target: { files: [file] } });
+    expect(await screen.findByTestId('photo-result')).toBeInTheDocument();
+    expect((screen.getByTestId('paper-correct') as HTMLInputElement).value).toBe('1');
+
+    fireEvent.click(screen.getByRole('button', { name: /새 문제 만들기/ }));
+    expect(screen.queryByTestId('photo-result')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId('photo-cell')).toHaveLength(0);
+    expect((screen.getByTestId('paper-correct') as HTMLInputElement).value).toBe('');
   });
 
   it('열쇠가 있으면 사진 칸이 나타난다', async () => {

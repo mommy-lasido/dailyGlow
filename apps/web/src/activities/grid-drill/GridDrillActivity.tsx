@@ -146,6 +146,11 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
     setPaperSec(0);
     setPaperCorrect('');
     setPaperSaved(false);
+    // 사진으로 읽어 온 것도 함께 지운다. 새 표에는 예전 답이 아무 뜻이 없고,
+    // 그대로 두면 지난 사진의 숫자가 새 표 위에 얹혀 엉뚱하게 채점된다.
+    setPhoto(null);
+    setPhotoError('');
+    setPhotoBusy(false);
   }
 
   function type(index: number, field: 'value' | 'remainder', text: string) {
