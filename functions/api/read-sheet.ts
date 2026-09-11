@@ -1,17 +1,27 @@
 /**
- * 종이에 푼 100칸 계산 사진을 읽어 준다.
+ * 종이에 푼 100칸 계산 사진을 읽어 준다. (Cloudflare Pages Function)
  *
  * **채점은 여기서 하지 않는다.** 이 함수가 하는 일은 사진에서 **아이가 칸마다 무엇을
  * 적었는지 읽어 오는 것**뿐이고, 맞았는지 틀렸는지는 앱이 자기가 아는 정답과
  * 견주어 판단한다. 셈까지 맡기면 AI 가 계산을 틀릴 때 아이가 맞게 쓴 것을 틀렸다고
  * 하게 되는데, 그건 아이에게 가장 나쁜 종류의 잘못이다.
  *
- * 열쇠(ANTHROPIC_API_KEY)는 넷리파이 화면에서 넣는다. 저장소에는 두지 않는다 —
+ * 열쇠(ANTHROPIC_API_KEY)는 Cloudflare 화면에서 넣는다. 저장소에는 두지 않는다 —
  * 쓸 때마다 돈이 나가는 열쇠라 밖으로 새면 안 된다.
  * 열쇠가 없으면 `available: false` 만 돌려주고, 앱은 사진 칸을 아예 감춘다.
+ *
+ * Anthropic 을 부를 때 꾸러미(SDK) 대신 `fetch` 를 바로 쓴다. Cloudflare 의 실행
+ * 환경은 Node 가 아니라서 꾸러미가 늘 그대로 도는지 장담할 수 없고, 하는 일이
+ * 요청 한 번이라 꾸러미를 쓸 까닭이 없다.
+ *
+ * 자리(타입)도 직접 적는다. Cloudflare 가 주는 타입 꾸러미를 받으면 이 파일 하나
+ * 때문에 설치할 것이 늘어난다. Cloudflare 는 아래 두 이름만 찾으면 된다.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+interface Ctx {
+  request: Request;
+  env: Env;
+}
 
 /** 사진 한 장의 크기 한도. 이보다 크면 받지 않는다(대략 6MB). */
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -22,38 +32,35 @@ const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
  */
 const MODEL = 'claude-sonnet-5';
 
-type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/webp';
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-const ALLOWED_TYPES: ImageMediaType[] = ['image/jpeg', 'image/png', 'image/webp'];
+interface Env {
+  ANTHROPIC_API_KEY?: string;
+}
 
 interface ReadRequest {
   /** 사진. data: 접두어를 뺀 base64 */
   imageBase64: string;
-  mediaType: ImageMediaType;
+  mediaType: string;
   /** 표의 셈 기호 (＋ － × ÷) */
   op: string;
-  /** 가로 머리줄 */
   colHeaders: number[];
-  /** 세로 머리줄 */
   rowHeaders: number[];
 }
 
-function json(status: number, body: unknown) {
+function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  const key = process.env.ANTHROPIC_API_KEY;
+/** 앱이 사진 칸을 보여줄지 정하려고 먼저 물어본다. 열쇠를 쓰지 않으므로 돈이 안 든다. */
+export const onRequestGet = ({ env }: Ctx): Response =>
+  json(200, { available: Boolean(env.ANTHROPIC_API_KEY) });
 
-  // 앱이 사진 칸을 보여줄지 정하려고 먼저 물어본다. 열쇠를 쓰지 않으므로 돈이 안 든다.
-  if (request.method === 'GET') {
-    return json(200, { available: Boolean(key) });
-  }
-
-  if (request.method !== 'POST') return json(405, { error: '허용되지 않는 방법이에요.' });
+export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> => {
+  const key = env.ANTHROPIC_API_KEY;
   if (!key) return json(503, { error: '사진 읽기가 아직 준비되지 않았어요.' });
 
   let body: ReadRequest;
@@ -108,23 +115,40 @@ export default async function handler(request: Request): Promise<Response> {
     .join('\n');
 
   try {
-    const anthropic = new Anthropic({ apiKey: key });
-    const message = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 2000,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
-            { type: 'text', text: prompt },
-          ],
-        },
-      ],
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: mediaType, data: imageBase64 },
+              },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+      }),
     });
 
-    const text = message.content
-      .map((block) => (block.type === 'text' ? block.text : ''))
+    if (!res.ok) {
+      // 무엇이 잘못됐는지는 기록에만 남기고, 화면에는 쉬운 말로 알린다.
+      console.error('[read-sheet] anthropic', res.status, await res.text());
+      return json(502, { error: '사진을 읽는 데 실패했어요. 잠시 뒤에 다시 해볼까요?' });
+    }
+
+    const payload = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const text = (payload.content ?? [])
+      .map((b) => (b.type === 'text' ? (b.text ?? '') : ''))
       .join('')
       .trim();
 
@@ -159,8 +183,7 @@ export default async function handler(request: Request): Promise<Response> {
       rowHeaders: toNumbers(parsed.rowHeaders, rows),
     });
   } catch (e) {
-    // 무엇이 잘못됐는지는 넷리파이 기록에만 남기고, 아이 화면에는 쉬운 말로 알린다.
     console.error('[read-sheet]', e);
     return json(502, { error: '사진을 읽는 데 실패했어요. 잠시 뒤에 다시 해볼까요?' });
   }
-}
+};

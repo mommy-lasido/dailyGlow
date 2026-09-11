@@ -1,7 +1,7 @@
 /**
  * 종이에 푼 연습지를 사진으로 채점하기.
  *
- * 사진에서 **읽는 일**은 넷리파이 뒤편(`netlify/functions/read-sheet.ts`)이 하고,
+ * 사진에서 **읽는 일**은 서버 뒤편(`functions/api/read-sheet.ts`)이 하고,
  * **맞았는지 판단하는 일**은 여기서 한다. 앱은 정답을 이미 알고 있으므로 셈을
  * 남에게 맡길 이유가 없다 — 맡기면 AI 가 계산을 틀릴 때 아이가 맞게 쓴 것을
  * 틀렸다고 하게 된다.
@@ -9,7 +9,7 @@
 
 import { answerAt, type DrillPuzzle } from './generate';
 
-const ENDPOINT = '/.netlify/functions/read-sheet';
+const ENDPOINT = '/api/read-sheet';
 
 /** 사진 읽기를 쓸 수 있는가. 열쇠가 없으면 앱이 사진 칸을 아예 감춘다. */
 export async function photoGradingAvailable(): Promise<boolean> {
