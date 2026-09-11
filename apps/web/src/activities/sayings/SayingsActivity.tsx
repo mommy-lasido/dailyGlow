@@ -24,6 +24,15 @@ import {
   type SayingProblem,
 } from './generate';
 
+/**
+ * 모아 보기에서 한 쪽에 담는 개수.
+ *
+ * 다섯 개다. 아이가 **스크롤을 내리지 않고 한눈에** 볼 수 있어야 하기 때문이다.
+ * 사자성어는 한자와 글자별 뜻까지 붙어 한 칸이 높아서, 열 개를 담으면 화면 밖으로
+ * 한참 밀려난다.
+ */
+export const PAGE_SIZE = 5;
+
 const ROUND_TITLE: Record<number, string> = {
   2: '틀린 문제를 다시 풀어봐요',
   3: '이번엔 힌트를 보고 풀어봐요',
@@ -44,6 +53,11 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
 
   /** 먼저 모아 보고, 그다음에 푼다. 배경지식이 없으면 찍는 것밖에 못 한다. */
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
+  /**
+   * 목록을 다섯 개씩 끊어 보여준다. 속담이 마흔일곱 개라 한 화면에 다 쏟아 놓으면
+   * 아이가 어디까지 읽었는지 놓치고, 아래로 한참 밀어야 퀴즈 단추가 나온다.
+   */
+  const [page, setPage] = useState(0);
   const [problems, setProblems] = useState<SayingProblem[]>([]);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [startedAt, setStartedAt] = useState(0);
@@ -96,6 +110,10 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
 
   // ── ① 모아 보기 ───────────────────────────────────────
   if (phase === 'learn' || !quiz) {
+    const pageCount = Math.ceil(pool.length / PAGE_SIZE);
+    const shown = pool.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+    const last = page === pageCount - 1;
+
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-center text-3xl font-bold text-glow-600">{lesson.title}</h1>
@@ -104,16 +122,27 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
         </p>
 
         <ol className="flex flex-col gap-3">
-          {pool.map((s, i) => (
+          {shown.map((s, i) => (
             <li key={s.text}>
-              <SayingCard saying={s} index={i + 1} />
+              <SayingCard saying={s} index={page * PAGE_SIZE + i + 1} />
             </li>
           ))}
         </ol>
 
-        <Button size="lg" onClick={begin}>
-          다 읽었어요 — 퀴즈 풀기
-        </Button>
+        {/* 쪽 넘기기. 어디까지 왔는지 보이고, 마지막 쪽에서만 퀴즈로 넘어간다. */}
+        <div data-testid="pager" className="flex items-center justify-between gap-3">
+          <Button variant="ghost" disabled={page === 0} onClick={() => setPage((n) => n - 1)}>
+            ← 앞으로
+          </Button>
+          <span className="text-slate-500">
+            {page + 1} / {pageCount}쪽
+          </span>
+          {last ? (
+            <Button onClick={begin}>퀴즈 풀기</Button>
+          ) : (
+            <Button onClick={() => setPage((n) => n + 1)}>다음 →</Button>
+          )}
+        </div>
       </div>
     );
   }

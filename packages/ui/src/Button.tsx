@@ -20,9 +20,14 @@ const variants: Record<Variant, string> = {
   ghost: 'bg-white text-glow-700 shadow-[0_5px_0_theme(colors.glow.100)] hover:bg-glow-50',
 };
 
+/**
+ * 큰 단추를 조금 줄였다(4.5rem → 3.75rem, text-2xl → text-xl).
+ * 화면을 너무 차지해서 정작 아이가 봐야 할 문제와 글자가 밀려났다.
+ * 손가락으로 누르기에는 min-h-touch(3.5rem) 이면 넉넉하다.
+ */
 const sizes: Record<Size, string> = {
-  md: 'min-h-touch px-6 text-lg',
-  lg: 'min-h-[4.5rem] px-10 text-2xl',
+  md: 'min-h-touch px-5 text-lg',
+  lg: 'min-h-[3.75rem] px-8 text-xl',
 };
 
 export function Button({
