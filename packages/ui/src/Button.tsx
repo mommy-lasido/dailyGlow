@@ -21,13 +21,19 @@ const variants: Record<Variant, string> = {
 };
 
 /**
- * 큰 단추를 조금 줄였다(4.5rem → 3.75rem, text-2xl → text-xl).
- * 화면을 너무 차지해서 정작 아이가 봐야 할 문제와 글자가 밀려났다.
- * 손가락으로 누르기에는 min-h-touch(3.5rem) 이면 넉넉하다.
+ * 단추는 **글씨보다 조금만 더 여유로운 정도**로 둔다.
+ *
+ * 처음에는 손가락으로 누르기 좋게 min-h-touch(3.5rem) 을 바닥으로 깔았는데,
+ * "홈으로" 같은 짧은 단추까지 커다란 덩어리가 되어 화면을 차지했다. 정작 아이가
+ * 봐야 할 문제와 글자가 밀려난다.
+ *
+ * 이제 높이를 따로 잡지 않고 글씨 둘레의 여백(py)으로만 크기를 정한다.
+ * 그래도 큰 단추는 3rem 쯤 되어 태블릿에서 누르기에 모자라지 않다.
  */
 const sizes: Record<Size, string> = {
-  md: 'min-h-touch px-5 text-lg',
-  lg: 'min-h-[3.75rem] px-8 text-xl',
+  // md 는 글씨 16px + 위아래 10px = 약 44px. 손가락으로 누르기에 모자라지 않은 최소선이다.
+  md: 'px-4 py-2.5 text-base',
+  lg: 'px-6 py-3 text-lg',
 };
 
 export function Button({
