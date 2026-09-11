@@ -85,7 +85,7 @@ export function HomePage() {
   const callName = profile?.given_name || profile?.display_name || '친구';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-lg text-slate-500">안녕,</p>
@@ -127,7 +127,7 @@ export function HomePage() {
         />
       ) : null}
 
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
         {lessonsPending ? (
           <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
         ) : lessonsError ? (
@@ -141,14 +141,14 @@ export function HomePage() {
         ) : (
           activities.map((a) => (
             <Link key={a.id} to={`/activity/${a.id}`}>
-              <Card className="flex items-center gap-5 transition-transform hover:scale-[1.02]">
+              <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
                 <ActivityIcon
                   id={a.iconId}
                   className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
                 />
                 {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
                 <div className="min-w-0">
-                  <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+                  <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}>
                     {a.title}
                   </h2>
                   {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에

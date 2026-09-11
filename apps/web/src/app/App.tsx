@@ -29,7 +29,7 @@ export function App() {
   }, [status]);
 
   return (
-    <div className="mx-auto flex min-h-full max-w-6xl flex-col px-4 py-4 sm:px-8 sm:py-8">
+    <div className="mx-auto flex min-h-full max-w-6xl flex-col px-3 py-3 sm:px-5 sm:py-5">
       {/* 인쇄할 때는 앱 껍데기를 감춘다 — 종이에는 표만 나와야 한다. */}
       <div className="print:hidden">
         <OfflineBadge />

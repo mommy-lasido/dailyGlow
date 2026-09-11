@@ -10,10 +10,12 @@
  * 둘은 아직 글을 못 읽는다.
  */
 
-const ORANGE = '#ea580c'; // glow-600
-const ORANGE_MID = '#f97316'; // glow-500
-const ORANGE_SOFT = '#ffedd5'; // glow-100
-const ORANGE_LINE = '#fdba74'; // glow-300
+// 앱의 색과 같은 값이다. SVG 안에서는 Tailwind 이름을 쓸 수 없어 직접 적는다.
+// 색을 바꿀 일이 생기면 `packages/ui/src/tailwind-preset.ts` 와 함께 고칠 것.
+const LEAF = '#55853e'; // glow-600
+const LEAF_MID = '#5e9a44'; // glow-500
+const LEAF_SOFT = '#e3f1d8'; // glow-100
+const LEAF_LINE = '#a8d18c'; // glow-300
 const BLUE = '#0ea5e9'; // sky-500
 const PAPER = '#ffffff';
 
@@ -37,9 +39,9 @@ function Frame({ children }: { children: React.ReactNode }) {
 function LetterCardsIcon() {
   return (
     <Frame>
-      <rect x="4" y="8" width="56" height="48" rx="12" fill={ORANGE_SOFT} />
+      <rect x="4" y="8" width="56" height="48" rx="12" fill={LEAF_SOFT} />
       {/* ㄱ */}
-      <path d="M17 23 H31 V43" stroke={ORANGE} {...stroke} />
+      <path d="M17 23 H31 V43" stroke={LEAF} {...stroke} />
       {/* ㅏ */}
       <path d="M43 19 V45" stroke={BLUE} {...stroke} />
       <path d="M43 31 H53" stroke={BLUE} {...stroke} />
@@ -57,8 +59,8 @@ function WordCardsIcon() {
         width="34"
         height="34"
         rx="9"
-        fill={ORANGE_SOFT}
-        stroke={ORANGE_LINE}
+        fill={LEAF_SOFT}
+        stroke={LEAF_LINE}
         strokeWidth="3"
       />
       <rect
@@ -68,12 +70,12 @@ function WordCardsIcon() {
         height="34"
         rx="9"
         fill={PAPER}
-        stroke={ORANGE_MID}
+        stroke={LEAF_MID}
         strokeWidth="3"
       />
       {/* 앞장에 적힌 낱말 두 줄 */}
-      <path d="M33 22 H51" stroke={ORANGE_MID} {...stroke} strokeWidth="4" />
-      <path d="M33 32 H45" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
+      <path d="M33 22 H51" stroke={LEAF_MID} {...stroke} strokeWidth="4" />
+      <path d="M33 32 H45" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
     </Frame>
   );
 }
@@ -85,20 +87,20 @@ function ReadingCardsIcon() {
       <path
         d="M32 18C26 13 15 12 7 15V47C15 44 26 45 32 50Z"
         fill={PAPER}
-        stroke={ORANGE_MID}
+        stroke={LEAF_MID}
         strokeWidth="4"
         strokeLinejoin="round"
       />
       <path
         d="M32 18C38 13 49 12 57 15V47C49 44 38 45 32 50Z"
-        fill={ORANGE_SOFT}
-        stroke={ORANGE_MID}
+        fill={LEAF_SOFT}
+        stroke={LEAF_MID}
         strokeWidth="4"
         strokeLinejoin="round"
       />
       {/* 오른쪽 장에 적힌 글줄 */}
-      <path d="M39 25 H50" stroke={ORANGE_LINE} {...stroke} strokeWidth="3" />
-      <path d="M39 33 H50" stroke={ORANGE_LINE} {...stroke} strokeWidth="3" />
+      <path d="M39 25 H50" stroke={LEAF_LINE} {...stroke} strokeWidth="3" />
+      <path d="M39 33 H50" stroke={LEAF_LINE} {...stroke} strokeWidth="3" />
     </Frame>
   );
 }
@@ -114,15 +116,15 @@ function WorksheetIcon() {
         height="50"
         rx="7"
         fill={PAPER}
-        stroke={ORANGE_MID}
+        stroke={LEAF_MID}
         strokeWidth="4"
       />
-      <path d="M19 21 H37" stroke={ORANGE_LINE} {...stroke} strokeWidth="3" />
-      <path d="M19 31 H37" stroke={ORANGE_LINE} {...stroke} strokeWidth="3" />
-      <path d="M19 41 H30" stroke={ORANGE_LINE} {...stroke} strokeWidth="3" />
+      <path d="M19 21 H37" stroke={LEAF_LINE} {...stroke} strokeWidth="3" />
+      <path d="M19 31 H37" stroke={LEAF_LINE} {...stroke} strokeWidth="3" />
+      <path d="M19 41 H30" stroke={LEAF_LINE} {...stroke} strokeWidth="3" />
       {/* 연필 */}
-      <path d="M52 12 L58 18 L38 38 L30 40 L32 32 Z" fill={ORANGE_SOFT} stroke={ORANGE} strokeWidth="4" strokeLinejoin="round" />
-      <path d="M32 32 L38 38" stroke={ORANGE} strokeWidth="4" strokeLinecap="round" />
+      <path d="M52 12 L58 18 L38 38 L30 40 L32 32 Z" fill={LEAF_SOFT} stroke={LEAF} strokeWidth="4" strokeLinejoin="round" />
+      <path d="M32 32 L38 38" stroke={LEAF} strokeWidth="4" strokeLinecap="round" />
     </Frame>
   );
 }
@@ -131,9 +133,9 @@ function WorksheetIcon() {
 function CountPlayIcon() {
   return (
     <Frame>
-      <circle cx="15" cy="40" r="10" fill={ORANGE_SOFT} stroke={ORANGE_MID} strokeWidth="4" />
-      <circle cx="32" cy="40" r="10" fill={ORANGE_SOFT} stroke={ORANGE_MID} strokeWidth="4" />
-      <circle cx="49" cy="40" r="10" fill={ORANGE_SOFT} stroke={ORANGE_MID} strokeWidth="4" />
+      <circle cx="15" cy="40" r="10" fill={LEAF_SOFT} stroke={LEAF_MID} strokeWidth="4" />
+      <circle cx="32" cy="40" r="10" fill={LEAF_SOFT} stroke={LEAF_MID} strokeWidth="4" />
+      <circle cx="49" cy="40" r="10" fill={LEAF_SOFT} stroke={LEAF_MID} strokeWidth="4" />
       {/* 하나, 둘, 셋 — 세어 나가는 자취 */}
       <path d="M15 22 Q23 12 32 22 Q41 12 49 22" stroke={BLUE} {...stroke} strokeWidth="4" />
     </Frame>
@@ -144,12 +146,12 @@ function CountPlayIcon() {
 function AddPlayIcon() {
   return (
     <Frame>
-      <circle cx="14" cy="22" r="6" fill={ORANGE_MID} />
-      <circle cx="14" cy="42" r="6" fill={ORANGE_MID} />
+      <circle cx="14" cy="22" r="6" fill={LEAF_MID} />
+      <circle cx="14" cy="42" r="6" fill={LEAF_MID} />
       <circle cx="50" cy="22" r="6" fill={BLUE} />
       <circle cx="50" cy="42" r="6" fill={BLUE} />
-      <path d="M32 20 V44" stroke={ORANGE} {...stroke} />
-      <path d="M20 32 H44" stroke={ORANGE} {...stroke} />
+      <path d="M32 20 V44" stroke={LEAF} {...stroke} />
+      <path d="M20 32 H44" stroke={LEAF} {...stroke} />
     </Frame>
   );
 }
@@ -158,14 +160,14 @@ function AddPlayIcon() {
 function GridDrillIcon() {
   return (
     <Frame>
-      <rect x="7" y="7" width="50" height="50" rx="8" fill={PAPER} stroke={ORANGE_MID} strokeWidth="4" />
+      <rect x="7" y="7" width="50" height="50" rx="8" fill={PAPER} stroke={LEAF_MID} strokeWidth="4" />
       {/* 머리줄 — 표의 첫 줄과 첫 칸 */}
-      <path d="M7 22 H57" stroke={ORANGE_MID} strokeWidth="4" />
-      <path d="M22 7 V57" stroke={ORANGE_MID} strokeWidth="4" />
-      <rect x="7" y="7" width="15" height="15" fill={ORANGE_SOFT} />
+      <path d="M7 22 H57" stroke={LEAF_MID} strokeWidth="4" />
+      <path d="M22 7 V57" stroke={LEAF_MID} strokeWidth="4" />
+      <rect x="7" y="7" width="15" height="15" fill={LEAF_SOFT} />
       {/* 나머지 칸 */}
-      <path d="M36 22 V57" stroke={ORANGE_LINE} strokeWidth="3" />
-      <path d="M22 38 H57" stroke={ORANGE_LINE} strokeWidth="3" />
+      <path d="M36 22 V57" stroke={LEAF_LINE} strokeWidth="3" />
+      <path d="M22 38 H57" stroke={LEAF_LINE} strokeWidth="3" />
     </Frame>
   );
 }
@@ -174,11 +176,11 @@ function GridDrillIcon() {
 function SpellingIcon() {
   return (
     <Frame>
-      <rect x="6" y="14" width="40" height="26" rx="7" fill={ORANGE_SOFT} />
-      <path d="M14 24 H26" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
-      <path d="M14 32 H22" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
-      <circle cx="38" cy="36" r="14" fill="none" stroke={ORANGE} strokeWidth="5" />
-      <path d="M48 46 L57 55" stroke={ORANGE} {...stroke} strokeWidth="6" />
+      <rect x="6" y="14" width="40" height="26" rx="7" fill={LEAF_SOFT} />
+      <path d="M14 24 H26" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
+      <path d="M14 32 H22" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
+      <circle cx="38" cy="36" r="14" fill="none" stroke={LEAF} strokeWidth="5" />
+      <path d="M48 46 L57 55" stroke={LEAF} {...stroke} strokeWidth="6" />
     </Frame>
   );
 }
@@ -190,14 +192,14 @@ function SayingsIcon() {
       <path
         d="M14 12H50a4 4 0 0 1 4 4v32a4 4 0 0 1-4 4H14z"
         fill={PAPER}
-        stroke={ORANGE_MID}
+        stroke={LEAF_MID}
         strokeWidth="4"
         strokeLinejoin="round"
       />
       {/* 말려 있는 양쪽 끝 */}
-      <rect x="6" y="10" width="10" height="44" rx="5" fill={ORANGE_SOFT} stroke={ORANGE} strokeWidth="4" />
-      <path d="M24 26 H46" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
-      <path d="M24 36 H40" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
+      <rect x="6" y="10" width="10" height="44" rx="5" fill={LEAF_SOFT} stroke={LEAF} strokeWidth="4" />
+      <path d="M24 26 H46" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
+      <path d="M24 36 H40" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
     </Frame>
   );
 }
@@ -206,9 +208,9 @@ function SayingsIcon() {
 function DefaultIcon() {
   return (
     <Frame>
-      <rect x="9" y="9" width="46" height="46" rx="11" fill={ORANGE_SOFT} stroke={ORANGE_MID} strokeWidth="4" />
-      <path d="M22 26 H42" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
-      <path d="M22 38 H34" stroke={ORANGE_LINE} {...stroke} strokeWidth="4" />
+      <rect x="9" y="9" width="46" height="46" rx="11" fill={LEAF_SOFT} stroke={LEAF_MID} strokeWidth="4" />
+      <path d="M22 26 H42" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
+      <path d="M22 38 H34" stroke={LEAF_LINE} {...stroke} strokeWidth="4" />
     </Frame>
   );
 }
