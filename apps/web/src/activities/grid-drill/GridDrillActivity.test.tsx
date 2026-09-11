@@ -262,6 +262,15 @@ describe('GridDrillActivity — 문제 화면', () => {
     expect(screen.getByRole('button', { name: '답 보기' })).toBeInTheDocument();
   });
 
+  it('할 일 단추 넷이 한 줄에 있다', () => {
+    renderActivity();
+    showProblem({ cells: '25' });
+    const bar = screen.getByRole('button', { name: /화면에서 풀기/ }).closest('div')!;
+    for (const name of [/인쇄하기/, /새 문제 만들기/, /답 보기/]) {
+      expect(bar.contains(screen.getByRole('button', { name }))).toBe(true);
+    }
+  });
+
   it('할 일 단추는 표보다 위에 있다', () => {
     // 표가 100칸이면 아래로 길어서, 단추가 표 밑에 있으면 한참 내려가야 보인다.
     renderActivity();
@@ -414,7 +423,7 @@ describe('GridDrillActivity — 인쇄해서 풀기', () => {
   it('인쇄할 때 표만 남기고 나머지는 감춘다', () => {
     renderActivity();
     showProblem({ cells: '25' });
-    const bar = screen.getByRole('button', { name: /인쇄하기/ }).closest('div')!.parentElement!;
+    const bar = screen.getByRole('button', { name: /인쇄하기/ }).closest('div')!;
     expect(bar.className).toContain('print:hidden');
   });
 });
