@@ -206,7 +206,7 @@ function SayingCard({ saying, index }: { saying: Saying; index: number }) {
     <Card className="flex flex-col gap-1">
       <div className="flex flex-wrap items-baseline gap-2">
         <span className="text-sm font-bold text-glow-300">{index}</span>
-        <span className="text-xl font-bold text-slate-700">{saying.text}</span>
+        <span className="text-xl font-bold text-glow-700">{saying.text}</span>
         {saying.hanja ? (
           <span data-testid="list-hanja" className="text-lg text-glow-600">
             {saying.hanja}

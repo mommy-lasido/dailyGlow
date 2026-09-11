@@ -185,7 +185,7 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
       <Progress total={quiz.queue.length} done={quiz.cursor} />
 
       <Card className="flex flex-col items-center gap-5 text-center">
-        <p className="text-2xl font-bold text-slate-700">{sentenceQuestion(problem)}</p>
+        <p className="text-2xl font-bold text-glow-700">{sentenceQuestion(problem)}</p>
 
         {problem.direction === 'toSentence' ? (
           <span data-testid="prompt" className="text-7xl">

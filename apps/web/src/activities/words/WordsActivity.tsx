@@ -184,7 +184,7 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
       <Progress total={quiz.queue.length} done={quiz.cursor} />
 
       <Card className="flex flex-col items-center gap-5 text-center">
-        <p className="text-2xl font-bold text-slate-700">{wordQuestion(problem)}</p>
+        <p className="text-2xl font-bold text-glow-700">{wordQuestion(problem)}</p>
 
         {/* 그림을 보고 낱말을 고르거나, 낱말을 보고 그림을 고르거나. */}
         {problem.direction === 'toWord' ? (

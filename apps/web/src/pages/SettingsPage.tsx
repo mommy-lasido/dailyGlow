@@ -135,7 +135,7 @@ export function SettingsPage() {
       </header>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold text-slate-700">프로필</h2>
+        <h2 className="text-xl font-bold text-glow-700">프로필</h2>
 
         {/* 도움말 <span> 은 <label> 밖에 둔다 — 안에 넣으면 label 텍스트가 "성" 이 아니게 된다. */}
         <div className="flex flex-col gap-1">
@@ -253,7 +253,7 @@ export function SettingsPage() {
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold text-slate-700">과목별 단계</h2>
+        <h2 className="text-xl font-bold text-glow-700">과목별 단계</h2>
         <p className="text-sm text-slate-400">
           한글은 &lsquo;기적의 한글 학습&rsquo;(길벗스쿨) 5권 35단계를 그대로 따라가요.
           &lsquo;여기서 멈춰&rsquo;를 켜면 아이가 잘해도 다음 단계로 넘어가지 않아요.

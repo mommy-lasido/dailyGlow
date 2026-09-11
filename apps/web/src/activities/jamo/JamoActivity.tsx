@@ -352,7 +352,7 @@ function JamoQuestion({
         >
           🔊
         </button>
-        <p className="text-2xl font-bold text-slate-700">어느 글자일까?</p>
+        <p className="text-2xl font-bold text-glow-700">어느 글자일까?</p>
 
         {round === 3 ? (
           <p

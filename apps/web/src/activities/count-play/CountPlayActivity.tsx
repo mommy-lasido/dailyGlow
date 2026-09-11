@@ -103,7 +103,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
             <span className="flex items-center gap-5">
               <span className="text-5xl">{s.icon}</span>
               <span>
-                <span className="block text-2xl font-bold text-slate-700">{s.name}</span>
+                <span className="block text-2xl font-bold text-glow-700">{s.name}</span>
                 <span className="block text-sm text-slate-400">{s.desc}</span>
               </span>
             </span>

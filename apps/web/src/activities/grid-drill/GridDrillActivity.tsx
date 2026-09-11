@@ -201,7 +201,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
         <h1 className="text-center text-3xl font-bold text-glow-600">100칸 계산</h1>
 
         <Card className="flex flex-col gap-3">
-          <p className="font-bold text-slate-700">어떤 셈을 할까요?</p>
+          <p className="font-bold text-glow-700">어떤 셈을 할까요?</p>
           <div className="flex flex-wrap gap-2">
             {DRILL_OPS.map((o) => (
               <button
@@ -223,7 +223,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
         </Card>
 
         <Card className="flex flex-col gap-3">
-          <p className="font-bold text-slate-700">어느 단계로 할까요?</p>
+          <p className="font-bold text-glow-700">어느 단계로 할까요?</p>
           <div className="flex flex-col gap-2">
             {levelsOf(op).map((l) => (
               <button
@@ -242,7 +242,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
         </Card>
 
         <Card className="flex flex-col gap-3">
-          <p className="font-bold text-slate-700">몇 칸으로 할까요?</p>
+          <p className="font-bold text-glow-700">몇 칸으로 할까요?</p>
           <div className="flex flex-wrap gap-2">
             {DRILL_SIZES.map((s) => (
               <button
@@ -327,7 +327,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
 
         {/* 종이로 푼 기록은 앱이 저절로 알 수 없다. 옆에서 재고 적어 넣는다. */}
         <Card className="flex flex-col gap-4 print:hidden">
-          <p className="font-bold text-slate-700">
+          <p className="font-bold text-glow-700">
             종이로 풀었다면 기록 남기기
           </p>
 

@@ -148,7 +148,7 @@ export function HomePage() {
                 />
                 {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
                 <div className="min-w-0">
-                  <h2 className={`font-bold text-slate-700 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}>
+                  <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}>
                     {a.title}
                   </h2>
                   {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
