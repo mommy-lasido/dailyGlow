@@ -324,6 +324,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
           readOnly
           showAnswers={showAnswers}
           photoWrong={photo?.wrongIndexes}
+          photoCells={photo?.cells}
         />
 
         {/* 종이로 푼 기록은 앱이 저절로 알 수 없다. 옆에서 재고 적어 넣는다. */}
@@ -392,13 +393,30 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
                 <div data-testid="photo-result" className="text-slate-600">
                   <p className="font-bold text-glow-700">
                     {photo.total}칸 중 {photo.correct}칸 맞았어요.
+                    {photo.wrongIndexes.length > 0
+                      ? ` ${photo.wrongIndexes.length}칸은 틀렸어요.`
+                      : ''}
                   </p>
+                  {/* 안 쓴 칸과 못 읽은 칸은 다른 이야기다. 안 쓴 것은 사진 탓이 아니다. */}
+                  {photo.blankIndexes.length > 0 ? (
+                    <p data-testid="photo-blank" className="text-sm text-slate-500">
+                      {photo.blankIndexes.length}칸은 아직 안 썼어요.
+                    </p>
+                  ) : null}
                   {photo.unreadIndexes.length > 0 ? (
-                    <p className="text-sm text-slate-500">
+                    <p data-testid="photo-unread" className="text-sm text-slate-500">
                       {photo.unreadIndexes.length}칸은 흐려서 못 읽었어요. 눈으로 보고
                       개수를 고쳐주세요.
                     </p>
                   ) : null}
+                  {photo.shifted ? (
+                    <p data-testid="photo-shifted" className="text-sm text-slate-500">
+                      표의 차례가 어긋나게 읽혀서 바로잡았어요.
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-slate-400">
+                    표에 읽어 온 값이 적혀 있어요. 다르게 읽은 것이 있으면 개수를 고쳐주세요.
+                  </p>
                 </div>
               ) : null}
 
@@ -567,6 +585,7 @@ function PuzzleTable({
   readOnly = false,
   showAnswers = false,
   photoWrong,
+  photoCells,
   onType,
 }: {
   puzzle: DrillPuzzle;
@@ -576,6 +595,8 @@ function PuzzleTable({
   showAnswers?: boolean;
   /** 사진으로 채점했을 때 틀린 칸 */
   photoWrong?: number[];
+  /** 사진에서 읽어 온 것. 표에 그대로 보여줘 무엇을 잘못 읽었는지 눈으로 알게 한다. */
+  photoCells?: string[][];
   onType?: (index: number, field: 'value' | 'remainder', text: string) => void;
 }) {
   const side = sideOf(puzzle.cells);
@@ -632,12 +653,24 @@ function PuzzleTable({
                     }`}
                   >
                     {readOnly ? (
-                      <span className="text-sm font-bold text-glow-700">
-                        {showAnswers || (photoWrong?.includes(index) ?? false)
-                          ? puzzle.op === '÷'
-                            ? `${a.quotient}…${a.remainder}`
-                            : a.value
-                          : ''}
+                      <span className="flex flex-col leading-tight">
+                        {/* 사진에서 읽어 온 것 — 아이가 쓴 것으로 본 값 */}
+                        {photoCells ? (
+                          <span
+                            data-testid="photo-cell"
+                            className={`text-sm font-bold ${
+                              wrong ? 'text-red-500' : 'text-slate-600'
+                            }`}
+                          >
+                            {photoCells[ri]?.[ci] || '·'}
+                          </span>
+                        ) : null}
+                        {/* 바른 답 — 틀린 칸이거나 답 보기를 켰을 때만 */}
+                        {showAnswers || wrong ? (
+                          <span className="text-xs font-bold text-glow-700">
+                            {puzzle.op === '÷' ? `${a.quotient}…${a.remainder}` : a.value}
+                          </span>
+                        ) : null}
                       </span>
                     ) : puzzle.op === '÷' ? (
                       <span className="flex flex-col">

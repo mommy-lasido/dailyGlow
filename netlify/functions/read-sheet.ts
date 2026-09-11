@@ -79,21 +79,30 @@ export default async function handler(request: Request): Promise<Response> {
   const cols = colHeaders.length;
 
   const prompt = [
-    `이 사진은 아이가 연필로 푼 ${rows}×${cols} 계산표입니다.`,
-    `맨 윗줄은 ${colHeaders.join(', ')} 이고, 맨 왼쪽 줄은 ${rowHeaders.join(', ')} 입니다.`,
-    `이 두 줄은 인쇄된 것이고, 나머지 ${rows * cols}칸에 아이가 손으로 답을 적었습니다.`,
+    `사진에 ${rows}×${cols} 계산표가 있습니다. 아이가 연필로 답을 적어 넣은 것입니다.`,
+    '',
+    '표의 **맨 윗줄과 맨 왼쪽 줄은 인쇄된 머리줄**이고, 그 안쪽 칸에만 아이가 손으로 썼습니다.',
+    `머리줄을 빼고 **안쪽 ${rows}줄 × ${cols}칸**만 읽어 주세요.`,
+    '머리줄의 숫자를 답으로 세지 마세요. 이것을 틀리면 칸이 통째로 밀립니다.',
     '',
     '각 칸에 **적혀 있는 그대로** 읽어 주세요.',
-    '- 셈을 하지 마세요. 맞았는지 틀렸는지도 판단하지 마세요. 보이는 것만 옮겨 적으세요.',
-    '- 빈칸은 빈 문자열 "" 로 두세요.',
+    '- 셈을 하지 마세요. 맞았는지도 판단하지 마세요. 보이는 것만 옮겨 적으세요.',
+    '- 아무것도 안 쓴 칸은 빈 문자열 "" 로 두세요.',
     '- 지우고 다시 쓴 흔적이 있으면 마지막에 쓴 것을 읽으세요.',
-    '- 무엇이라 썼는지 알아볼 수 없으면 "?" 로 두세요. 짐작해서 채우지 마세요.',
+    '- 적혀 있는데 알아볼 수 없으면 "?" 로 두세요. 짐작해서 채우지 마세요.',
     op === '÷'
       ? '- 나눗셈이라 한 칸에 몫과 나머지가 있습니다. "몫,나머지" 로 적어 주세요. (예: "3,2")'
       : '',
     '',
-    `답은 JSON 만 보내 주세요. 다른 말은 붙이지 마세요.`,
-    `{"cells": [[…${cols}개…], …${rows}줄…]}`,
+    '**칸이 밀렸는지 확인할 수 있도록, 사진에서 읽은 머리줄도 함께 보내 주세요.**',
+    '보낸 것과 다르더라도 고치지 말고 사진에 보이는 그대로 적어 주세요.',
+    '',
+    'JSON 만 보내 주세요. 다른 말은 붙이지 마세요.',
+    '{',
+    `  "colHeaders": [맨 윗줄 숫자 ${cols}개],`,
+    `  "rowHeaders": [맨 왼쪽 줄 숫자 ${rows}개],`,
+    `  "cells": [[…${cols}개…], …${rows}줄…]`,
+    '}',
   ]
     .filter(Boolean)
     .join('\n');
@@ -124,7 +133,11 @@ export default async function handler(request: Request): Promise<Response> {
     const end = text.lastIndexOf('}');
     if (start < 0 || end < 0) return json(502, { error: '사진을 읽지 못했어요.' });
 
-    const parsed = JSON.parse(text.slice(start, end + 1)) as { cells?: unknown };
+    const parsed = JSON.parse(text.slice(start, end + 1)) as {
+      cells?: unknown;
+      colHeaders?: unknown;
+      rowHeaders?: unknown;
+    };
     const cells = parsed.cells;
     if (!Array.isArray(cells) || cells.length !== rows) {
       return json(502, { error: '표를 제대로 알아보지 못했어요. 다시 찍어볼까요?' });
@@ -136,7 +149,15 @@ export default async function handler(request: Request): Promise<Response> {
         : Array.from({ length: cols }, () => ''),
     );
 
-    return json(200, { cells: clean });
+    const toNumbers = (v: unknown, n: number) =>
+      Array.isArray(v) && v.length === n ? v.map((x) => Number(x)) : null;
+
+    // 읽어 온 머리줄을 함께 돌려준다. 칸이 밀렸는지는 앱이 판단한다.
+    return json(200, {
+      cells: clean,
+      colHeaders: toNumbers(parsed.colHeaders, cols),
+      rowHeaders: toNumbers(parsed.rowHeaders, rows),
+    });
   } catch (e) {
     // 무엇이 잘못됐는지는 넷리파이 기록에만 남기고, 아이 화면에는 쉬운 말로 알린다.
     console.error('[read-sheet]', e);

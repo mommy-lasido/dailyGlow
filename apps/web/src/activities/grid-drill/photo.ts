@@ -45,19 +45,28 @@ export interface PhotoResult {
   total: number;
   /** 틀린 칸 번호 */
   wrongIndexes: number[];
-  /** 알아보지 못한 칸 번호. 이건 틀린 것과 다르게 다뤄야 한다. */
+  /** 아이가 아직 안 쓴 칸. 사진 탓이 아니다. */
+  blankIndexes: number[];
+  /** 적혀 있긴 한데 알아보지 못한 칸. 이것만 사진 탓이다. */
   unreadIndexes: number[];
+  /** 읽어 온 표의 차례가 어긋나 바로잡았는가 */
+  shifted?: boolean;
 }
 
 /**
  * 읽어 온 것을 정답과 견준다.
  *
- * **알아보지 못한 칸(`?`)은 틀린 것으로 세지 않는다.** 아이가 틀린 것이 아니라
- * 사진이 흐린 것이므로, 그것까지 오답으로 세면 아이가 억울하다. 대신 몇 칸을
- * 못 읽었는지 따로 알려주고 부모가 눈으로 확인하게 한다.
+ * 칸을 세 갈래로 나눈다.
+ *   **빈칸** — 아이가 아직 안 쓴 칸. 사진 탓이 아니므로 "못 읽었다" 고 하면 안 된다.
+ *              스물다섯 칸 중 열세 칸만 풀었으면 열두 칸이 비어 있는 것이 당연하다.
+ *   **못 읽은 칸(`?`)** — 적혀 있긴 한데 흐려서 알아보지 못한 칸. 이것만 사진 탓이다.
+ *   **틀린 칸** — 읽었는데 답과 다른 칸.
+ *
+ * 빈칸도 못 읽은 칸도 **틀린 것으로 세지 않는다.** 아이가 틀린 것이 아니기 때문이다.
  */
 export function gradeCells(puzzle: DrillPuzzle, cells: string[][]): PhotoResult {
   const wrongIndexes: number[] = [];
+  const blankIndexes: number[] = [];
   const unreadIndexes: number[] = [];
   let correct = 0;
 
@@ -67,7 +76,11 @@ export function gradeCells(puzzle: DrillPuzzle, cells: string[][]): PhotoResult 
       const wrote = (cells[r]?.[c] ?? '').trim();
       const a = answerAt(puzzle, index);
 
-      if (wrote === '?' || wrote === '') {
+      if (wrote === '') {
+        blankIndexes.push(index);
+        continue;
+      }
+      if (wrote === '?') {
         unreadIndexes.push(index);
         continue;
       }
@@ -90,8 +103,54 @@ export function gradeCells(puzzle: DrillPuzzle, cells: string[][]): PhotoResult 
     correct,
     total: puzzle.cells,
     wrongIndexes,
+    blankIndexes,
     unreadIndexes,
   };
+}
+
+/**
+ * 읽어 온 표를 우리가 낸 표에 맞춰 바로잡는다.
+ *
+ * AI 가 머리줄을 칸으로 세거나 줄 차례를 바꿔 읽으면, 열세 칸을 다 맞게 썼는데도
+ * 두 칸만 맞다고 나온다. 실제로 그런 일이 있었다. 그래서 읽어 온 머리줄을 함께
+ * 받아 **우리가 낸 머리줄과 견주고, 차례가 다르면 제자리로 돌려놓는다.**
+ *
+ * 머리줄에 같은 수가 두 번 나오면 어느 줄인지 가릴 수 없으므로 손대지 않는다.
+ */
+export function realign(
+  puzzle: DrillPuzzle,
+  cells: string[][],
+  readCols: number[] | null,
+  readRows: number[] | null,
+): { cells: string[][]; shifted: boolean } {
+  const fix = (
+    mine: number[],
+    read: number[] | null,
+  ): { order: number[]; moved: boolean } | null => {
+    const keep = { order: mine.map((_, i) => i), moved: false };
+    if (!read || read.length !== mine.length) return keep;
+    // 같은 수가 두 번 있으면 가릴 수 없다.
+    if (new Set(mine).size !== mine.length) return keep;
+    // 읽어 온 것이 우리 것과 같은 수들이 아니면 믿을 수 없다.
+    if ([...read].sort((a, b) => a - b).join() !== [...mine].sort((a, b) => a - b).join())
+      return null;
+
+    const order = mine.map((v) => read.indexOf(v));
+    return { order, moved: order.some((v, i) => v !== i) };
+  };
+
+  const rowFix = fix(puzzle.rowHeaders, readRows);
+  const colFix = fix(puzzle.colHeaders, readCols);
+  if (!rowFix || !colFix) {
+    // 머리줄부터 다르게 읽었다면 표를 잘못 본 것이다. 바로잡지 않고 그대로 둔다.
+    return { cells, shifted: false };
+  }
+
+  const moved = rowFix.moved || colFix.moved;
+  if (!moved) return { cells, shifted: false };
+
+  const fixed = rowFix.order.map((r) => colFix.order.map((c) => cells[r]?.[c] ?? ''));
+  return { cells: fixed, shifted: true };
 }
 
 /** 사진을 보내 읽어 오고, 정답과 견주어 돌려준다. */
@@ -112,9 +171,20 @@ export async function readAndGrade(
     }),
   });
 
-  const body = (await res.json()) as { cells?: string[][]; error?: string };
+  const body = (await res.json()) as {
+    cells?: string[][];
+    colHeaders?: number[] | null;
+    rowHeaders?: number[] | null;
+    error?: string;
+  };
   // 실패를 조용히 넘기지 않는다 — 부모가 왜 안 됐는지 알아야 다시 찍든 손으로 세든 한다.
   if (!res.ok || !body.cells) throw new Error(body.error ?? '사진을 읽지 못했어요.');
 
-  return gradeCells(puzzle, body.cells);
+  const { cells, shifted } = realign(
+    puzzle,
+    body.cells,
+    body.colHeaders ?? null,
+    body.rowHeaders ?? null,
+  );
+  return { ...gradeCells(puzzle, cells), shifted };
 }
