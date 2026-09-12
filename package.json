@@ -6,7 +6,7 @@
   "description": "DailyGlow (하루배움) - 태블릿용 맞춤형 학습 앱",
   "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "turbo run dev",
