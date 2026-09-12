@@ -26,7 +26,6 @@ export interface ActivityCard {
   title: string;
   activityKind: string;
   subjectSlug: string;
-  subjectTitle: string;
   /** 카드에 그릴 그림의 이름. ActivityIcon 이 이 이름으로 그림을 고른다. */
   iconId: string;
   /**
@@ -98,7 +97,6 @@ export function selectActivities(
       title: r.title,
       activityKind: r.activity_kind,
       subjectSlug: r.subject_slug,
-      subjectTitle: r.subject_title,
       iconId: activityIconId(r),
       hint: activityHint(r.config),
     }));

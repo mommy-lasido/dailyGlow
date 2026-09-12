@@ -152,7 +152,8 @@ describe('HomePage', () => {
     catalog.response = { data: [lessonRow()], error: null };
     renderHome();
     expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
-    expect(screen.getByText('수학')).toBeInTheDocument();
+    // 과목 이름은 카드에 적지 않는다 — 아이에게는 제목만 있으면 된다.
+    expect(screen.queryByText('수학')).not.toBeInTheDocument();
     expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
   });
 
@@ -160,17 +161,15 @@ describe('HomePage', () => {
     catalog.response = { data: [lessonRow({ config: { hint: '3 + 2 = ?' } })], error: null };
     const { container } = renderHome();
     expect(await screen.findByText('3 + 2 = ?')).toBeInTheDocument();
-    // 예시 줄 + 과목 이름 = 카드 안 <p> 두 줄.
-    expect(container.querySelectorAll('a p')).toHaveLength(2);
+    // 카드 안 <p> 는 예시 한 줄뿐.
+    expect(container.querySelectorAll('a p')).toHaveLength(1);
   });
 
   it('config.hint 가 없으면 예시 줄 없이 제목만 보여준다', async () => {
     catalog.response = { data: [lessonRow({ config: {} })], error: null };
     const { container } = renderHome();
     expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
-    // 카드 안 <p> 는 과목 이름 한 줄뿐 — 예시 자리에 빈 요소가 남지 않는다.
-    const paragraphs = container.querySelectorAll('a p');
-    expect(paragraphs).toHaveLength(1);
-    expect(paragraphs[0]).toHaveTextContent('수학');
+    // 카드에는 제목만 남는다 — 예시 자리에 빈 요소가 남지 않는다.
+    expect(container.querySelectorAll('a p')).toHaveLength(0);
   });
 });

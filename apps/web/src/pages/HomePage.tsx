@@ -147,19 +147,24 @@ export function HomePage() {
                   className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
                 />
                 {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
-                <div className="min-w-0">
-                  <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}>
+                <div className="min-w-0 flex-1 text-center">
+                  <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
                     {a.title}
                   </h2>
                   {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
                       예를 보여준다. 제목보다 눈에 띄지 않게 흐리게. 없으면 아무것도 그리지 않는다. */}
                   {a.hint ? (
-                    <p className={`text-slate-500 ${isPreReader ? 'text-xl' : 'text-base'}`}>
+                    <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
                       {a.hint}
                     </p>
                   ) : null}
-                  <p className="text-sm text-slate-400">{a.subjectTitle}</p>
                 </div>
+                {/* 그림과 같은 너비의 빈 자리. 이것이 있어야 제목이 카드의 한가운데에
+                    온다 — 없으면 그림에 밀려 오른쪽으로 치우친다. */}
+                <div
+                  aria-hidden
+                  className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
+                />
               </Card>
             </Link>
           ))
