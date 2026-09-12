@@ -147,7 +147,7 @@ export function HomePage() {
                   className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
                 />
                 {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
-                <div className="min-w-0 flex-1 text-center">
+                <div className="min-w-0">
                   <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
                     {a.title}
                   </h2>
@@ -159,12 +159,6 @@ export function HomePage() {
                     </p>
                   ) : null}
                 </div>
-                {/* 그림과 같은 너비의 빈 자리. 이것이 있어야 제목이 카드의 한가운데에
-                    온다 — 없으면 그림에 밀려 오른쪽으로 치우친다. */}
-                <div
-                  aria-hidden
-                  className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
-                />
               </Card>
             </Link>
           ))
