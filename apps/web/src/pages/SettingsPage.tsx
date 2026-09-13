@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@dailyglow/ui';
 import {
@@ -128,9 +127,6 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center gap-4">
-        <Link to="/">
-          <Button variant="ghost">← 홈</Button>
-        </Link>
         <h1 className="text-3xl font-bold text-glow-600">설정</h1>
       </header>
 

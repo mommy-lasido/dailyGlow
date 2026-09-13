@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
@@ -22,6 +21,9 @@ import {
   sentenceQuestion,
   type SentenceProblem,
 } from './generate';
+
+/** 화면이 넘어가고 나서 읽어주기까지 기다리는 시간. */
+const SPEAK_DELAY_MS = 2000;
 
 const ROUND_TITLE: Record<number, string> = {
   2: '틀린 문장을 다시 찾아봐요',
@@ -56,9 +58,16 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
   const index = quiz && quiz.phase === 'solving' ? currentIndex(quiz) : null;
   const asked = index === null ? null : (problems[index]?.answer ?? null);
 
-  // 문제가 바뀌면 읽어준다. 소리가 곧 문제라 아이가 누르기를 기다릴 수 없다.
+  /**
+   * 문제가 바뀌면 읽어준다. 소리가 곧 문제라 아이가 누르기를 기다릴 수 없다.
+   *
+   * 다만 **곧바로 읽지 않고 조금 기다린다.** 화면이 넘어가는 순간에 소리가 겹쳐
+   * 나면 아이가 아직 화면을 보고 있어서 못 듣는다. 두 셈 쉬었다가 읽어준다.
+   */
   useEffect(() => {
-    if (asked) speak(asked);
+    if (!asked) return;
+    const id = setTimeout(() => speak(asked), SPEAK_DELAY_MS);
+    return () => clearTimeout(id);
   }, [asked]);
 
   function begin() {
@@ -111,9 +120,6 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
       <Card className="flex flex-col items-center gap-4 text-center">
         <h1 className="text-2xl font-bold text-glow-600">아직 읽을 문장이 적어요</h1>
         <p className="text-slate-500">낱말 읽기를 조금 더 하고 오면 문장이 늘어나요.</p>
-        <Link to="/">
-          <Button size="lg">홈으로</Button>
-        </Link>
       </Card>
     );
   }

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import { speak } from '@/lib/speak';
@@ -110,9 +109,6 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
             </Button>
           </>
         )}
-        <Link to="/">
-          <Button variant="ghost">홈으로</Button>
-        </Link>
       </Card>
     </div>
   );

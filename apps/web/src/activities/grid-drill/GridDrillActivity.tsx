@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import { useProfile } from '@/stores/profile';
@@ -468,9 +467,6 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
           )}
         </Card>
 
-        <Link to="/" className="print:hidden">
-          <Button variant="ghost">홈으로</Button>
-        </Link>
       </div>
     );
   }
@@ -533,9 +529,6 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
             >
               🎲 새 문제
             </Button>
-            <Link to="/">
-              <Button variant="ghost">홈으로</Button>
-            </Link>
           </div>
         </Card>
       ) : (

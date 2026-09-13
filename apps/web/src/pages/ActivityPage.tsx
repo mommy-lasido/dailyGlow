@@ -1,6 +1,6 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card } from '@dailyglow/ui';
+import { Card } from '@dailyglow/ui';
 import { ACTIVITY_RENDERERS, resolveRendererId } from '@/activities/registry';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
 import { useProfile } from '@/stores/profile';
@@ -15,9 +15,6 @@ function Notice({ emoji, title, body }: { emoji: string; title: string; body: st
         <span className="text-6xl">{emoji}</span>
         <h1 className="text-2xl font-bold text-glow-600">{title}</h1>
         <p className="text-slate-500">{body}</p>
-        <Link to="/">
-          <Button size="lg">홈으로</Button>
-        </Link>
       </Card>
     </div>
   );

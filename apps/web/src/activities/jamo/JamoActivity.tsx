@@ -254,7 +254,11 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
             <span data-testid="letter" className="block text-8xl font-bold text-slate-700">
               {item.letter}
             </span>
-            <span className="mt-2 block text-2xl text-glow-600">🔊 {item.sound}</span>
+            {/* 읽는 말이 글자와 다를 때만 적는다 — 모음 'ㅏ' 는 '아' 로 읽는다.
+                글자 '튜' 밑에 '튜' 를 또 적으면 같은 것이 두 번 나올 뿐이다. */}
+            <span className="mt-2 block text-2xl text-glow-600">
+              🔊{item.sound === item.letter ? '' : ` ${item.sound}`}
+            </span>
           </button>
 
           <p className="text-slate-500">글자를 누르면 소리가 나요</p>

@@ -59,9 +59,11 @@ describe('Finished', () => {
     expect(screen.getByTestId('finish-detail')).toHaveTextContent('5문제를 처음부터 다 맞혔어요');
   });
 
-  it('홈으로 돌아갈 수 있다', () => {
+  it('홈으로 가는 길을 여기에 또 두지 않는다', () => {
+    // 껍데기(App)가 모든 활동 화면 위에 "🏠 홈으로" 를 들고 있다. 여기에 또
+    // 두면 한 화면에 홈 단추가 둘이 된다.
     renderFinished(quiz());
-    expect(screen.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
+    expect(screen.queryByRole('link', { name: /홈으로/ })).not.toBeInTheDocument();
   });
 
   it('활동이 덧붙인 것을 함께 보여준다', () => {

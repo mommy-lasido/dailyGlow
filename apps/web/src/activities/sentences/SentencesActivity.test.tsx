@@ -1,6 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SentencesActivity } from './SentencesActivity';
 import { poolForStage, SENTENCES_PER_ROUND } from './generate';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
@@ -50,6 +50,11 @@ function goToQuiz(level = LEVEL) {
  * 본다. 화면을 보고 알 수 있으면 듣기 문제가 아니다.
  */
 function answerSentence(): string {
+  // 문제를 읽어주기까지 두 셈 기다린다 — 화면이 넘어가는 순간에 소리가 겹치면
+  // 아이가 못 듣기 때문이다. 시험에서는 그 시간을 건너뛴다.
+  act(() => {
+    vi.advanceTimersByTime(3000);
+  });
   return speak.mock.calls.at(-1)![0] as string;
 }
 
@@ -68,8 +73,13 @@ function clickWrong() {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers();
   speak.mockClear();
   canSpeak.mockReturnValue(true);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('SentencesActivity — 문장 카드 보기', () => {
@@ -129,8 +139,10 @@ describe('SentencesActivity — 듣고 고르기', () => {
     renderActivity();
     speak.mockClear();
     goToQuiz();
-    expect(speak).toHaveBeenCalledTimes(1);
+    // 곧바로는 읽지 않는다.
+    expect(speak).not.toHaveBeenCalled();
     const asked = answerSentence();
+    expect(speak).toHaveBeenCalledTimes(1);
     expect(
       screen.getAllByTestId('choice').some((b) => b.getAttribute('data-sentence') === asked),
     ).toBe(true);

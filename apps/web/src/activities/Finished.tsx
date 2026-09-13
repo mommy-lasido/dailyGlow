@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Card } from '@dailyglow/ui';
+import { Card } from '@dailyglow/ui';
 import type { QuizState } from '@/activities/quiz-flow';
 
 /**
@@ -39,9 +38,6 @@ export function Finished({
           : `처음엔 ${quiz.firstTryCorrect}개였는데, 틀린 것도 포기하지 않고 끝까지 알아냈어요.`}
       </p>
       {children}
-      <Link to="/">
-        <Button size="lg">홈으로</Button>
-      </Link>
     </Card>
   );
 }
