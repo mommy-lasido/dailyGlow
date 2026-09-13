@@ -90,7 +90,15 @@ describe('WordsActivity — 낱말 카드 보기', () => {
     expect(screen.getByText(`오늘 읽어볼 낱말 ${WORDS_PER_ROUND}개`)).toBeInTheDocument();
   });
 
-  it('낱말을 누르면 읽어준다', () => {
+  it('글자를 눌러서는 소리가 나지 않는다', () => {
+    // 글자를 눌러 소리가 나면, 읽을 줄 아는 아이도 실수로 눌러 듣게 되어
+    // 읽기 연습이 듣기가 되어 버린다.
+    renderActivity(1);
+    fireEvent.click(screen.getByTestId('card-word'));
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it('스피커를 누르면 읽어준다', () => {
     renderActivity(1);
     const word = screen.getByTestId('card-word').textContent!;
     fireEvent.click(screen.getByRole('button', { name: `${word} 읽어주기` }));

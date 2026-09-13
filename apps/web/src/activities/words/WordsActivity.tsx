@@ -127,19 +127,26 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
         <p className="text-center text-slate-500">오늘 읽어볼 낱말 {round.length}개</p>
 
         <Card className="flex flex-col items-center gap-4 text-center">
+          {/* 스피커는 글자와 **따로** 둔다. 글자를 눌러 소리가 나면, 읽을 줄 아는
+              아이도 실수로 눌러 듣게 되어 읽기 연습이 듣기가 되어 버린다.
+              소리는 스스로 못 읽을 때만 찾는 것이라 글자 위에 따로 둔다. */}
           <button
             type="button"
             onClick={() => speak(word)}
             aria-label={`${word} 읽어주기`}
-            className="min-h-touch rounded-3xl bg-glow-50 px-8 py-5"
+            className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl transition-transform active:scale-95"
           >
-            <span data-testid="card-word" className="text-6xl font-bold text-slate-700">
-              {word}
-            </span>
-            <span className="ml-3 text-2xl">🔊</span>
+            🔊
           </button>
 
-          <p className="text-slate-500">낱말을 누르면 읽어줘요</p>
+          <span
+            data-testid="card-word"
+            className="rounded-3xl bg-glow-50 px-8 py-5 text-6xl font-bold text-slate-700"
+          >
+            {word}
+          </span>
+
+          <p className="text-slate-500">먼저 읽어보고, 모르겠으면 🔊 를 눌러요</p>
 
           <div className="flex w-full items-center justify-between gap-3">
             <Button variant="ghost" disabled={card === 0} onClick={() => setCard((c) => c - 1)}>

@@ -93,7 +93,13 @@ describe('SentencesActivity — 문장 카드 보기', () => {
     ).toBeInTheDocument();
   });
 
-  it('문장을 누르면 읽어준다', () => {
+  it('글자를 눌러서는 소리가 나지 않는다', () => {
+    renderActivity(9);
+    fireEvent.click(screen.getByTestId('card-sentence'));
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it('스피커를 누르면 읽어준다', () => {
     renderActivity(9);
     const shown = screen.getByTestId('card-sentence').textContent!;
     fireEvent.click(screen.getByRole('button', { name: `${shown} 읽어주기` }));

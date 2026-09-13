@@ -127,19 +127,25 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
         <p className="text-center text-slate-500">오늘 읽어볼 문장 {round.length}개</p>
 
         <Card className="flex flex-col items-center gap-4 text-center">
+          {/* 낱말 읽기와 같은 까닭으로 스피커를 글자와 따로 둔다 — 글자를 눌러
+              소리가 나면 읽기 연습이 듣기가 되어 버린다. */}
           <button
             type="button"
             onClick={() => speak(sentence)}
             aria-label={`${sentence} 읽어주기`}
-            className="min-h-touch rounded-3xl bg-glow-50 px-6 py-5"
+            className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl transition-transform active:scale-95"
           >
-            <span data-testid="card-sentence" className="text-3xl font-bold text-slate-700">
-              {sentence}
-            </span>
-            <span className="ml-3 text-2xl">🔊</span>
+            🔊
           </button>
 
-          <p className="text-slate-500">문장을 누르면 읽어줘요</p>
+          <span
+            data-testid="card-sentence"
+            className="rounded-3xl bg-glow-50 px-6 py-5 text-3xl font-bold text-slate-700"
+          >
+            {sentence}
+          </span>
+
+          <p className="text-slate-500">먼저 읽어보고, 모르겠으면 🔊 를 눌러요</p>
 
           <div className="flex w-full items-center justify-between gap-3">
             <Button variant="ghost" disabled={card === 0} onClick={() => setCard((c) => c - 1)}>
