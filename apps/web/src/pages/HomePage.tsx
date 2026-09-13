@@ -7,7 +7,6 @@ import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
 import {
   fetchTodayMinutes,
-  fetchTotalMinutes,
   fetchWeek,
   selectActivities,
   type LessonGateRow,
@@ -71,13 +70,6 @@ export function HomePage() {
     queryFn: () => fetchTodayMinutes(profile!.id),
   });
 
-  /** 처음부터 지금까지 쌓인 공부 시간. 오늘 것과 달리 줄지 않는다. */
-  const { data: totalMinutes = 0 } = useQuery({
-    queryKey: ['total-minutes', profile?.id],
-    enabled: Boolean(profile),
-    queryFn: () => fetchTotalMinutes(profile!.id),
-  });
-
   /** 이번 주 출석. 공부한 날에 도장이 찍힌다. */
   const { data: week = [] } = useQuery({
     queryKey: ['week', profile?.id],
@@ -125,18 +117,15 @@ export function HomePage() {
       </header>
 
       {/*
-        목표 시간을 들이대는 대신 **쌓인 것**을 보여준다.
-        "20분 / 15분" 은 다 채우고 나면 무슨 뜻인지 알기 어려웠고, 못 채운 날에는
-        모자란다는 말로만 남았다. 지금까지 쌓인 시간은 줄지 않으므로, 아이가
-        어제의 자기와 이어져 있다고 느낀다.
+        아이 화면에는 **오늘 한 것과 이번 주 도장**만 둔다.
+        목표 시간("20분 / 15분")은 다 채우고 나면 무슨 뜻인지 알기 어려웠고, 못 채운
+        날에는 모자란다는 말로만 남았다. 처음부터 쌓인 시간은 아이가 쓸 일이 없어
+        설정(부모 화면)으로 옮겼다.
       */}
       <Card className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <span data-testid="total-minutes" className="text-xl font-bold text-glow-600">
-            ⏱ 지금까지 {totalMinutes}분 공부했어요
-          </span>
-          <span className="text-lg text-slate-500">오늘 {todayMinutes}분</span>
-        </div>
+        <span data-testid="today-minutes" className="text-xl font-bold text-glow-600">
+          ⏱ 오늘 {todayMinutes}분 공부했어요
+        </span>
 
         <WeekStamps week={week} />
       </Card>

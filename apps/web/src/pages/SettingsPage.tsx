@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@dailyglow/ui';
+import { fetchTotalMinutes } from '@/lib/activities';
 import {
   BIRTH_DATE_MIN,
   DAILY_GOAL_OPTIONS,
@@ -63,6 +64,13 @@ export function SettingsPage() {
     setReadingLevel((profile.reading_level as ReadingLevel | null) ?? '');
     setGoal(profile.daily_goal_minutes ?? 10);
   }, [profile]);
+
+  /** 처음부터 지금까지 쌓인 공부 시간. 부모가 보는 숫자다. */
+  const { data: totalMinutes = 0 } = useQuery({
+    queryKey: ['total-minutes', profile?.id],
+    enabled: Boolean(profile),
+    queryFn: () => fetchTotalMinutes(profile!.id),
+  });
 
   const {
     data: subjects,
@@ -129,6 +137,17 @@ export function SettingsPage() {
       <header className="flex items-center gap-4">
         <h1 className="text-3xl font-bold text-glow-600">설정</h1>
       </header>
+
+      {/*
+        지금까지 쌓인 공부 시간은 **부모가 보는 숫자**다. 아이 화면에서는 오늘 한
+        것과 이번 주 도장이면 충분하고, 며칠 치를 합한 숫자는 아이가 쓸 일이 없다.
+      */}
+      <Card className="flex items-baseline justify-between gap-3">
+        <h2 className="text-xl font-bold text-glow-700">지금까지 공부한 시간</h2>
+        <span data-testid="total-minutes" className="text-lg text-slate-600">
+          {totalMinutes}분
+        </span>
+      </Card>
 
       <Card className="flex flex-col gap-4">
         <h2 className="text-xl font-bold text-glow-700">프로필</h2>
