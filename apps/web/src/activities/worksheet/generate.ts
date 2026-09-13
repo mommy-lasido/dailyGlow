@@ -45,14 +45,31 @@ export const ROWS_PER_SHEET = 8;
 export const WRITES_PER_ROW = 5;
 
 /**
- * 갈래마다 몇 번 쓰고 몇 줄을 넣을지.
+ * 갈래마다 어떻게 생긴 연습지인가.
  *
- * 문장은 길어서 한 줄에 다섯 번 쓸 수 없다. 한 장에 문장 세 개만 넣고,
- * 각 문장은 본보기 한 줄에 따라 쓸 줄 둘을 붙여 **아래로 쌓는다**.
+ * 자음·모음·글자·낱말은 **칸에 다섯 번씩** 쓴다. 낱말은 글자가 둘셋이라 한 줄이
+ * 길어지므로, 칸을 조금 줄이고 한 장에 넣는 줄도 줄인다.
+ *
+ * 문장은 **칸을 쓰지 않는다.** 문장을 칸에 가두면 띄어쓰기가 사라지고, 무엇보다
+ * 줄공책에 쓰는 것과 모양이 달라 학교에서 쓰는 법이 몸에 붙지 않는다. 대신 줄을
+ * 긋고 그 위에 쓰게 한다. 본보기 한 줄 아래에 빈 줄 셋을 둔다.
  */
-export function layoutFor(kind: SheetKind): { writes: number; rows: number; stacked: boolean } {
-  if (kind === 'sentence') return { writes: 3, rows: 3, stacked: true };
-  return { writes: WRITES_PER_ROW, rows: ROWS_PER_SHEET, stacked: false };
+export interface SheetLayout {
+  /** 몇 번 쓰는가 (문장은 칸이 아니라 줄이라 쓰이지 않는다) */
+  writes: number;
+  /** 한 장에 넣을 줄(항목) 수 */
+  rows: number;
+  /** 칸이 아니라 줄에 쓰는가 */
+  ruled: boolean;
+  /** 본보기 아래에 둘 빈 줄 수 (줄 연습지만) */
+  blankLines: number;
+}
+
+export function layoutFor(kind: SheetKind): SheetLayout {
+  if (kind === 'sentence') return { writes: 1, rows: 4, ruled: true, blankLines: 3 };
+  if (kind === 'word')
+    return { writes: WRITES_PER_ROW, rows: 5, ruled: false, blankLines: 0 };
+  return { writes: WRITES_PER_ROW, rows: ROWS_PER_SHEET, ruled: false, blankLines: 0 };
 }
 
 export interface SheetRow {
@@ -70,8 +87,8 @@ export function sourceFor(kind: SheetKind, stage: number): SheetRow[] {
   if (kind === 'letter')
     return lettersForStage(stage).map((l) => ({ text: l.letter, sound: l.sound }));
   if (kind === 'sentence')
-    return sentencesForStage(stage).map((s) => ({ text: s.sentence, sound: s.sentence }));
-  return wordsForStage(stage).map((w) => ({ text: w.word, sound: w.word }));
+    return sentencesForStage(stage).map((s) => ({ text: s, sound: s }));
+  return wordsForStage(stage).map((w) => ({ text: w, sound: w }));
 }
 
 function shuffle<T>(arr: T[], rand: () => number): T[] {

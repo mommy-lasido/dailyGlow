@@ -18,8 +18,11 @@ import {
   consonantsForStage,
   JAMO_MAX_STAGE,
   jamoHint,
+  learnedLeads,
   lettersForStage,
   makeJamoSet,
+  pickLetters,
+  syllablesOf,
   BASIC_VOWELS,
   type JamoItem,
   type JamoProblem,
@@ -40,17 +43,23 @@ const ROUND_TITLE: Record<number, string> = {
  * 문제로 내면 아이는 찍을 수밖에 없다. 카드의 이름이 "배우기" 인 이유다.
  */
 export function JamoActivity({ lesson, onFinish }: ActivityProps) {
-  // 아이가 배운 데까지의 글자. 15단계를 넘긴 아이는 자음·모음을 이미 뗐으므로
-  // 마지막 자음으로 맞춰 복습이 된다.
+  // 아이가 배운 데까지. 14단계를 넘긴 아이는 자음·모음을 이미 다 뗐으므로 거기서 멈춘다.
   const stage = Math.min(Math.max(lesson.childLevel, 1), JAMO_MAX_STAGE);
   const stageLabel = hangulStage(stage)?.label ?? '자음과 모음';
+  const leads = learnedLeads(stage);
 
   const [mode, setMode] = useState<JamoMode | null>(null);
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
+  /** 글자 배우기에서 어느 자음의 글자를 볼지 고르는 중인가 */
+  const [pickingLead, setPickingLead] = useState(false);
+  /** 이번 판에 다룰 글자들 */
+  const [items, setItems] = useState<JamoItem[]>([]);
   /** 배우기 화면에서 지금 보고 있는 글자 */
   const [card, setCard] = useState(0);
   /** 배우기 화면에서 한 번이라도 소리를 들은 글자들 */
   const [heard, setHeard] = useState<Set<number>>(new Set());
+  /** 지금 보고 있는 것이 어느 묶음인지 (화면 위 안내에 쓴다) */
+  const [setLabel, setSetLabel] = useState('');
 
   const [problems, setProblems] = useState<JamoProblem[]>([]);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
@@ -59,20 +68,23 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
 
   const speechOk = canSpeak();
 
-  const items: JamoItem[] =
-    mode === 'consonant'
-      ? consonantsForStage(stage)
-      : mode === 'vowel'
-        ? BASIC_VOWELS
-        : mode === 'syllable'
-          ? lettersForStage(stage)
-          : [];
-
-  function begin(chosen: JamoMode) {
-    setMode(chosen);
+  /** 배우기 화면을 연다. */
+  function show(next: JamoItem[], label: string) {
+    setItems(next);
+    setSetLabel(label);
+    setPickingLead(false);
     setPhase('learn');
     setCard(0);
     setHeard(new Set());
+  }
+
+  function begin(chosen: JamoMode) {
+    setMode(chosen);
+    if (chosen === 'consonant') return show(consonantsForStage(stage), '자음 배우기');
+    if (chosen === 'vowel') return show(BASIC_VOWELS, '모음 배우기');
+    // 배운 자음이 하나뿐이면 고를 것이 없다 — 바로 그 글자들을 연다.
+    if (leads.length <= 1) return show(lettersForStage(stage), `${stage}단계 · ${stageLabel}`);
+    setPickingLead(true);
   }
 
   // ── 무엇을 배울지 고르기 ───────────────────────────────
@@ -101,9 +113,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
               mode: 'syllable' as JamoMode,
               icon: '가',
               name: '글자 배우기',
-              desc: lettersForStage(stage)
-                .map((i) => i.letter)
-                .join(' '),
+              desc: leads.map((l) => syllablesOf(l)[0]!.letter).join(' '),
             },
           ]
         : []),
@@ -130,6 +140,48 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
             </span>
           </button>
         ))}
+      </div>
+    );
+  }
+
+  // ── 어느 글자를 볼지 고르기 (글자 배우기) ───────────────
+  //
+  // 단계는 "여기까지 왔다" 는 뜻이라, 그 아래 자음은 모두 아는 것으로 친다.
+  // 그래서 배운 자음을 다 늘어놓고 아이가 고르게 한다. '섞어서' 를 고르면
+  // 배운 글자 전부에서 열 자를 뽑아 종합 복습이 된다.
+  if (pickingLead) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-center text-4xl font-bold text-glow-600">어떤 글자?</h1>
+
+        <button
+          type="button"
+          onClick={() => show(pickLetters(lettersForStage(stage)), '섞어서')}
+          className="min-h-touch rounded-3xl bg-glow-100 p-5 text-center text-2xl font-bold text-glow-700 transition-transform active:scale-95"
+        >
+          🎲 섞어서
+        </button>
+
+        <div className="flex flex-wrap justify-center gap-2">
+          {leads.map((lead) => {
+            const set = syllablesOf(lead);
+            return (
+              <button
+                key={lead}
+                type="button"
+                aria-label={set[0]!.letter}
+                onClick={() => show(set, `${set[0]!.letter} 줄`)}
+                className="min-h-touch min-w-touch rounded-2xl bg-white px-5 text-3xl font-bold text-slate-700 ring-1 ring-glow-100 transition-transform active:scale-95"
+              >
+                {set[0]!.letter}
+              </button>
+            );
+          })}
+        </div>
+
+        <Button variant="ghost" onClick={() => setMode(null)}>
+          ← 다시 고르기
+        </Button>
       </div>
     );
   }
@@ -190,13 +242,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
     const last = card === items.length - 1;
     return (
       <div className="flex flex-col gap-5">
-        <p className="text-center text-slate-500">
-          {mode === 'consonant'
-            ? '자음 배우기'
-            : mode === 'vowel'
-              ? '모음 배우기'
-              : `${stage}단계 · ${stageLabel}`}
-        </p>
+        <p className="text-center text-slate-500">{setLabel}</p>
 
         <Card className="flex flex-col items-center gap-5 text-center">
           <button
@@ -232,7 +278,8 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
           </div>
         </Card>
 
-        {/* 어디까지 들어봤는지 보여준다. 소리를 안 들은 글자는 흐리게. */}
+        {/* 어디까지 들어봤는지는 **바탕색**으로만 나타낸다. 글자를 흐리게 하면
+            자모 모양이 뭉개지는데, 이 활동은 바로 그 모양을 익히는 자리다. */}
         <div className="flex flex-wrap justify-center gap-2">
           {items.map((it, i) => (
             <button
@@ -244,7 +291,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
                   ? 'bg-glow-500 text-white'
                   : heard.has(i)
                     ? 'bg-glow-100 text-slate-700'
-                    : 'bg-white text-slate-300'
+                    : 'bg-white text-slate-700 ring-1 ring-glow-100'
               }`}
             >
               {it.letter}

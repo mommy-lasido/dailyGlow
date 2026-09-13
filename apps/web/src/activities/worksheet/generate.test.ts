@@ -69,18 +69,34 @@ describe('sourceFor', () => {
 });
 
 describe('layoutFor', () => {
-  it('짧은 글자는 한 줄에 다섯 번 나란히 쓴다', () => {
-    expect(layoutFor('vowel')).toEqual({ writes: 5, rows: 8, stacked: false });
+  it('자음·모음·글자는 한 줄에 다섯 번씩 쓴다', () => {
+    for (const kind of ['vowel', 'consonant', 'letter'] as const) {
+      expect(layoutFor(kind)).toEqual({ writes: 5, rows: 8, ruled: false, blankLines: 0 });
+    }
   });
 
-  it('문장은 길어서 아래로 쌓고 한 장에 셋만 넣는다', () => {
-    expect(layoutFor('sentence')).toEqual({ writes: 3, rows: 3, stacked: true });
+  it('낱말도 다섯 번씩 쓰되 한 장에 넣는 줄을 줄인다', () => {
+    // 낱말은 글자가 둘셋이라 한 줄이 길다. 여덟 줄을 넣으면 종이를 넘친다.
+    expect(layoutFor('word')).toEqual({ writes: 5, rows: 5, ruled: false, blankLines: 0 });
+  });
+
+  it('문장은 칸이 아니라 줄에 쓰고, 본보기 아래 빈 줄 셋을 둔다', () => {
+    expect(layoutFor('sentence')).toEqual({
+      writes: 1,
+      rows: 4,
+      ruled: true,
+      blankLines: 3,
+    });
   });
 });
 
 describe('makeSheet', () => {
   it('한 장에 여덟 줄까지 넣는다', () => {
-    expect(makeSheet('word', 30)).toHaveLength(ROWS_PER_SHEET);
+    expect(makeSheet('letter', 30)).toHaveLength(ROWS_PER_SHEET);
+  });
+
+  it('낱말 연습지는 다섯 줄을 넣는다', () => {
+    expect(makeSheet('word', 30)).toHaveLength(5);
   });
 
   it('쓸 것이 적으면 있는 만큼만 넣는다', () => {
@@ -95,8 +111,9 @@ describe('makeSheet', () => {
     }
   });
 
-  it('문장 연습지는 세 문장만 넣는다', () => {
-    expect(makeSheet('sentence', 35)).toHaveLength(3);
+  it('문장 연습지는 네 문장을 넣는다', () => {
+    // 문장마다 본보기 한 줄에 빈 줄 셋이 붙으므로 넷이면 한 장이 찬다.
+    expect(makeSheet('sentence', 35)).toHaveLength(4);
   });
 
   it('낼 때마다 글자가 달라진다', () => {

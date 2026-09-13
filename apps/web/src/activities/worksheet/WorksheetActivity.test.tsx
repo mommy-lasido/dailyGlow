@@ -88,12 +88,32 @@ describe('WorksheetActivity — 연습지', () => {
     for (const b of boxes.slice(1)) expect(b.className).toContain('text-transparent');
   });
 
-  it('문장은 사이띄개 자리를 칸 없이 벌린다', () => {
-    // 띄어쓰기도 같이 익히게 한다.
+  it('문장은 칸이 아니라 줄에 쓴다', () => {
+    // 칸에 가두면 띄어쓰기가 사라지고, 학교에서 쓰는 줄공책과 모양이 달라진다.
     renderActivity(35);
     choose('sentence');
     const row = screen.getAllByTestId('sheet-row')[0]!;
-    expect(row.querySelectorAll('[data-testid="gap"]').length).toBeGreaterThan(0);
+    expect(row.querySelectorAll('[data-testid="box"]')).toHaveLength(0);
+    expect(row.querySelectorAll('[data-testid="sample-line"]')).toHaveLength(1);
+  });
+
+  it('문장 아래에 따라 쓸 빈 줄 셋이 있다', () => {
+    renderActivity(35);
+    choose('sentence');
+    const row = screen.getAllByTestId('sheet-row')[0]!;
+    expect(row.querySelectorAll('[data-testid="blank-line"]')).toHaveLength(3);
+  });
+
+  it('띄어쓰는 자리에 ∨ 를 찍어준다', () => {
+    // 여섯 살에게 띄어쓰기는 규칙이 아니라 눈에 보이는 표시로 먼저 익히는 것이다.
+    renderActivity(35);
+    choose('sentence');
+    const row = screen.getAllByTestId('sheet-row')[0]!;
+    const marks = row.querySelectorAll('[data-testid="space-mark"]');
+    // 본보기 문장의 띄어쓰기 수만큼.
+    const spaces = row.querySelector('[data-testid="sample-line"]')!.textContent!.match(/∨/g);
+    expect(marks.length).toBeGreaterThan(0);
+    expect(spaces).toHaveLength(marks.length);
   });
 
   it('1단계 아이는 ㄱ ㄴ ㄷ ㄹ 을 쓴다', () => {

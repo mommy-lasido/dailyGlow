@@ -94,24 +94,72 @@ export function stageLetter(stage: number): string | null {
   return match ? match[1]! : null;
 }
 
-/**
- * 이 단계에서 배울 글자들.
- *
- * 아직 아무것도 안 배운 아이(1단계)는 모음부터, 자음 단계는 그 자음이 모음과
- * 만나 어떤 소리가 되는지를 배운다. 15단계 넘게 올라간 아이는 자음·모음을 이미
- * 뗐으므로 마지막 자음(ㅎ)으로 맞춰 복습이 되게 한다.
- */
-export function lettersForStage(stage: number): JamoItem[] {
-  const clamped = Math.min(Math.max(stage, 1), JAMO_MAX_STAGE);
-  if (clamped === 1) return BASIC_VOWELS;
-
-  const lead = stageLetter(clamped);
-  if (!lead) return BASIC_VOWELS;
-
+/** 자음 하나가 기본 모음 열과 만나 만들어지는 글자 열. (ㄱ → 가 갸 거 겨 …) */
+export function syllablesOf(lead: string): JamoItem[] {
   return BASIC_VOWELS.map((v) => {
     const letter = composeSyllable(lead, v.letter);
     return { letter, sound: letter };
   });
+}
+
+/**
+ * 이 단계까지 배운 자음들. 2단계 'ㄱ' 부터 이 단계의 자음까지다.
+ *
+ * **단계는 "여기까지 왔다" 는 뜻이지 "이것만 안다" 는 뜻이 아니다.** 5단계 아이는
+ * ㄱ ㄴ ㄷ ㄹ 을 모두 아는 아이다. 그러니 글자도 그 넷에서 두루 나와야 한다.
+ */
+export function learnedLeads(stage: number): string[] {
+  const last = Math.min(Math.max(stage, 1), JAMO_MAX_STAGE);
+  const leads: string[] = [];
+  for (let s = 2; s <= last; s += 1) {
+    const lead = stageLetter(s);
+    if (lead) leads.push(lead);
+  }
+  return leads;
+}
+
+/**
+ * 이 단계까지 배운 글자 전부.
+ *
+ * 14단계를 다 뗀 아이라면 가갸거겨부터 하햐허혀까지 백사십 자가 된다. 여기서
+ * 열 자를 뽑아 섞어 내면 오늘은 '거', 내일은 '뮤' 처럼 배운 것이 골고루 돌아온다.
+ */
+export function syllablesUpTo(stage: number): JamoItem[] {
+  return learnedLeads(stage).flatMap(syllablesOf);
+}
+
+/**
+ * 이 단계에서 배울 글자들.
+ *
+ * 아직 아무것도 안 배운 아이(1단계)는 모음부터, 그 위로는 **지금까지 배운 글자
+ * 전부**를 받는다.
+ *
+ * 예전에는 그 단계의 자음 하나만 내놓았다. 그래서 자음을 다 뗀 아이에게 늘
+ * '하 햐 허 혀' 만 나왔다. 다 배운 아이에게 필요한 것은 마지막 한 자음이 아니라
+ * 지금까지 배운 것의 종합 복습이다.
+ */
+export function lettersForStage(stage: number): JamoItem[] {
+  if (stage <= 1) return BASIC_VOWELS;
+  const all = syllablesUpTo(stage);
+  return all.length > 0 ? all : BASIC_VOWELS;
+}
+
+/** 한 판에 보여줄 글자 수. 어느 단계든 열 자다. */
+export const LEARN_CARD_COUNT = BASIC_VOWELS.length;
+
+/**
+ * 배우기 화면에 올릴 글자를 고른다.
+ *
+ * 한 단계의 글자는 열 자뿐이라 그대로 쓴다 — 책의 차례(가 갸 거 겨 …)가
+ * 흐트러지면 안 된다. 복습처럼 글자가 열보다 많을 때만 섞어서 열 자를 뽑는다.
+ */
+export function pickLetters(
+  items: JamoItem[],
+  count = LEARN_CARD_COUNT,
+  rand: () => number = Math.random,
+): JamoItem[] {
+  if (items.length <= count) return items;
+  return shuffle(items, rand).slice(0, count);
 }
 
 function shuffle<T>(arr: T[], rand: () => number): T[] {

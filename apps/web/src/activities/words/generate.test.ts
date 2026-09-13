@@ -5,25 +5,19 @@ import { makeWordSet, MIN_POOL, poolForStage, wordQuestion } from './generate';
 
 describe('자료', () => {
   it('모든 낱말이 책의 자모만으로 이루어져 있다', () => {
-    // 겹받침이나 쌍받침이 들어가면 계산이 null 을 돌려준다 — 그런 낱말은 쓸 수 없다.
+    // 겹받침이나 쌍받침이 들어가면 계산이 null 을 돌려준다 — 그런 낱말은 아이에게
+    // 나가지 않으므로, 여기 적어 두면 자리만 차지하는 죽은 낱말이 된다.
     for (const w of WORD_ITEMS) {
-      expect(minStageFor(w.word)).not.toBeNull();
-    }
-  });
-
-  it('모든 낱말에 그림이 있다', () => {
-    // 그림을 보고 글자를 고르는 활동이라 그림 없는 낱말은 쓸 수 없다.
-    for (const w of WORD_ITEMS) {
-      expect(w.emoji.length).toBeGreaterThan(0);
+      expect(minStageFor(w)).not.toBeNull();
     }
   });
 
   it('같은 낱말이 두 번 들어가지 않는다', () => {
-    expect(new Set(WORD_ITEMS.map((w) => w.word)).size).toBe(WORD_ITEMS.length);
+    expect(new Set(WORD_ITEMS).size).toBe(WORD_ITEMS.length);
   });
 
   it('1단계부터 33단계까지 빠짐없이 낱말이 있다', () => {
-    const stages = new Set(WORD_ITEMS.map((w) => minStageFor(w.word)));
+    const stages = new Set(WORD_ITEMS.map((w) => minStageFor(w)));
     for (let s = 1; s <= 33; s += 1) {
       expect(stages.has(s)).toBe(true);
     }
@@ -34,7 +28,7 @@ describe('poolForStage', () => {
   it('배운 데까지의 낱말만 고른다', () => {
     for (const stage of [1, 5, 14, 21, 28, 35]) {
       for (const w of poolForStage(stage)) {
-        expect(minStageFor(w.word)!).toBeLessThanOrEqual(stage);
+        expect(minStageFor(w)!).toBeLessThanOrEqual(stage);
       }
     }
   });
@@ -45,7 +39,7 @@ describe('poolForStage', () => {
   });
 
   it('1단계 아이는 모음만으로 된 낱말을 읽는다', () => {
-    expect(poolForStage(1).map((w) => w.word)).toEqual(['오이', '우유', '여우', '아이']);
+    expect(poolForStage(1)).toEqual(['오이', '우유', '여우', '아이', '이유']);
   });
 
   it('35단계면 모든 낱말을 읽는다', () => {
@@ -57,7 +51,7 @@ describe('makeWordSet', () => {
   it('한 판 안에서 같은 낱말이 두 번 나오지 않는다', () => {
     const pool = poolForStage(20);
     for (let i = 0; i < 100; i += 1) {
-      const words = makeWordSet(pool).map((p) => p.answer.word);
+      const words = makeWordSet(pool).map((p) => p.answer);
       expect(new Set(words).size).toBe(words.length);
     }
   });
@@ -65,7 +59,7 @@ describe('makeWordSet', () => {
   it('보기는 서로 다른 3개이고 정답이 들어 있다', () => {
     const pool = poolForStage(20);
     for (const p of makeWordSet(pool)) {
-      expect(new Set(p.choices.map((c) => c.word)).size).toBe(3);
+      expect(new Set(p.choices).size).toBe(3);
       expect(p.choices).toContain(p.answer);
     }
   });
@@ -76,22 +70,13 @@ describe('makeWordSet', () => {
     const pool = poolForStage(stage);
     for (const p of makeWordSet(pool)) {
       for (const c of p.choices) {
-        expect(minStageFor(c.word)!).toBeLessThanOrEqual(stage);
+        expect(minStageFor(c)!).toBeLessThanOrEqual(stage);
       }
     }
   });
 
-  it('두 방향으로 낸다', () => {
-    const pool = poolForStage(20);
-    const seen = new Set<string>();
-    for (let i = 0; i < 100; i += 1) {
-      for (const p of makeWordSet(pool)) seen.add(p.direction);
-    }
-    expect([...seen].sort()).toEqual(['toEmoji', 'toWord']);
-  });
-
   it('낱말이 모자라면 있는 만큼만 낸다', () => {
-    expect(makeWordSet(poolForStage(1))).toHaveLength(4);
+    expect(makeWordSet(poolForStage(1))).toHaveLength(5);
   });
 
   it('낱말이 셋도 안 되면 아예 내지 않는다', () => {
@@ -101,11 +86,7 @@ describe('makeWordSet', () => {
 });
 
 describe('wordQuestion', () => {
-  it('방향에 맞게 묻는다', () => {
-    const w = WORD_ITEMS[0]!;
-    expect(wordQuestion({ answer: w, direction: 'toWord', choices: [w] })).toBe('무엇일까?');
-    expect(wordQuestion({ answer: w, direction: 'toEmoji', choices: [w] })).toBe(
-      '어느 그림일까?',
-    );
+  it('소리를 듣고 찾는 것이라 무엇을 찾는지만 묻는다', () => {
+    expect(wordQuestion()).toBe('어떤 낱말일까?');
   });
 });

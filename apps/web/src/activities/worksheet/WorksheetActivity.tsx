@@ -123,7 +123,7 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
  *
  * 여섯 살이 쓰는 것이라 칸을 크게, 줄 사이를 넓게 잡는다. 손을 가누기 어려운
  * 나이라 칸이 작으면 글씨가 삐져나가고, 줄이 붙어 있으면 어디에 쓸지 헷갈린다.
- * 첫 칸은 따라 쓰도록 흐리게 본보기를 보여주고 나머지는 비운다.
+ * 첫 번째는 따라 쓰도록 흐리게 본보기를 보여주고 나머지는 비운다.
  */
 function Sheet({
   rows,
@@ -134,7 +134,12 @@ function Sheet({
   kind: SheetKind;
   onSpeak: (text: string) => void;
 }) {
-  const { writes, stacked } = layoutFor(kind);
+  const layout = layoutFor(kind);
+  // 낱말은 글자가 둘셋이라 다섯 번이면 줄이 길어진다. 칸을 조금 줄여 한 줄에 담는다.
+  const boxSize =
+    kind === 'word'
+      ? 'h-14 w-14 text-3xl print:h-16 print:w-16 print:text-4xl'
+      : 'h-20 w-20 text-5xl print:h-28 print:w-28 print:text-6xl';
 
   return (
     <div data-testid="sheet" className="flex flex-col gap-6 print:gap-10">
@@ -149,36 +154,78 @@ function Sheet({
             🔊 {row.sound}
           </button>
 
-          {/* 문장은 길어서 옆으로 다섯 번 쓸 수 없다. 본보기 한 줄 밑에 따라 쓸
-              줄을 쌓는다. 짧은 글자·낱말은 한 줄에 나란히 쓴다. */}
-          <div
-            className={
-              stacked ? 'flex flex-col gap-3 print:gap-5' : 'flex flex-wrap gap-3 print:gap-4'
-            }
-          >
-            {Array.from({ length: writes }).map((_, i) => (
-              <span key={i} className="flex flex-wrap gap-1">
-                {[...row.text].map((ch, ci) =>
-                  ch === ' ' ? (
-                    // 사이띄개는 칸을 두지 않고 자리만 벌린다.
-                    <span key={ci} data-testid="gap" className="w-6 print:w-8" />
-                  ) : (
+          {layout.ruled ? (
+            <RuledSentence text={row.text} blankLines={layout.blankLines} />
+          ) : (
+            <div className="flex flex-wrap gap-3 print:gap-4">
+              {Array.from({ length: layout.writes }).map((_, i) => (
+                // 한 벌은 통째로 붙어 있어야 한다 — 낱말이 줄 끝에서 쪼개지면
+                // 아이가 무엇을 쓰는 중인지 놓친다.
+                <span key={i} className="flex flex-nowrap gap-1">
+                  {[...row.text].map((ch, ci) => (
                     <span
                       key={ci}
                       data-testid="box"
-                      className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-dashed border-glow-300 text-5xl font-bold print:h-28 print:w-28 print:text-6xl"
+                      className={`flex items-center justify-center rounded-xl border-2 border-dashed border-glow-300 font-bold ${boxSize}`}
                     >
                       {/* 첫 번째만 본보기. 흐리게 보여줘 따라 쓰게 한다. */}
                       <span className={i === 0 ? 'text-glow-300' : 'text-transparent'}>
                         {ch}
                       </span>
                     </span>
-                  ),
-                )}
-              </span>
-            ))}
-          </div>
+                  ))}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * 문장 한 줄과 그 아래 빈 줄들.
+ *
+ * 문장은 칸에 가두지 않는다. 칸에 넣으면 띄어쓰기가 사라지고, 학교에서 쓰는
+ * 줄공책과 모양이 달라 쓰는 법이 몸에 붙지 않는다.
+ *
+ * 대신 **띄어쓰는 자리에 ∨ 를 위에 찍어** 어디서 띄는지 눈에 보이게 한다.
+ * 여섯 살에게 띄어쓰기는 규칙이 아니라 눈에 보이는 표시로 먼저 익히는 것이다.
+ */
+function RuledSentence({ text, blankLines }: { text: string; blankLines: number }) {
+  const words = text.split(' ');
+
+  return (
+    <div className="flex flex-col gap-6 print:gap-8">
+      <div
+        data-testid="sample-line"
+        className="flex flex-wrap items-end border-b-2 border-glow-300 pb-1 pt-5 text-4xl font-bold text-glow-300 print:text-5xl"
+      >
+        {words.map((w, i) => (
+          <span key={i} className="flex items-end">
+            {i > 0 ? (
+              // 띄어쓰는 자리. 글자만큼 자리를 비우고 그 위에 ∨ 를 찍는다.
+              <span data-testid="space-mark" className="relative inline-block w-8 print:w-10">
+                <span
+                  aria-hidden
+                  className="absolute -top-5 left-1/2 -translate-x-1/2 text-2xl text-glow-500 print:text-3xl"
+                >
+                  ∨
+                </span>
+              </span>
+            ) : null}
+            <span>{w}</span>
+          </span>
+        ))}
+      </div>
+
+      {Array.from({ length: blankLines }).map((_, i) => (
+        <div
+          key={i}
+          data-testid="blank-line"
+          className="h-12 border-b-2 border-glow-300 print:h-16"
+        />
       ))}
     </div>
   );

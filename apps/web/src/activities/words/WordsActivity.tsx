@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
@@ -14,7 +14,6 @@ import {
   submit,
   type QuizState,
 } from '@/activities/quiz-flow';
-import type { WordItem } from './content';
 import {
   makeWordSet,
   MIN_POOL,
@@ -24,16 +23,19 @@ import {
 } from './generate';
 
 const ROUND_TITLE: Record<number, string> = {
-  2: '틀린 낱말을 다시 읽어봐요',
-  3: '이번엔 소리를 들으며 읽어봐요',
+  2: '틀린 낱말을 다시 찾아봐요',
+  3: '이번엔 천천히 들어봐요',
 };
 
 /**
  * 낱말 읽기.
  *
- * 먼저 낱말 카드를 넘겨 보고, 그다음에 찾는다. 소리는 **아이가 누를 때만** 난다 —
- * 문제마다 읽어주면 글자를 보지 않고 소리만 기다리게 되어, 읽기 연습이 되지 않는다.
- * 3차에서만 답의 소리를 들려준다.
+ * 먼저 낱말 카드를 넘겨 보고, 그다음에 찾는다. **문제는 소리로 낸다** — 앱이
+ * 읽어주는 낱말을 보기 중에서 찾는 것이다. 그래서 문제 화면에서는 소리가 저절로
+ * 난다. 소리가 곧 문제이기 때문이다.
+ *
+ * 반대로 **카드를 넘겨 볼 때는 아이가 누를 때만 난다.** 거기서 저절로 읽어주면
+ * 글자를 보지 않고 소리만 기다리게 된다.
  */
 export function WordsActivity({ lesson, onFinish }: ActivityProps) {
   const pool = poolForStage(lesson.childLevel);
@@ -44,6 +46,14 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [startedAt, setStartedAt] = useState(0);
   const [retryMessage, setRetryMessage] = useState('');
+
+  const index = quiz && quiz.phase === 'solving' ? currentIndex(quiz) : null;
+  const asked = index === null ? null : (problems[index]?.answer ?? null);
+
+  // 문제가 바뀌면 읽어준다. 소리가 곧 문제라 아이가 누르기를 기다릴 수 없다.
+  useEffect(() => {
+    if (asked) speak(asked);
+  }, [asked]);
 
   function begin() {
     const set = makeWordSet(pool);
@@ -66,11 +76,11 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
 
   function pick(word: string) {
     if (!quiz) return;
-    const index = currentIndex(quiz);
-    if (index === null) return;
+    const at = currentIndex(quiz);
+    if (at === null) return;
 
-    const isCorrect = word === problems[index]!.answer.word;
-    setRetryMessage(quiz.round === 3 && !isCorrect ? '괜찮아요, 천천히 읽어볼까? 🤔' : '');
+    const isCorrect = word === problems[at]!.answer;
+    setRetryMessage(quiz.round === 3 && !isCorrect ? '괜찮아요, 다시 들어볼까? 🤔' : '');
     if (isCorrect) spawnConfetti(6);
 
     const next = submit(quiz, isCorrect);
@@ -92,7 +102,6 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
   if (pool.length < MIN_POOL) {
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">🌱</span>
         <h1 className="text-2xl font-bold text-glow-600">아직 읽을 낱말이 적어요</h1>
         <p className="text-slate-500">
           자음모음 배우기를 조금 더 하고 오면 낱말이 늘어나요.
@@ -106,25 +115,26 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
 
   // ── ① 낱말 카드 보기 ──────────────────────────────────
   if (phase === 'learn' || !quiz) {
-    const item = pool[card]!;
+    const word = pool[card]!;
     const last = card === pool.length - 1;
     return (
       <div className="flex flex-col gap-5">
         <p className="text-center text-slate-500">지금 읽을 수 있는 낱말 {pool.length}개</p>
 
         <Card className="flex flex-col items-center gap-4 text-center">
-          <span className="text-8xl">{item.emoji}</span>
           <button
             type="button"
-            onClick={() => speak(item.word)}
-            aria-label={`${item.word} 읽어주기`}
-            className="min-h-touch rounded-3xl bg-glow-50 px-8 py-3"
+            onClick={() => speak(word)}
+            aria-label={`${word} 읽어주기`}
+            className="min-h-touch rounded-3xl bg-glow-50 px-8 py-5"
           >
-            <span data-testid="card-word" className="text-5xl font-bold text-slate-700">
-              {item.word}
+            <span data-testid="card-word" className="text-6xl font-bold text-slate-700">
+              {word}
             </span>
             <span className="ml-3 text-2xl">🔊</span>
           </button>
+
+          <p className="text-slate-500">낱말을 누르면 읽어줘요</p>
 
           <div className="flex w-full items-center justify-between gap-3">
             <Button variant="ghost" disabled={card === 0} onClick={() => setCard((c) => c - 1)}>
@@ -144,14 +154,14 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
         <div className="flex flex-wrap justify-center gap-2">
           {pool.map((w, i) => (
             <button
-              key={w.word}
+              key={w}
               onClick={() => setCard(i)}
-              aria-label={w.word}
+              aria-label={w}
               className={`min-h-touch rounded-2xl px-3 text-lg font-bold transition-transform active:scale-95 ${
-                i === card ? 'bg-glow-500 text-white' : 'bg-white text-slate-500'
+                i === card ? 'bg-glow-500 text-white' : 'bg-white text-slate-700 ring-1 ring-glow-100'
               }`}
             >
-              {w.emoji}
+              {w}
             </button>
           ))}
         </div>
@@ -167,10 +177,9 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
 
   if (quiz.phase === 'done') return <Finished emoji="🎉📗✨" quiz={quiz} />;
   if (quiz.phase === 'grading')
-    return <Grading quiz={quiz} retryLabel="다시 읽기" onNext={goOn} />;
+    return <Grading quiz={quiz} retryLabel="다시 듣기" onNext={goOn} />;
 
-  // ── ② 읽고 고르기 ─────────────────────────────────────
-  const index = currentIndex(quiz);
+  // ── ② 듣고 고르기 ─────────────────────────────────────
   if (index === null) return null;
   const problem = problems[index]!;
   const left = quiz.queue.length - quiz.cursor;
@@ -184,46 +193,30 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
       <Progress total={quiz.queue.length} done={quiz.cursor} />
 
       <Card className="flex flex-col items-center gap-5 text-center">
-        <p className="text-2xl font-bold text-glow-700">{wordQuestion(problem)}</p>
+        <p className="text-2xl font-bold text-glow-700">{wordQuestion()}</p>
 
-        {/* 그림을 보고 낱말을 고르거나, 낱말을 보고 그림을 고르거나. */}
-        {problem.direction === 'toWord' ? (
-          <span data-testid="prompt" className="text-8xl">
-            {problem.answer.emoji}
-          </span>
-        ) : (
-          <span data-testid="prompt" className="text-6xl font-bold text-slate-700">
-            {problem.answer.word}
-          </span>
-        )}
-
-        {/* 3차에만 답을 읽어준다. 그 전에 읽어주면 글자를 보지 않게 된다. */}
-        {quiz.round === 3 ? (
-          <button
-            type="button"
-            data-testid="hint"
-            onClick={() => speak(problem.answer.word)}
-            className="min-h-touch rounded-2xl bg-glow-50 px-5 text-lg text-glow-700"
-          >
-            💡 눌러서 들어보기 🔊
-          </button>
-        ) : null}
+        {/* 소리가 곧 문제다. 못 들었으면 다시 들을 수 있어야 한다. */}
+        <button
+          type="button"
+          data-testid="prompt"
+          onClick={() => speak(problem.answer)}
+          aria-label="다시 들어보기"
+          className="min-h-touch rounded-3xl bg-glow-50 px-10 py-6 text-6xl transition-transform active:scale-95"
+        >
+          🔊
+        </button>
 
         <div className="flex flex-wrap justify-center gap-3">
-          {problem.choices.map((c: WordItem) => (
+          {problem.choices.map((c) => (
             <button
-              key={c.word}
+              key={c}
               data-testid="choice"
-              data-word={c.word}
-              onClick={() => pick(c.word)}
-              aria-label={c.word}
+              data-word={c}
+              onClick={() => pick(c)}
+              aria-label={c}
               className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 transition-transform active:scale-95"
             >
-              {problem.direction === 'toWord' ? (
-                <span className="text-3xl font-bold text-slate-700">{c.word}</span>
-              ) : (
-                <span className="text-5xl">{c.emoji}</span>
-              )}
+              <span className="text-3xl font-bold text-slate-700">{c}</span>
             </button>
           ))}
         </div>
@@ -232,6 +225,12 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
           {retryMessage || (quiz.round === 1 ? `${left}개 남았어요` : '')}
         </p>
       </Card>
+
+      {!canSpeak() ? (
+        <p className="text-center text-sm text-slate-400">
+          이 기기에서는 소리가 안 나요. 옆에서 낱말을 읽어주세요.
+        </p>
+      ) : null}
     </div>
   );
 }

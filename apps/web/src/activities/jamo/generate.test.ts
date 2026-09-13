@@ -5,9 +5,11 @@ import {
   composeSyllable,
   JAMO_MAX_STAGE,
   jamoHint,
+  learnedLeads,
   lettersForStage,
   makeJamoProblem,
   makeJamoSet,
+  pickLetters,
   stageLetter,
 } from './generate';
 
@@ -69,18 +71,31 @@ describe('lettersForStage', () => {
     }
   });
 
-  it('1~14단계 모두 열 글자씩 나오고 빈 글자가 없다', () => {
-    for (let s = 1; s <= JAMO_MAX_STAGE; s += 1) {
+  it('단계는 "여기까지 왔다" 는 뜻이라 앞 단계 글자도 함께 나온다', () => {
+    // 3단계(ㄴ)까지 온 아이는 ㄱ 도 아는 아이다. '가' 도 '나' 도 나와야 한다.
+    const letters = lettersForStage(3).map((i) => i.letter);
+    expect(letters).toContain('가');
+    expect(letters).toContain('나');
+    expect(letters).toHaveLength(20);
+  });
+
+  it('1~14단계 모두 빈 글자 없이 열 글자씩 늘어난다', () => {
+    expect(lettersForStage(1)).toHaveLength(10);
+    for (let s = 2; s <= JAMO_MAX_STAGE; s += 1) {
       const items = lettersForStage(s);
-      expect(items).toHaveLength(10);
+      expect(items).toHaveLength((s - 1) * 10);
       for (const i of items) expect(i.letter).not.toBe('');
     }
   });
 
-  it('받침 단계로 넘어간 아이는 마지막 자음으로 복습한다', () => {
-    // 15단계부터는 받침이라 이 활동이 다룰 내용이 아니다.
-    expect(lettersForStage(20)).toEqual(lettersForStage(JAMO_MAX_STAGE));
-    expect(lettersForStage(35)).toEqual(lettersForStage(JAMO_MAX_STAGE));
+  it('받침 단계로 넘어간 아이는 배운 글자 전부로 복습한다', () => {
+    // 15단계부터는 받침이라 이 활동이 다룰 내용이 아니다. 마지막 자음(ㅎ)만
+    // 내놓으면 다 뗀 아이에게 늘 '하 햐 허 혀' 만 나온다.
+    const all = lettersForStage(JAMO_MAX_STAGE);
+    expect(lettersForStage(20)).toEqual(all);
+    expect(lettersForStage(35)).toEqual(all);
+    expect(all.map((i) => i.letter)).toContain('가');
+    expect(all.map((i) => i.letter)).toContain('하');
   });
 
   it('단계가 1보다 작아도 터지지 않는다', () => {
@@ -141,5 +156,33 @@ describe('jamoHint', () => {
   it('어떤 소리였는지 다시 말해준다', () => {
     const p = { answer: { letter: 'ㅏ', sound: '아' }, choices: [] };
     expect(jamoHint(p)).toContain('아');
+  });
+});
+
+describe('learnedLeads · pickLetters', () => {
+  it('단계가 오를수록 배운 자음이 하나씩 늘어난다', () => {
+    expect(learnedLeads(1)).toEqual([]);
+    expect(learnedLeads(2)).toEqual(['ㄱ']);
+    expect(learnedLeads(4)).toEqual(['ㄱ', 'ㄴ', 'ㄷ']);
+    expect(learnedLeads(JAMO_MAX_STAGE)).toHaveLength(13);
+  });
+
+  it('받침 단계로 넘어가도 자음은 열셋에서 멈춘다', () => {
+    expect(learnedLeads(35)).toEqual(learnedLeads(JAMO_MAX_STAGE));
+  });
+
+  it('열 자 이하면 책의 차례를 그대로 둔다', () => {
+    const ten = lettersForStage(2);
+    expect(pickLetters(ten)).toEqual(ten);
+  });
+
+  it('열 자보다 많으면 섞어서 열 자만 뽑는다', () => {
+    const many = lettersForStage(JAMO_MAX_STAGE);
+    const picked = pickLetters(many);
+    expect(picked).toHaveLength(10);
+    // 뽑은 글자는 모두 배운 글자 안에 있고, 서로 겹치지 않는다.
+    const letters = picked.map((i) => i.letter);
+    expect(new Set(letters).size).toBe(10);
+    for (const l of letters) expect(many.some((i) => i.letter === l)).toBe(true);
   });
 });

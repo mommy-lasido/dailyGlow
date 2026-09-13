@@ -30,29 +30,33 @@ function renderActivity(level = LEVEL, onFinish: (r: ActivityResult) => void = (
   );
 }
 
+/** 카드를 끝까지 넘겨 문제로 들어간다. */
 function goToQuiz(level = LEVEL) {
-  const pool = poolForStage(level);
-  fireEvent.click(screen.getByRole('button', { name: pool.at(-1)!.sentence }));
+  for (let i = 1; i < poolForStage(level).length; i += 1) {
+    fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
+  }
   fireEvent.click(screen.getByRole('button', { name: '다 봤어요' }));
 }
 
-/** 지금 문제의 정답 문장. 보여준 것이 그림이든 글이든 되짚어 찾는다. */
-function answerSentence(level = LEVEL): string {
-  const shown = screen.getByTestId('prompt').textContent!;
-  const pool = poolForStage(level);
-  return (pool.find((s) => s.emoji === shown) ?? pool.find((s) => s.sentence === shown))!
-    .sentence;
+/**
+ * 지금 문제의 정답 문장.
+ *
+ * 화면에는 스피커 그림만 있고 답은 소리로만 나가므로, **읽어준 것**을 정답으로
+ * 본다. 화면을 보고 알 수 있으면 듣기 문제가 아니다.
+ */
+function answerSentence(): string {
+  return speak.mock.calls.at(-1)![0] as string;
 }
 
-function clickCorrect(level = LEVEL) {
-  const correct = answerSentence(level);
+function clickCorrect() {
+  const correct = answerSentence();
   fireEvent.click(
     screen.getAllByTestId('choice').find((b) => b.getAttribute('data-sentence') === correct)!,
   );
 }
 
-function clickWrong(level = LEVEL) {
-  const correct = answerSentence(level);
+function clickWrong() {
+  const correct = answerSentence();
   fireEvent.click(
     screen.getAllByTestId('choice').find((b) => b.getAttribute('data-sentence') !== correct)!,
   );
@@ -85,11 +89,11 @@ describe('SentencesActivity — 문장 카드 보기', () => {
   it('문장을 누르면 읽어준다', () => {
     renderActivity(9);
     const first = poolForStage(9)[0]!;
-    fireEvent.click(screen.getByRole('button', { name: `${first.sentence} 읽어주기` }));
-    expect(speak).toHaveBeenCalledWith(first.sentence);
+    fireEvent.click(screen.getByRole('button', { name: `${first} 읽어주기` }));
+    expect(speak).toHaveBeenCalledWith(first);
   });
 
-  it('스스로 읽어주지는 않는다', () => {
+  it('카드를 넘겨 볼 때는 스스로 읽어주지 않는다', () => {
     renderActivity();
     expect(speak).not.toHaveBeenCalled();
   });
@@ -100,11 +104,31 @@ describe('SentencesActivity — 문장 카드 보기', () => {
   });
 });
 
-describe('SentencesActivity — 읽고 고르기', () => {
+describe('SentencesActivity — 듣고 고르기', () => {
   it('보기는 3개다', () => {
     renderActivity();
     goToQuiz();
     expect(screen.getAllByTestId('choice')).toHaveLength(3);
+  });
+
+  it('문제를 내면서 문장을 읽어준다', () => {
+    // 소리가 곧 문제다. 아이가 누르기를 기다리면 무엇을 고를지 알 수 없다.
+    renderActivity();
+    speak.mockClear();
+    goToQuiz();
+    expect(speak).toHaveBeenCalledTimes(1);
+    const asked = answerSentence();
+    expect(
+      screen.getAllByTestId('choice').some((b) => b.getAttribute('data-sentence') === asked),
+    ).toBe(true);
+  });
+
+  it('못 들었으면 다시 들을 수 있다', () => {
+    renderActivity();
+    goToQuiz();
+    const asked = answerSentence();
+    fireEvent.click(screen.getByTestId('prompt'));
+    expect(speak).toHaveBeenLastCalledWith(asked);
   });
 
   it('1차에서는 맞았는지 알려주지 않는다', () => {
@@ -112,17 +136,8 @@ describe('SentencesActivity — 읽고 고르기', () => {
     goToQuiz();
     expect(screen.getByText('5개 남았어요')).toBeInTheDocument();
     clickWrong();
-    expect(screen.queryByText(/천천히 읽어볼까/)).not.toBeInTheDocument();
-    expect(screen.queryByTestId('hint')).not.toBeInTheDocument();
+    expect(screen.queryByText(/다시 들어볼까/)).not.toBeInTheDocument();
     expect(screen.getByText('4개 남았어요')).toBeInTheDocument();
-  });
-
-  it('1·2차에는 읽어주지 않는다', () => {
-    renderActivity();
-    goToQuiz();
-    speak.mockClear();
-    clickWrong();
-    expect(speak).not.toHaveBeenCalled();
   });
 
   it('다 맞히면 채점 화면 없이 끝나고 점수는 1차 것이다', () => {
@@ -141,27 +156,21 @@ describe('SentencesActivity — 읽고 고르기', () => {
     goToQuiz();
     clickWrong();
     for (let i = 0; i < 4; i += 1) clickCorrect();
-    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 읽기' }));
+    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 듣기' }));
     clickCorrect();
     expect(onFinish.mock.calls[0]![0].correctCount).toBe(4);
   });
 
-  it('3차에만 눌러서 들어볼 수 있다', () => {
+  it('3차에 틀리면 다독여준다', () => {
     renderActivity();
     goToQuiz();
     clickWrong();
     for (let i = 0; i < 4; i += 1) clickCorrect();
-    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 읽기' }));
+    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 듣기' }));
     clickWrong();
-    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 읽기' }));
-
-    const sentence = answerSentence();
-    speak.mockClear();
-    fireEvent.click(screen.getByTestId('hint'));
-    expect(speak).toHaveBeenCalledWith(sentence);
+    fireEvent.click(screen.getByRole('button', { name: '틀린 1개 다시 듣기' }));
 
     clickWrong();
-    expect(screen.getByText(/천천히 읽어볼까/)).toBeInTheDocument();
-    expect(answerSentence()).toBe(sentence);
+    expect(screen.getByText(/다시 들어볼까/)).toBeInTheDocument();
   });
 });
