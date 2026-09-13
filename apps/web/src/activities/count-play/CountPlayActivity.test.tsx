@@ -24,7 +24,14 @@ function renderActivity(onFinish: (r: ActivityResult) => void = () => {}) {
   );
 }
 
-function start(name: RegExp = /다섯까지 세기/) {
+/**
+ * 단계를 고른다.
+ *
+ * 고르는 화면이 두 걸음이다 — 하는 일이 같은 것끼리 셋으로 묶고(하나씩 세기 /
+ * 숫자 읽기 / 뛰어 세기), 묶음을 고른 뒤에 그 안의 단계를 고른다.
+ */
+function start(name: RegExp = /다섯까지 세기/, group: RegExp = /하나씩 세기/) {
+  fireEvent.click(screen.getByRole('button', { name: group }));
   fireEvent.click(screen.getByRole('button', { name }));
 }
 
@@ -64,14 +71,6 @@ function clickWrong() {
 }
 
 describe('CountPlayActivity', () => {
-  it('얼마까지 셀지 먼저 고르게 한다', () => {
-    renderActivity();
-    expect(screen.getByText('얼마까지 세어볼까?')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /셋까지 세기/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /다섯까지 세기/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /열까지 세기/ })).toBeInTheDocument();
-  });
-
   it('고른 단계에 맞는 개수만 나온다', () => {
     renderActivity();
     start(/셋까지 세기/);
@@ -277,5 +276,46 @@ describe('CountPlayActivity — 듣고 나서 고르기', () => {
     start();
     clickCorrect();
     expect(screen.getByTestId('confirm')).toBeDisabled();
+  });
+});
+
+describe('CountPlayActivity — 숫자 읽기', () => {
+  it('그림 대신 스피커가 나오고, 스피커는 하나뿐이다', () => {
+    // 큰 스피커 옆에 작은 스피커가 또 있으면 아이가 어느 것을 눌러야 할지 헷갈린다.
+    renderActivity();
+    start(/스물까지 읽기/, /숫자 읽기/);
+    // 듣고 찾기 문제가 나올 때까지 넘긴다 (빠진 수 채우기와 번갈아 나온다).
+    let guard = 0;
+    while (!screen.queryByTestId('say-number') && guard < 5) {
+      fireEvent.click(screen.getAllByTestId('choice')[0]!);
+      fireEvent.click(screen.getByTestId('confirm'));
+      guard += 1;
+    }
+    if (!screen.queryByTestId('say-number')) return;
+
+    expect(screen.queryByTestId('objects')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '문제 읽어주기' })).not.toBeInTheDocument();
+  });
+
+  it('빠진 수 채우기에는 수 줄이 나온다', () => {
+    renderActivity();
+    start(/백까지 읽기/, /숫자 읽기/);
+    let guard = 0;
+    while (!screen.queryByTestId('sequence') && guard < 5) {
+      fireEvent.click(screen.getAllByTestId('choice')[0]!);
+      fireEvent.click(screen.getByTestId('confirm'));
+      guard += 1;
+    }
+    if (!screen.queryByTestId('sequence')) return;
+
+    expect(screen.getAllByTestId('blank')).toHaveLength(1);
+    expect(screen.getByText('빠진 수는 무엇일까?')).toBeInTheDocument();
+  });
+
+  it('뛰어 세기는 따로 묶여 있다', () => {
+    renderActivity();
+    fireEvent.click(screen.getByRole('button', { name: /뛰어 세기/ }));
+    expect(screen.getByRole('button', { name: /다섯씩 뛰어 세기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /열씩 뛰어 세기/ })).toBeInTheDocument();
   });
 });

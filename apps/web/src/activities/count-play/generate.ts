@@ -58,28 +58,57 @@ export const COUNT_OBJECTS: readonly CountObject[] = [
   { icon: '🐤', name: '병아리', unit: '마리' },
 ] as const;
 
+/**
+ * 단계 묶음.
+ *
+ * 단계가 여덟이 되니 고르는 화면이 길어져, 아이가 무엇이 무엇인지 가리기 어려워졌다.
+ * **하는 일이 같은 것끼리** 셋으로 묶는다 — 세는 것, 읽는 것, 뛰는 것.
+ */
+export type CountGroup = 'count' | 'read' | 'skip';
+
+export interface CountGroupInfo {
+  group: CountGroup;
+  name: string;
+  icon: string;
+  desc: string;
+}
+
+export const COUNT_GROUPS: readonly CountGroupInfo[] = [
+  { group: 'count', name: '하나씩 세기', icon: '🍎', desc: '그림을 짚어가며 세어요' },
+  { group: 'read', name: '숫자 읽기', icon: '🔢', desc: '듣고 찾고, 빠진 수 채워요' },
+  { group: 'skip', name: '뛰어 세기', icon: '🦘', desc: '다섯씩, 열씩 건너뛰어요' },
+] as const;
+
 export interface CountSetting {
+  group: CountGroup;
   range: CountRange;
   mode: CountMode;
   name: string;
+  /** 고르는 화면에 크게 띄울 것. 숫자 단계는 **그 숫자 자체**가 가장 잘 보인다. */
   icon: string;
   desc: string;
 }
 
 export const COUNT_SETTINGS: readonly CountSetting[] = [
   // 그림을 하나씩 짚어 세는 단계
-  { range: 3, mode: 'count', name: '셋까지 세기', icon: '🍎', desc: '그림을 세어봐요' },
-  { range: 5, mode: 'count', name: '다섯까지 세기', icon: '🐟', desc: '그림을 세어봐요' },
-  { range: 10, mode: 'count', name: '열까지 세기', icon: '🐤', desc: '그림을 세어봐요' },
-  // 숫자를 읽고 순서를 아는 단계
-  { range: 20, mode: 'read', name: '스물까지 읽기', icon: '2️⃣', desc: '듣고 찾고, 빠진 수 채우기' },
-  { range: 50, mode: 'read', name: '쉰까지 읽기', icon: '5️⃣', desc: '듣고 찾고, 빠진 수 채우기' },
-  { range: 100, mode: 'read', name: '백까지 읽기', icon: '💯', desc: '듣고 찾고, 빠진 수 채우기' },
+  { group: 'count', range: 3, mode: 'count', name: '셋까지 세기', icon: '🍎', desc: '1부터 3까지' },
+  { group: 'count', range: 5, mode: 'count', name: '다섯까지 세기', icon: '🐟', desc: '1부터 5까지' },
+  { group: 'count', range: 10, mode: 'count', name: '열까지 세기', icon: '🐤', desc: '1부터 10까지' },
+  // 숫자를 읽고 순서를 아는 단계.
+  // 그림글자(2️⃣ 5️⃣)로는 스물·쉰이 보이지 않는다. 숫자를 그대로 크게 띄운다.
+  { group: 'read', range: 20, mode: 'read', name: '스물까지 읽기', icon: '20', desc: '1부터 20까지' },
+  { group: 'read', range: 50, mode: 'read', name: '쉰까지 읽기', icon: '50', desc: '1부터 50까지' },
+  { group: 'read', range: 100, mode: 'read', name: '백까지 읽기', icon: '100', desc: '1부터 100까지' },
   // 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
   // 다섯씩이 열씩보다 촘촘해 먼저 온다.
-  { range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '🐇', desc: '5 10 15 … 100' },
-  { range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '🦘', desc: '10 20 30 … 100' },
+  { group: 'skip', range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '🐇', desc: '5 10 15 … 100' },
+  { group: 'skip', range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '🦘', desc: '10 20 30 … 100' },
 ] as const;
+
+/** 이 묶음에 든 단계들 */
+export function settingsOf(group: CountGroup): CountSetting[] {
+  return COUNT_SETTINGS.filter((s) => s.group === group);
+}
 
 /** 아이가 아직 숫자를 못 읽어도 소리 내어 셀 수 있도록 우리말 수사를 함께 쓴다. */
 export const KOREAN_COUNT = [

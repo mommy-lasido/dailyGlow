@@ -15,12 +15,14 @@ import {
 } from '@/activities/quiz-flow';
 import {
   countAloud,
-  COUNT_SETTINGS,
+  COUNT_GROUPS,
   countHint,
   countQuestion,
   KOREAN_COUNT,
   makeCountProblem,
+  settingsOf,
   stepOf,
+  type CountGroup,
   type CountProblem,
   type CountSetting,
 } from './generate';
@@ -46,6 +48,8 @@ const ROUND_TITLE: Record<number, string> = {
 };
 
 export function CountPlayActivity({ onFinish }: ActivityProps) {
+  /** 무엇을 하는 묶음을 고르는 중인가. 고르고 나면 그 안의 단계를 고른다. */
+  const [group, setGroup] = useState<CountGroup | null>(null);
   const [setting, setSetting] = useState<CountSetting | null>(null);
   const [problems, setProblems] = useState<CountProblem[]>([]);
   /** 스물이 넘는 단계에서 쓰는 문제들. 그림 세기와 서로 배타적이다. */
@@ -151,29 +155,47 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     if (next.phase === 'done') finish(next);
   }
 
-  // ── 얼마까지 세어볼지 고르기 ───────────────────────────
+  // ── ① 무엇을 해볼지 고르기 ─────────────────────────────
+  //
+  // 단계가 여덟이 되어 한 화면에 늘어놓으니 아이가 무엇이 무엇인지 가리기 어려웠다.
+  // 하는 일이 같은 것끼리 셋으로 묶고, 묶음을 고른 뒤에 단계를 고르게 한다.
   if (!quiz || setting === null) {
+    if (group === null) {
+      return (
+        <div className="flex flex-col gap-4">
+          <h1 className="text-center text-4xl font-bold text-glow-600">뭘 해볼까?</h1>
+          {COUNT_GROUPS.map((g) => (
+            <MenuRow
+              key={g.group}
+              testId="group"
+              icon={g.icon}
+              name={g.name}
+              desc={g.desc}
+              onClick={() => setGroup(g.group)}
+            />
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-center text-4xl font-bold text-glow-600">얼마까지 세어볼까?</h1>
-        {COUNT_SETTINGS.map((s) => (
-          <button
+        <h1 className="text-center text-4xl font-bold text-glow-600">어디까지 해볼까?</h1>
+        {settingsOf(group).map((s) => (
+          <MenuRow
             key={`${s.mode}-${s.range}`}
-            data-testid="setting"
-            data-mode={s.mode}
-            data-range={s.range}
+            testId="setting"
+            icon={s.icon}
+            name={s.name}
+            desc={s.desc}
+            mode={s.mode}
+            range={s.range}
             onClick={() => begin(s)}
-            className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
-          >
-            <span className="flex items-center gap-5">
-              <span className="text-5xl">{s.icon}</span>
-              <span>
-                <span className="block text-2xl font-bold text-glow-700">{s.name}</span>
-                <span className="block text-sm text-slate-400">{s.desc}</span>
-              </span>
-            </span>
-          </button>
+          />
         ))}
+        <Button variant="ghost" onClick={() => setGroup(null)}>
+          ← 다시 고르기
+        </Button>
       </div>
     );
   }
@@ -262,18 +284,22 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
           </button>
         )}
 
+        {/* 듣고 찾기에는 위에 이미 큰 스피커가 있다. 여기에 또 두면 한 화면에
+            스피커가 둘이 되어 아이가 어느 것을 눌러야 할지 헷갈린다. */}
         <div className="flex items-center justify-center gap-3">
           <span data-testid="question" className="text-4xl font-bold text-slate-700">
             {question}
           </span>
-          <button
-            type="button"
-            onClick={() => speak(question)}
-            aria-label="문제 읽어주기"
-            className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl transition-transform active:scale-95"
-          >
-            🔊
-          </button>
+          {problem || number?.sequence ? (
+            <button
+              type="button"
+              onClick={() => speak(question)}
+              aria-label="문제 읽어주기"
+              className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl transition-transform active:scale-95"
+            >
+              🔊
+            </button>
+          ) : null}
         </div>
 
         {numbered ? (
@@ -331,5 +357,50 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
         </p>
       </Card>
     </div>
+  );
+}
+
+/**
+ * 고르는 화면의 한 줄.
+ *
+ * 묶음을 고를 때와 단계를 고를 때가 같은 모양이라 한 군데서 그린다.
+ * 그림 자리의 너비를 고정해 두어야 '🍎' 와 '100' 처럼 폭이 다른 것이 섞여도
+ * 이름이 들쭉날쭉해지지 않는다.
+ */
+function MenuRow({
+  testId,
+  icon,
+  name,
+  desc,
+  mode,
+  range,
+  onClick,
+}: {
+  testId: string;
+  icon: string;
+  name: string;
+  desc: string;
+  mode?: string;
+  range?: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      data-testid={testId}
+      data-mode={mode}
+      data-range={range}
+      onClick={onClick}
+      className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
+    >
+      <span className="flex items-center gap-5">
+        <span className="flex w-16 shrink-0 justify-center text-5xl font-bold text-glow-600">
+          {icon}
+        </span>
+        <span>
+          <span className="block text-2xl font-bold text-glow-700">{name}</span>
+          <span className="block text-sm text-slate-400">{desc}</span>
+        </span>
+      </span>
+    </button>
   );
 }
