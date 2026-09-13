@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  selectActivities,
-  activityIconId,
   activityHint,
+  activityIconId,
+  selectActivities,
+  streakOf,
   type LessonGateRow,
+  weekComplete,
 } from './activities';
 
 const HANGUL = 'subj-hangul';
@@ -121,5 +123,63 @@ describe('activityIconId', () => {
     expect(activityIconId({ activity_kind: 'choice_quiz', config: { renderer: '' } })).toBe(
       'choice_quiz',
     );
+  });
+});
+
+describe('streakOf', () => {
+  function week(done: boolean[], todayIndex: number) {
+    return done.map((d, i) => ({
+      key: `d${i}`,
+      label: '월',
+      date: `9/${i + 1}`,
+      minutes: d ? 10 : 0,
+      isToday: i === todayIndex,
+      isFuture: i > todayIndex,
+    }));
+  }
+
+  it('오늘까지 이어서 한 날을 센다', () => {
+    expect(streakOf(week([true, true, true, false, false, false, false], 2))).toBe(3);
+  });
+
+  it('오늘 아직 안 했어도 어제까지의 줄은 살아 있다', () => {
+    // 아침에 열었을 때 "3일째" 가 0 이 되어 있으면 쌓은 것을 잃은 것처럼 느낀다.
+    expect(streakOf(week([true, true, true, false, false, false, false], 3))).toBe(3);
+  });
+
+  it('중간에 빠진 날이 있으면 거기서 끊는다', () => {
+    expect(streakOf(week([true, false, true, true, false, false, false], 3))).toBe(2);
+  });
+
+  it('한 번도 안 했으면 0', () => {
+    expect(streakOf(week([false, false, false, false, false, false, false], 2))).toBe(0);
+  });
+});
+
+describe('weekComplete', () => {
+  function fullWeek(done: boolean[], todayIndex: number) {
+    return done.map((d, i) => ({
+      key: `d${i}`,
+      label: '월',
+      date: `9/${i + 1}`,
+      minutes: d ? 10 : 0,
+      isToday: i === todayIndex,
+      isFuture: i > todayIndex,
+    }));
+  }
+
+  it('일요일까지 하루도 안 빠져야 참이다', () => {
+    expect(weekComplete(fullWeek(Array(7).fill(true), 6))).toBe(true);
+  });
+
+  it('아직 주가 안 끝났으면 거짓이다', () => {
+    // 수요일까지 다 했다고 "하루도 안 빠졌어요" 라고 하면 목요일에 말이 어그러진다.
+    expect(weekComplete(fullWeek([true, true, true, false, false, false, false], 2))).toBe(
+      false,
+    );
+  });
+
+  it('한 날이라도 빠지면 거짓이다', () => {
+    expect(weekComplete(fullWeek([true, true, false, true, true, true, true], 6))).toBe(false);
   });
 });

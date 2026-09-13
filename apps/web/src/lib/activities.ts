@@ -140,6 +140,11 @@ export interface WeekDay {
   key: string;
   /** 월·화·수… */
   label: string;
+  /**
+   * 출석 칸에 흐리게 적을 날짜. "9/7" 처럼 **달까지 적는다.**
+   * 한 주가 달을 넘어갈 때가 있어, 날짜만 적으면 아이가 헷갈린다.
+   */
+  date: string;
   minutes: number;
   isToday: boolean;
   /** 오늘보다 뒤라 아직 오지 않은 날 */
@@ -169,6 +174,7 @@ export function toWeek(
     return {
       key,
       label,
+      date: `${d.getMonth() + 1}/${d.getDate()}`,
       minutes: Math.floor((minutes.get(key) ?? 0) / 60),
       isToday: key === todayKey,
       isFuture: key > todayKey,
@@ -202,4 +208,33 @@ export async function fetchTotalMinutes(profileId: string): Promise<number> {
 
   if (error || !data) return 0;
   return Math.floor(data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0) / 60);
+}
+
+/**
+ * 오늘까지 며칠을 이어서 했는가.
+ *
+ * **오늘 아직 안 했어도 어제까지의 줄은 살아 있다.** 아침에 앱을 열었을 때
+ * "3일째" 가 갑자기 0 이 되어 있으면, 아이는 어제까지 쌓은 것을 잃은 것처럼
+ * 느낀다. 오늘 하면 이어지고, 오늘을 넘겨야 끊어진다.
+ *
+ * 이번 주 안에서만 센다 — 한 주 칸에 붙는 숫자이기 때문이다.
+ */
+export function streakOf(week: WeekDay[]): number {
+  const todayIndex = week.findIndex((d) => d.isToday);
+  if (todayIndex < 0) return 0;
+
+  // 오늘 했으면 오늘부터, 아직이면 어제부터 거슬러 센다.
+  let i = week[todayIndex]!.minutes > 0 ? todayIndex : todayIndex - 1;
+  let count = 0;
+  for (; i >= 0; i -= 1) {
+    if (week[i]!.minutes === 0) break;
+    count += 1;
+  }
+  return count;
+}
+
+/** 이번 주를 하루도 빠짐없이 채웠는가. 아직 오지 않은 날은 따지지 않는다. */
+export function weekComplete(week: WeekDay[]): boolean {
+  const past = week.filter((d) => !d.isFuture);
+  return past.length === 7 && past.every((d) => d.minutes > 0);
 }

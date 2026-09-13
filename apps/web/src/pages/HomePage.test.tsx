@@ -128,23 +128,29 @@ describe('HomePage', () => {
     // 목표 시간은 다 채우고 나면 무슨 뜻인지 알기 어렵고, 못 채운 날에는
     // 모자란다는 말로만 남는다.
     renderHome();
-    expect(await screen.findByText(/오늘 9분 공부했어요/)).toBeInTheDocument();
+    // 숫자만 굵게 나가므로 글자가 여러 조각으로 나뉜다. 다 이어 붙여 본다.
+    expect(await screen.findByText('9분')).toBeInTheDocument();
+    expect(screen.getByTestId('today-minutes')).toHaveTextContent('오늘 9분 공부했어요');
     expect(screen.queryByText(/오늘의 목표/)).not.toBeInTheDocument();
   });
 
   it('며칠 치를 합한 숫자는 아이 화면에 두지 않는다', async () => {
     // 아이가 쓸 일이 없는 숫자다. 그것은 설정(부모 화면)에서 본다.
     renderHome();
-    await screen.findByText(/오늘 9분 공부했어요/);
+    await screen.findByText('9분');
     expect(screen.queryByText(/지금까지/)).not.toBeInTheDocument();
   });
 
   it('이번 주 출석 칸 일곱 개를 보여주고 공부한 날에 도장을 찍는다', async () => {
     renderHome();
-    expect(await screen.findByText('이번 주 출석')).toBeInTheDocument();
+    await screen.findByText('9분');
     const stamps = screen.getAllByTestId('stamp');
     expect(stamps).toHaveLength(7);
     expect(stamps.filter((s) => s.getAttribute('data-done') === 'yes')).toHaveLength(1);
+    // 칸마다 "9/7" 처럼 달까지 적는다 — 주가 달을 넘어갈 때 날짜만으로는 헷갈린다.
+    for (const d of screen.getAllByTestId('stamp-date')) {
+      expect(d.textContent).toMatch(/^\d{1,2}\/\d{1,2}$/);
+    }
   });
 
   it('아직 못 읽는 아이에게는 큰 글씨 클래스를 쓴다', () => {
