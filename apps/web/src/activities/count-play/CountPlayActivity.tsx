@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card } from '@dailyglow/ui';
+import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import { speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
@@ -42,13 +42,16 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   const [startedAt, setStartedAt] = useState(0);
   /** 3차에서 방금 틀렸을 때만 쓰는 안내 */
   const [retryMessage, setRetryMessage] = useState('');
+  /** 지금 짚어 둔 보기. 아직 답으로 낸 것은 아니다. */
+  const [chosen, setChosen] = useState<number | null>(null);
 
-  function begin(chosen: CountRange) {
-    setRange(chosen);
-    setProblems(Array.from({ length: PROBLEM_COUNT }, () => makeCountProblem(chosen)));
+  function begin(chosenRange: CountRange) {
+    setRange(chosenRange);
+    setProblems(Array.from({ length: PROBLEM_COUNT }, () => makeCountProblem(chosenRange)));
     setQuiz(createQuiz(PROBLEM_COUNT));
     setStartedAt(Date.now());
     setRetryMessage('');
+    setChosen(null);
   }
 
   function finish(state: QuizState) {
@@ -62,15 +65,28 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     });
   }
 
+  /**
+   * 보기를 짚는다. **아직 답이 아니다.**
+   *
+   * 누르자마자 답으로 넘어가면 아이가 보기를 견주어 볼 수 없다. 세 살에게는
+   * "셋은 어떻게 들리고 넷은 어떻게 들리나" 를 번갈아 들어보는 것이 곧 공부다.
+   * 그래서 누르면 소리만 나고, 답은 아래 단추로 낸다.
+   */
+  function tap(value: number) {
+    if (!quiz) return;
+    const index = currentIndex(quiz);
+    if (index === null) return;
+    setChosen(value);
+    // 만 세 살은 숫자 모양과 수량이 아직 이어지지 않아 점을 보지 않고 그냥 찍는다.
+    // 누를 때마다 그 수의 이름을 들으면 3 과 '세 개' 가 같은 것이라는 것이 붙는다.
+    speak(countAloud(value, problems[index]!.object.unit));
+  }
+
   function pick(value: number) {
     if (!quiz) return;
     const index = currentIndex(quiz);
     if (index === null) return;
-
-    // 고른 수를 소리 내어 말해준다 — "세 개".
-    // 만 세 살은 숫자 모양과 수량이 아직 이어지지 않아, 점을 보지 않고 그냥 찍는다.
-    // 누를 때마다 그 수의 이름을 들으면 3 과 '세 개' 가 같은 것이라는 것이 붙는다.
-    speak(countAloud(value, problems[index]!.object.unit));
+    setChosen(null);
 
     const isCorrect = value === problems[index]!.answer;
     // 3차에서 틀리면 같은 문제에 머문다 — 흐름은 submit 이 알아서 처리한다.
@@ -91,6 +107,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     const next = nextRound(quiz);
     setQuiz(next);
     setRetryMessage('');
+    setChosen(null);
     if (next.phase === 'done') finish(next);
   }
 
@@ -197,9 +214,12 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
               key={c}
               data-testid="choice"
               data-value={c}
-              onClick={() => pick(c)}
+              data-chosen={c === chosen ? 'yes' : undefined}
+              onClick={() => tap(c)}
               aria-label={`${c}${problem.object.unit}`}
-              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 transition-transform active:scale-95"
+              className={`min-h-touch min-w-touch rounded-3xl px-5 py-3 transition-transform active:scale-95 ${
+                c === chosen ? 'bg-glow-300 ring-4 ring-glow-500' : 'bg-glow-100'
+              }`}
             >
               <span className="block text-4xl font-bold text-slate-700">{c}</span>
               <span className="mt-1 flex max-w-[4.5rem] flex-wrap justify-center gap-[2px] leading-none">
@@ -212,6 +232,16 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
             </button>
           ))}
         </div>
+
+        {/* 짚어 보고 나서 답을 낸다. 짚기 전에는 누를 것이 없다. */}
+        <Button
+          size="lg"
+          data-testid="confirm"
+          disabled={chosen === null}
+          onClick={() => pick(chosen!)}
+        >
+          {chosen === null ? '눌러서 들어봐요' : '이거예요!'}
+        </Button>
 
         <p className="min-h-[1.75rem] font-bold text-glow-600">
           {retryMessage || (quiz.round === 1 ? `${left}개 남았어요` : '')}

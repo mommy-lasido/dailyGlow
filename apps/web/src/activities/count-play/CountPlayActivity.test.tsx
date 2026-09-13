@@ -40,16 +40,27 @@ function choice(value: number): HTMLElement {
     .find((b) => b.getAttribute('data-value') === String(value))!;
 }
 
+/**
+ * 보기를 짚고 나서 답을 낸다.
+ *
+ * 듣기와 고르기는 서로 다른 일이다 — 아이가 아직 숫자를 보고 고르지 못하므로,
+ * 보기를 하나씩 눌러 몇 개인지 들어본 뒤에 답을 낸다.
+ */
+function answerWith(value: number) {
+  fireEvent.click(choice(value));
+  fireEvent.click(screen.getByTestId('confirm'));
+}
+
 function clickCorrect() {
-  fireEvent.click(choice(answerNow()));
+  answerWith(answerNow());
 }
 
 function clickWrong() {
   const correct = String(answerNow());
   const wrong = screen
     .getAllByTestId('choice')
-    .find((b) => b.getAttribute('data-value') !== correct);
-  fireEvent.click(wrong!);
+    .find((b) => b.getAttribute('data-value') !== correct)!;
+  answerWith(Number(wrong.getAttribute('data-value')));
 }
 
 describe('CountPlayActivity', () => {
@@ -218,5 +229,53 @@ describe('CountPlayActivity', () => {
     renderActivity();
     start();
     expect(speak).not.toHaveBeenCalled();
+  });
+});
+
+describe('CountPlayActivity — 듣고 나서 고르기', () => {
+  it('보기를 눌러도 바로 넘어가지 않는다', () => {
+    // 듣기와 고르기는 서로 다른 일이다. 누르자마자 넘어가면 보기를 견주어 볼 수 없다.
+    renderActivity();
+    start();
+    const before = screen.getByTestId('objects').innerHTML;
+    fireEvent.click(screen.getAllByTestId('choice')[0]!);
+    expect(screen.getByTestId('objects').innerHTML).toBe(before);
+  });
+
+  it('보기를 누르면 몇 개인지 말해준다', () => {
+    renderActivity();
+    start();
+    const unit = screen.getByTestId('question').textContent!.match(/몇 (개|마리)/)![1];
+    speak.mockClear();
+    const b = screen.getAllByTestId('choice')[0]!;
+    fireEvent.click(b);
+    expect(speak).toHaveBeenCalledWith(
+      expect.stringContaining(unit!),
+    );
+  });
+
+  it('하나도 안 짚었으면 답을 낼 수 없다', () => {
+    renderActivity();
+    start();
+    expect(screen.getByTestId('confirm')).toBeDisabled();
+    fireEvent.click(screen.getAllByTestId('choice')[0]!);
+    expect(screen.getByTestId('confirm')).not.toBeDisabled();
+  });
+
+  it('여러 보기를 번갈아 들어본 뒤에 고를 수 있다', () => {
+    renderActivity();
+    start();
+    const all = screen.getAllByTestId('choice');
+    for (const b of all) fireEvent.click(b);
+    // 마지막에 누른 것이 짚어 둔 것으로 남는다.
+    expect(all.at(-1)!.getAttribute('data-chosen')).toBe('yes');
+    expect(all[0]!.getAttribute('data-chosen')).toBeNull();
+  });
+
+  it('다음 문제로 넘어가면 짚어 둔 것이 지워진다', () => {
+    renderActivity();
+    start();
+    clickCorrect();
+    expect(screen.getByTestId('confirm')).toBeDisabled();
   });
 });
