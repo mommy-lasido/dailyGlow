@@ -7,7 +7,20 @@ import { useProfile, type ProfileRow } from '@/stores/profile';
 
 vi.mock('@/lib/activities', async () => {
   const actual = await vi.importActual<typeof import('@/lib/activities')>('@/lib/activities');
-  return { ...actual, fetchTodayMinutes: vi.fn().mockResolvedValue(9) };
+  return {
+    ...actual,
+    fetchTodayMinutes: vi.fn().mockResolvedValue(9),
+    fetchTotalMinutes: vi.fn().mockResolvedValue(132),
+    // 실제 조회 대신, 오늘까지 사흘 공부한 한 주를 돌려준다.
+    fetchWeek: vi.fn().mockImplementation(async () =>
+      actual.toWeek(
+        [
+          { created_at: new Date().toISOString(), duration_sec: 600 },
+        ],
+        new Date(),
+      ),
+    ),
+  };
 });
 
 // 활동 카탈로그 질의의 응답을 테스트마다 갈아끼울 수 있게 해 둔다.
@@ -111,9 +124,20 @@ describe('HomePage', () => {
     expect(screen.getByTestId('greeting')).toHaveTextContent('지호야');
   });
 
-  it('하루 목표를 보여준다', () => {
+  it('목표 대신 지금까지 쌓인 공부 시간을 보여준다', async () => {
+    // 목표 시간은 다 채우고 나면 무슨 뜻인지 알기 어렵고, 못 채운 날에는
+    // 모자란다는 말로만 남는다. 쌓인 시간은 줄지 않는다.
     renderHome();
-    expect(screen.getByText(/15분/)).toBeInTheDocument();
+    expect(await screen.findByText(/지금까지 132분 공부했어요/)).toBeInTheDocument();
+    expect(screen.queryByText(/오늘의 목표/)).not.toBeInTheDocument();
+  });
+
+  it('이번 주 출석 칸 일곱 개를 보여주고 공부한 날에 도장을 찍는다', async () => {
+    renderHome();
+    expect(await screen.findByText('이번 주 출석')).toBeInTheDocument();
+    const stamps = screen.getAllByTestId('stamp');
+    expect(stamps).toHaveLength(7);
+    expect(stamps.filter((s) => s.getAttribute('data-done') === 'yes')).toHaveLength(1);
   });
 
   it('아직 못 읽는 아이에게는 큰 글씨 클래스를 쓴다', () => {

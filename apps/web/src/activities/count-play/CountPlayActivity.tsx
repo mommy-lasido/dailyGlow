@@ -113,11 +113,14 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     const index = currentIndex(quiz);
     if (index === null) return;
     setChosen(value);
-    // 만 세 살은 숫자 모양과 수량이 아직 이어지지 않아 점을 보지 않고 그냥 찍는다.
-    // 누를 때마다 그 수의 이름을 들으면 3 과 '세 개' 가 같은 것이라는 것이 붙는다.
-    // 스물이 넘는 단계에서는 세는 말 없이 수만 읽어준다 — '삼십일'.
+    // **하나씩 세기에서만 보기를 읽어준다.** 만 세 살은 숫자 모양과 수량이 아직
+    // 이어지지 않아 점을 보지 않고 그냥 찍는다. 누를 때마다 그 수의 이름을 들으면
+    // 3 과 '세 개' 가 같은 것이라는 것이 붙는다.
+    //
+    // 숫자 읽기·뛰어 세기에서는 읽어주지 않는다. 그 단계는 **숫자를 보고 아는
+    // 것**이 배울 내용이라, 보기를 읽어주면 눌러 보기만 해도 답이 가려진다.
     const unit = problems[index]?.object.unit;
-    speak(unit ? countAloud(value, unit) : readNumber(value));
+    if (unit) speak(countAloud(value, unit));
   }
 
   function pick(value: number) {

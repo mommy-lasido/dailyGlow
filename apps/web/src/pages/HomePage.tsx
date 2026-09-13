@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card, ProgressBar } from '@dailyglow/ui';
+import { Button, Card } from '@dailyglow/ui';
 import { GRADE_LABEL, vocativeParticle, type Grade } from '@dailyglow/utils';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
 import {
   fetchTodayMinutes,
+  fetchTotalMinutes,
+  fetchWeek,
   selectActivities,
   type LessonGateRow,
+  type WeekDay,
 } from '@/lib/activities';
 import { buildSuggestion, fetchRecentSessions } from '@/lib/promotion';
 import { LevelSuggestionCard } from '@/components/LevelSuggestionCard';
@@ -68,6 +71,20 @@ export function HomePage() {
     queryFn: () => fetchTodayMinutes(profile!.id),
   });
 
+  /** 처음부터 지금까지 쌓인 공부 시간. 오늘 것과 달리 줄지 않는다. */
+  const { data: totalMinutes = 0 } = useQuery({
+    queryKey: ['total-minutes', profile?.id],
+    enabled: Boolean(profile),
+    queryFn: () => fetchTotalMinutes(profile!.id),
+  });
+
+  /** 이번 주 출석. 공부한 날에 도장이 찍힌다. */
+  const { data: week = [] } = useQuery({
+    queryKey: ['week', profile?.id],
+    enabled: Boolean(profile),
+    queryFn: () => fetchWeek(profile!.id),
+  });
+
   // 단계를 올릴 때가 됐는지 판단할 재료. 없으면 제안이 안 뜰 뿐이라 홈은 그대로 열린다.
   const { data: recentSessions = [], refetch: refetchSessions } = useQuery({
     queryKey: ['recent-sessions', profile?.id],
@@ -75,8 +92,6 @@ export function HomePage() {
     queryFn: () => fetchRecentSessions(profile!.id),
   });
 
-  const goal = profile?.daily_goal_minutes ?? 10;
-  const goalDone = goal > 0 && todayMinutes >= goal;
   // DB 타입은 grade 를 string 으로 주므로 도메인 타입으로 좁힌다.
   const grade = (profile?.grade as Grade | null) ?? null;
   const activities = selectActivities(lessons ?? [], grade, levels);
@@ -109,20 +124,21 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* 목표를 채운 뒤에는 "20분 / 15분" 이 무슨 뜻인지 알기 어렵다. 다 했으면
-          다 했다고 말해주고, 그 뒤로 더 한 시간은 덤으로 따로 적는다. */}
-      <Card className="flex flex-col gap-3">
+      {/*
+        목표 시간을 들이대는 대신 **쌓인 것**을 보여준다.
+        "20분 / 15분" 은 다 채우고 나면 무슨 뜻인지 알기 어려웠고, 못 채운 날에는
+        모자란다는 말로만 남았다. 지금까지 쌓인 시간은 줄지 않으므로, 아이가
+        어제의 자기와 이어져 있다고 느낀다.
+      */}
+      <Card className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-xl font-bold text-glow-600">
-            {goalDone ? '오늘 목표 다 했어요! 🎉' : '오늘의 목표'}
+          <span data-testid="total-minutes" className="text-xl font-bold text-glow-600">
+            ⏱ 지금까지 {totalMinutes}분 공부했어요
           </span>
-          <span data-testid="goal-count" className="text-lg text-slate-500">
-            {goalDone
-              ? `${todayMinutes}분 공부했어요`
-              : `${todayMinutes}분 / ${goal}분`}
-          </span>
+          <span className="text-lg text-slate-500">오늘 {todayMinutes}분</span>
         </div>
-        <ProgressBar ratio={goal === 0 ? 1 : todayMinutes / goal} />
+
+        <WeekStamps week={week} />
       </Card>
 
       {/* 단계 제안은 활동 목록 위에 둔다. 아래에 두면 카드를 다 지나쳐야 보인다. */}
@@ -171,6 +187,46 @@ export function HomePage() {
           ))
         )}
       </section>
+    </div>
+  );
+}
+
+/**
+ * 이번 주 출석 도장.
+ *
+ * 학교 출석부처럼 월요일부터 일요일까지 일곱 칸을 두고, 공부한 날에 도장을 찍는다.
+ * 몇 분을 했는지는 여기서 따지지 않는다 — **한 날이라도 앉았으면 찍힌다.** 목표
+ * 시간을 못 채웠다고 빈칸으로 두면, 한 날이 안 한 날과 같아져 버린다.
+ *
+ * 아직 오지 않은 날은 흐리게 둔다. 오늘은 테두리로 짚어 준다.
+ */
+function WeekStamps({ week }: { week: WeekDay[] }) {
+  if (week.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-bold text-slate-500">이번 주 출석</p>
+      <div className="flex justify-between gap-1">
+        {week.map((d) => (
+          <div key={d.key} className="flex flex-1 flex-col items-center gap-1">
+            <span className="text-xs text-slate-400">{d.label}</span>
+            <span
+              data-testid="stamp"
+              data-day={d.label}
+              data-done={d.minutes > 0 ? 'yes' : undefined}
+              className={`flex h-11 w-11 items-center justify-center rounded-full text-2xl ${
+                d.minutes > 0
+                  ? 'bg-glow-100'
+                  : d.isFuture
+                    ? 'bg-slate-50'
+                    : 'bg-white ring-1 ring-slate-200'
+              } ${d.isToday ? 'ring-4 ring-glow-500' : ''}`}
+            >
+              {d.minutes > 0 ? '⭐' : ''}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

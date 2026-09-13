@@ -76,7 +76,7 @@ export interface CountGroupInfo {
 export const COUNT_GROUPS: readonly CountGroupInfo[] = [
   { group: 'count', name: '하나씩 세기', icon: '🍎', desc: '그림을 짚어가며 세어요' },
   { group: 'read', name: '숫자 읽기', icon: '🔢', desc: '듣고 찾고, 빠진 수 채워요' },
-  { group: 'skip', name: '뛰어 세기', icon: '🦘', desc: '다섯씩, 열씩 건너뛰어요' },
+  { group: 'skip', name: '뛰어 세기', icon: '🐇', desc: '다섯씩, 열씩 건너뛰어요' },
 ] as const;
 
 export interface CountSetting {
@@ -101,8 +101,8 @@ export const COUNT_SETTINGS: readonly CountSetting[] = [
   { group: 'read', range: 100, mode: 'read', name: '백까지 읽기', icon: '100', desc: '1부터 100까지' },
   // 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
   // 다섯씩이 열씩보다 촘촘해 먼저 온다.
-  { group: 'skip', range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '🐇', desc: '5 10 15 … 100' },
-  { group: 'skip', range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '🦘', desc: '10 20 30 … 100' },
+  { group: 'skip', range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '5', desc: '5 10 15 … 100' },
+  { group: 'skip', range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '10', desc: '10 20 30 … 100' },
 ] as const;
 
 /** 이 묶음에 든 단계들 */

@@ -117,3 +117,89 @@ export async function fetchTodayMinutes(profileId: string): Promise<number> {
   const totalSec = data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0);
   return Math.floor(totalSec / 60);
 }
+
+/** 한 주는 월요일에 시작한다 — 아이들이 학교·어린이집에서 쓰는 주와 같다. */
+export function weekStart(today = new Date()): Date {
+  const d = new Date(today);
+  d.setHours(0, 0, 0, 0);
+  // getDay(): 일요일이 0. 월요일을 0 으로 옮겨 계산한다.
+  const fromMonday = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - fromMonday);
+  return d;
+}
+
+/** 날짜를 그날의 열쇠로. 시간대 차이로 날이 밀리지 않게 지역 시간으로 만든다. */
+export function dayKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export interface WeekDay {
+  key: string;
+  /** 월·화·수… */
+  label: string;
+  minutes: number;
+  isToday: boolean;
+  /** 오늘보다 뒤라 아직 오지 않은 날 */
+  isFuture: boolean;
+}
+
+const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'] as const;
+
+/** 세션 기록을 한 주의 일곱 칸으로 펼친다. */
+export function toWeek(
+  rows: { created_at: string | null; duration_sec: number | null }[],
+  today = new Date(),
+): WeekDay[] {
+  const minutes = new Map<string, number>();
+  for (const r of rows) {
+    if (!r.created_at) continue;
+    const k = dayKey(new Date(r.created_at));
+    minutes.set(k, (minutes.get(k) ?? 0) + (r.duration_sec ?? 0));
+  }
+
+  const start = weekStart(today);
+  const todayKey = dayKey(today);
+  return DAY_LABELS.map((label, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const key = dayKey(d);
+    return {
+      key,
+      label,
+      minutes: Math.floor((minutes.get(key) ?? 0) / 60),
+      isToday: key === todayKey,
+      isFuture: key > todayKey,
+    };
+  });
+}
+
+/** 이번 주의 공부 기록. 출석 도장을 찍는 데 쓴다. */
+export async function fetchWeek(profileId: string, today = new Date()): Promise<WeekDay[]> {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('created_at, duration_sec')
+    .eq('profile_id', profileId)
+    .gte('created_at', weekStart(today).toISOString());
+
+  if (error || !data) return toWeek([], today);
+  return toWeek(data, today);
+}
+
+/**
+ * 지금까지 공부한 시간(분), 처음부터 모두 더한 것.
+ *
+ * 오늘 얼마나 했는지는 매일 0 으로 돌아가지만, 이 숫자는 줄지 않는다.
+ * 쌓여 가는 것이 눈에 보여야 아이가 어제의 자기와 이어져 있다고 느낀다.
+ */
+export async function fetchTotalMinutes(profileId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('duration_sec')
+    .eq('profile_id', profileId);
+
+  if (error || !data) return 0;
+  return Math.floor(data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0) / 60);
+}
