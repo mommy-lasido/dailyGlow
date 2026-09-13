@@ -76,6 +76,7 @@ export function HomePage() {
   });
 
   const goal = profile?.daily_goal_minutes ?? 10;
+  const goalDone = goal > 0 && todayMinutes >= goal;
   // DB 타입은 grade 를 string 으로 주므로 도메인 타입으로 좁힌다.
   const grade = (profile?.grade as Grade | null) ?? null;
   const activities = selectActivities(lessons ?? [], grade, levels);
@@ -108,14 +109,20 @@ export function HomePage() {
         </div>
       </header>
 
+      {/* 목표를 채운 뒤에는 "20분 / 15분" 이 무슨 뜻인지 알기 어렵다. 다 했으면
+          다 했다고 말해주고, 그 뒤로 더 한 시간은 덤으로 따로 적는다. */}
       <Card className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <span className="text-xl font-bold text-glow-600">오늘의 목표</span>
-          <span className="text-lg text-slate-500">
-            {todayMinutes}분 / {goal}분
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-xl font-bold text-glow-600">
+            {goalDone ? '오늘 목표 다 했어요! 🎉' : '오늘의 목표'}
+          </span>
+          <span data-testid="goal-count" className="text-lg text-slate-500">
+            {goalDone
+              ? `${todayMinutes}분 공부했어요`
+              : `${todayMinutes}분 / ${goal}분`}
           </span>
         </div>
-        <ProgressBar ratio={goal === 0 ? 0 : todayMinutes / goal} />
+        <ProgressBar ratio={goal === 0 ? 1 : todayMinutes / goal} />
       </Card>
 
       {/* 단계 제안은 활동 목록 위에 둔다. 아래에 두면 카드를 다 지나쳐야 보인다. */}

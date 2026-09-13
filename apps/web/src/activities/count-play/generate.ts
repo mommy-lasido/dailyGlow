@@ -6,7 +6,17 @@
  */
 
 /** 셀 수 있는 가장 큰 수. 단계이자 설정이다. */
-export type CountRange = 3 | 5 | 10;
+export type CountRange = 3 | 5 | 10 | 20 | 50 | 100;
+
+/**
+ * 무엇을 하는 단계인가.
+ *
+ * **스물을 넘어가면 하는 일이 달라진다.** 사과 여든일곱 개를 화면에 그릴 수 없고,
+ * 그린다 해도 하나씩 짚어 세다 아이가 지친다. 그래서 스물부터는 세는 것이 아니라
+ * 읽고 순서를 아는 것으로 넘어간다. 시중 교재의 차례도 이렇게 나뉜다 —
+ * 9까지의 수(세기) → 50까지의 수(읽기) → 100까지의 수(읽기·뛰어 세기).
+ */
+export type CountMode = 'count' | 'read' | 'skip';
 
 /** 세는 대상과 그것을 세는 말 */
 export interface CountObject {
@@ -41,10 +51,25 @@ export const COUNT_OBJECTS: readonly CountObject[] = [
   { icon: '🐤', name: '병아리', unit: '마리' },
 ] as const;
 
-export const COUNT_SETTINGS = [
-  { range: 3 as CountRange, name: '셋까지 세기', icon: '🍎', desc: '1부터 3까지' },
-  { range: 5 as CountRange, name: '다섯까지 세기', icon: '🐟', desc: '1부터 5까지' },
-  { range: 10 as CountRange, name: '열까지 세기', icon: '🐤', desc: '1부터 10까지' },
+export interface CountSetting {
+  range: CountRange;
+  mode: CountMode;
+  name: string;
+  icon: string;
+  desc: string;
+}
+
+export const COUNT_SETTINGS: readonly CountSetting[] = [
+  // 그림을 하나씩 짚어 세는 단계
+  { range: 3, mode: 'count', name: '셋까지 세기', icon: '🍎', desc: '그림을 세어봐요' },
+  { range: 5, mode: 'count', name: '다섯까지 세기', icon: '🐟', desc: '그림을 세어봐요' },
+  { range: 10, mode: 'count', name: '열까지 세기', icon: '🐤', desc: '그림을 세어봐요' },
+  // 숫자를 읽고 순서를 아는 단계
+  { range: 20, mode: 'read', name: '스물까지 읽기', icon: '2️⃣', desc: '듣고 찾고, 빠진 수 채우기' },
+  { range: 50, mode: 'read', name: '쉰까지 읽기', icon: '5️⃣', desc: '듣고 찾고, 빠진 수 채우기' },
+  { range: 100, mode: 'read', name: '백까지 읽기', icon: '💯', desc: '듣고 찾고, 빠진 수 채우기' },
+  // 열씩 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
+  { range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '🦘', desc: '10 20 30 … 100' },
 ] as const;
 
 /** 아이가 아직 숫자를 못 읽어도 소리 내어 셀 수 있도록 우리말 수사를 함께 쓴다. */

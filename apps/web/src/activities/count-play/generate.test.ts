@@ -124,7 +124,16 @@ describe('countQuestion', () => {
 
 describe('COUNT_SETTINGS', () => {
   it('쉬운 것부터 어려운 순서로 놓여 있다', () => {
-    expect(COUNT_SETTINGS.map((s) => s.range)).toEqual([3, 5, 10]);
+    expect(COUNT_SETTINGS.map((s) => s.range)).toEqual([3, 5, 10, 20, 50, 100, 100]);
+  });
+
+  it('열까지는 그림을 세고, 스물부터는 읽는다', () => {
+    // 사과 여든일곱 개를 화면에 그릴 수는 없다. 스물을 넘어가면 하는 일이 달라진다.
+    for (const s of COUNT_SETTINGS) {
+      expect(s.mode).toBe(s.range <= 10 ? 'count' : s.mode === 'skip' ? 'skip' : 'read');
+    }
+    expect(COUNT_SETTINGS.filter((s) => s.mode === 'count')).toHaveLength(3);
+    expect(COUNT_SETTINGS.filter((s) => s.mode === 'skip')).toHaveLength(1);
   });
 });
 
