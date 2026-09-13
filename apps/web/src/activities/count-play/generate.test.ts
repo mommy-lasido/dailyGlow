@@ -7,6 +7,7 @@ import {
   countQuestion,
   KOREAN_COUNT,
   makeCountProblem,
+  stepOf,
   subjectParticle,
   type CountRange,
 } from './generate';
@@ -124,16 +125,22 @@ describe('countQuestion', () => {
 
 describe('COUNT_SETTINGS', () => {
   it('쉬운 것부터 어려운 순서로 놓여 있다', () => {
-    expect(COUNT_SETTINGS.map((s) => s.range)).toEqual([3, 5, 10, 20, 50, 100, 100]);
+    expect(COUNT_SETTINGS.map((s) => s.range)).toEqual([3, 5, 10, 20, 50, 100, 100, 100]);
   });
 
   it('열까지는 그림을 세고, 스물부터는 읽는다', () => {
     // 사과 여든일곱 개를 화면에 그릴 수는 없다. 스물을 넘어가면 하는 일이 달라진다.
     for (const s of COUNT_SETTINGS) {
-      expect(s.mode).toBe(s.range <= 10 ? 'count' : s.mode === 'skip' ? 'skip' : 'read');
+      if (s.range <= 10) expect(s.mode).toBe('count');
+      else expect(['read', 'skip5', 'skip']).toContain(s.mode);
     }
     expect(COUNT_SETTINGS.filter((s) => s.mode === 'count')).toHaveLength(3);
-    expect(COUNT_SETTINGS.filter((s) => s.mode === 'skip')).toHaveLength(1);
+    expect(COUNT_SETTINGS.filter((s) => s.mode === 'read')).toHaveLength(3);
+  });
+
+  it('뛰어 세기는 다섯씩과 열씩 둘 다 있다', () => {
+    const steps = COUNT_SETTINGS.map((s) => stepOf(s.mode)).filter((n) => n > 1);
+    expect(steps.sort((a, b) => a - b)).toEqual([5, 10]);
   });
 });
 

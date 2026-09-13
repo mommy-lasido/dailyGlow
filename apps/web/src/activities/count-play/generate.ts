@@ -16,7 +16,14 @@ export type CountRange = 3 | 5 | 10 | 20 | 50 | 100;
  * 읽고 순서를 아는 것으로 넘어간다. 시중 교재의 차례도 이렇게 나뉜다 —
  * 9까지의 수(세기) → 50까지의 수(읽기) → 100까지의 수(읽기·뛰어 세기).
  */
-export type CountMode = 'count' | 'read' | 'skip';
+export type CountMode = 'count' | 'read' | 'skip5' | 'skip';
+
+/** 한 번에 몇씩 건너뛰는가. 뛰어 세기가 아니면 하나씩이다. */
+export function stepOf(mode: CountMode): number {
+  if (mode === 'skip') return 10;
+  if (mode === 'skip5') return 5;
+  return 1;
+}
 
 /** 세는 대상과 그것을 세는 말 */
 export interface CountObject {
@@ -68,7 +75,9 @@ export const COUNT_SETTINGS: readonly CountSetting[] = [
   { range: 20, mode: 'read', name: '스물까지 읽기', icon: '2️⃣', desc: '듣고 찾고, 빠진 수 채우기' },
   { range: 50, mode: 'read', name: '쉰까지 읽기', icon: '5️⃣', desc: '듣고 찾고, 빠진 수 채우기' },
   { range: 100, mode: 'read', name: '백까지 읽기', icon: '💯', desc: '듣고 찾고, 빠진 수 채우기' },
-  // 열씩 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
+  // 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
+  // 다섯씩이 열씩보다 촘촘해 먼저 온다.
+  { range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '🐇', desc: '5 10 15 … 100' },
   { range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '🦘', desc: '10 20 30 … 100' },
 ] as const;
 

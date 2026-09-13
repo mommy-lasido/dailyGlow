@@ -20,6 +20,7 @@ import {
   countQuestion,
   KOREAN_COUNT,
   makeCountProblem,
+  stepOf,
   type CountProblem,
   type CountSetting,
 } from './generate';
@@ -76,8 +77,8 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
       setNumbers([]);
     } else {
       setProblems([]);
-      // 뛰어 세기는 열씩 건너뛴다 — 10 20 □ 40 50.
-      setNumbers(makeNumberSet(chosen.range, PROBLEM_COUNT, chosen.mode === 'skip' ? 10 : 1));
+      // 뛰어 세기는 다섯씩·열씩 건너뛴다 — 10 20 □ 40 50.
+      setNumbers(makeNumberSet(chosen.range, PROBLEM_COUNT, stepOf(chosen.mode)));
     }
     setQuiz(createQuiz(PROBLEM_COUNT));
     setStartedAt(Date.now());
