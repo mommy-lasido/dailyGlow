@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
@@ -17,6 +17,7 @@ import {
 import {
   makeSentenceSet,
   MIN_POOL,
+  pickRound,
   poolForStage,
   sentenceQuestion,
   type SentenceProblem,
@@ -42,6 +43,8 @@ const ROUND_TITLE: Record<number, string> = {
  */
 export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
   const pool = poolForStage(lesson.childLevel);
+  // 오늘 볼 것만 뽑는다. 다 넘겨 본 뒤에 풀게 하면 아이가 못 견딘다.
+  const round = useMemo(() => pickRound(pool), [pool]);
 
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
   const [card, setCard] = useState(0);
@@ -59,7 +62,8 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
   }, [asked]);
 
   function begin() {
-    const set = makeSentenceSet(pool);
+    // 방금 본 문장들 안에서 낸다 — 못 본 문장이 나오면 카드를 본 뜻이 없다.
+    const set = makeSentenceSet(round);
     setProblems(set);
     setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());
@@ -116,11 +120,11 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
 
   // ── ① 문장 카드 보기 ──────────────────────────────────
   if (phase === 'learn' || !quiz) {
-    const sentence = pool[card]!;
-    const last = card === pool.length - 1;
+    const sentence = round[card]!;
+    const last = card === round.length - 1;
     return (
       <div className="flex flex-col gap-5">
-        <p className="text-center text-slate-500">지금 읽을 수 있는 문장 {pool.length}개</p>
+        <p className="text-center text-slate-500">오늘 읽어볼 문장 {round.length}개</p>
 
         <Card className="flex flex-col items-center gap-4 text-center">
           <button
@@ -142,7 +146,7 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
               ← 앞으로
             </Button>
             <span className="text-slate-400">
-              {card + 1} / {pool.length}
+              {card + 1} / {round.length}
             </span>
             {last ? (
               <Button onClick={begin}>다 봤어요</Button>

@@ -16,6 +16,14 @@ import { WORD_ITEMS } from './content';
 export const WORD_PROBLEM_COUNT = 5;
 /** 보기를 세 개 채우려면 낱말이 적어도 셋은 있어야 한다. */
 export const MIN_POOL = 3;
+/**
+ * 한 판에 보여줄 낱말 수.
+ *
+ * 읽을 수 있는 낱말이 백사십 개까지 늘었는데, 그걸 다 넘겨 본 뒤에 문제를 풀게
+ * 하면 아이가 못 견딘다. **오늘 볼 것만 뽑아** 열 장을 보고 그중에서 문제를 낸다.
+ * 다음에 열면 또 다른 열 장이 나오므로 낱말이 많은 것이 그대로 이득이 된다.
+ */
+export const WORDS_PER_ROUND = 10;
 
 export interface WordProblem {
   answer: string;
@@ -37,6 +45,15 @@ export function poolForStage(stage: number): string[] {
     const need = minStageFor(w);
     return need !== null && need <= stage;
   });
+}
+
+/** 오늘 볼 낱말 열 개를 뽑는다. 읽을 수 있는 것이 열보다 적으면 있는 만큼. */
+export function pickRound(
+  pool: string[],
+  count = WORDS_PER_ROUND,
+  rand: () => number = Math.random,
+): string[] {
+  return shuffle(pool, rand).slice(0, Math.min(count, pool.length));
 }
 
 /**

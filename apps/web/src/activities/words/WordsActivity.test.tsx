@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WordsActivity } from './WordsActivity';
-import { poolForStage } from './generate';
+import { poolForStage, WORDS_PER_ROUND } from './generate';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
 
 vi.mock('@/lib/confetti', () => ({ spawnConfetti: () => {} }));
@@ -28,10 +28,16 @@ function renderActivity(level = 20, onFinish: (r: ActivityResult) => void = () =
   );
 }
 
-/** 마지막 카드까지 가서 문제로 넘어간다. */
+/** 한 판에 보여주는 낱말 수 — 읽을 수 있는 것이 열보다 적으면 그만큼. */
+function roundSize(level: number): number {
+  return Math.min(WORDS_PER_ROUND, poolForStage(level).length);
+}
+
+/** 카드를 끝까지 넘겨 문제로 들어간다. */
 function goToQuiz(level = 20) {
-  const pool = poolForStage(level);
-  fireEvent.click(screen.getByRole('button', { name: pool.at(-1)! }));
+  for (let i = 1; i < roundSize(level); i += 1) {
+    fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
+  }
   fireEvent.click(screen.getByRole('button', { name: '다 봤어요' }));
 }
 
@@ -73,21 +79,22 @@ describe('WordsActivity — 낱말 카드 보기', () => {
 
   it('아이가 읽을 수 있는 낱말만 보여준다', () => {
     renderActivity(1);
-    expect(screen.getByText('지금 읽을 수 있는 낱말 5개')).toBeInTheDocument();
-    expect(screen.getByTestId('card-word')).toHaveTextContent('오이');
+    expect(screen.getByText('오늘 읽어볼 낱말 5개')).toBeInTheDocument();
+    expect(poolForStage(1)).toContain(screen.getByTestId('card-word').textContent);
   });
 
-  it('단계가 오르면 읽을 낱말이 늘어난다', () => {
+  it('낱말이 많아도 한 판에 열 개만 보여준다', () => {
+    // 백사십 개를 다 넘겨 본 뒤에 풀게 하면 아이가 못 견딘다.
+    expect(poolForStage(20).length).toBeGreaterThan(WORDS_PER_ROUND);
     renderActivity(20);
-    expect(
-      screen.getByText(`지금 읽을 수 있는 낱말 ${poolForStage(20).length}개`),
-    ).toBeInTheDocument();
+    expect(screen.getByText(`오늘 읽어볼 낱말 ${WORDS_PER_ROUND}개`)).toBeInTheDocument();
   });
 
   it('낱말을 누르면 읽어준다', () => {
     renderActivity(1);
-    fireEvent.click(screen.getByRole('button', { name: '오이 읽어주기' }));
-    expect(speak).toHaveBeenCalledWith('오이');
+    const word = screen.getByTestId('card-word').textContent!;
+    fireEvent.click(screen.getByRole('button', { name: `${word} 읽어주기` }));
+    expect(speak).toHaveBeenCalledWith(word);
   });
 
   it('카드를 넘겨 볼 때는 스스로 읽어주지 않는다', () => {

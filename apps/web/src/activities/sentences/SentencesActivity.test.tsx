@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SentencesActivity } from './SentencesActivity';
-import { poolForStage } from './generate';
+import { poolForStage, SENTENCES_PER_ROUND } from './generate';
 import type { ActivityLesson, ActivityResult } from '@/activities/types';
 
 vi.mock('@/lib/confetti', () => ({ spawnConfetti: () => {} }));
@@ -30,9 +30,14 @@ function renderActivity(level = LEVEL, onFinish: (r: ActivityResult) => void = (
   );
 }
 
+/** 한 판에 보여주는 문장 수 — 읽을 수 있는 것이 여덟보다 적으면 그만큼. */
+function roundSize(level: number): number {
+  return Math.min(SENTENCES_PER_ROUND, poolForStage(level).length);
+}
+
 /** 카드를 끝까지 넘겨 문제로 들어간다. */
 function goToQuiz(level = LEVEL) {
-  for (let i = 1; i < poolForStage(level).length; i += 1) {
+  for (let i = 1; i < roundSize(level); i += 1) {
     fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
   }
   fireEvent.click(screen.getByRole('button', { name: '다 봤어요' }));
@@ -76,21 +81,23 @@ describe('SentencesActivity — 문장 카드 보기', () => {
 
   it('아이가 읽을 수 있는 문장만 보여준다', () => {
     renderActivity(9);
-    expect(screen.getByText(`지금 읽을 수 있는 문장 ${poolForStage(9).length}개`)).toBeInTheDocument();
+    expect(screen.getByText(`오늘 읽어볼 문장 ${roundSize(9)}개`)).toBeInTheDocument();
+    expect(poolForStage(9)).toContain(screen.getByTestId('card-sentence').textContent);
   });
 
-  it('단계가 오르면 읽을 문장이 늘어난다', () => {
-    const low = poolForStage(9).length;
+  it('문장이 많아도 한 판에 여덟 개만 보여준다', () => {
+    expect(poolForStage(25).length).toBeGreaterThan(SENTENCES_PER_ROUND);
     renderActivity(25);
-    expect(screen.getByText(`지금 읽을 수 있는 문장 ${poolForStage(25).length}개`)).toBeInTheDocument();
-    expect(poolForStage(25).length).toBeGreaterThan(low);
+    expect(
+      screen.getByText(`오늘 읽어볼 문장 ${SENTENCES_PER_ROUND}개`),
+    ).toBeInTheDocument();
   });
 
   it('문장을 누르면 읽어준다', () => {
     renderActivity(9);
-    const first = poolForStage(9)[0]!;
-    fireEvent.click(screen.getByRole('button', { name: `${first} 읽어주기` }));
-    expect(speak).toHaveBeenCalledWith(first);
+    const shown = screen.getByTestId('card-sentence').textContent!;
+    fireEvent.click(screen.getByRole('button', { name: `${shown} 읽어주기` }));
+    expect(speak).toHaveBeenCalledWith(shown);
   });
 
   it('카드를 넘겨 볼 때는 스스로 읽어주지 않는다', () => {

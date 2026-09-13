@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
@@ -17,6 +17,7 @@ import {
 import {
   makeWordSet,
   MIN_POOL,
+  pickRound,
   poolForStage,
   wordQuestion,
   type WordProblem,
@@ -39,6 +40,9 @@ const ROUND_TITLE: Record<number, string> = {
  */
 export function WordsActivity({ lesson, onFinish }: ActivityProps) {
   const pool = poolForStage(lesson.childLevel);
+  // 읽을 수 있는 낱말이 백 개가 넘는다. 다 넘겨 본 뒤에 풀게 하면 아이가 못 견디니
+  // 오늘 볼 것만 뽑는다. 다음에 열면 또 다른 열 장이 나온다.
+  const round = useMemo(() => pickRound(pool), [pool]);
 
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
   const [card, setCard] = useState(0);
@@ -56,7 +60,8 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
   }, [asked]);
 
   function begin() {
-    const set = makeWordSet(pool);
+    // 방금 본 낱말들 안에서 낸다 — 못 본 낱말이 나오면 카드를 본 뜻이 없다.
+    const set = makeWordSet(round);
     setProblems(set);
     setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());
@@ -115,11 +120,11 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
 
   // ── ① 낱말 카드 보기 ──────────────────────────────────
   if (phase === 'learn' || !quiz) {
-    const word = pool[card]!;
-    const last = card === pool.length - 1;
+    const word = round[card]!;
+    const last = card === round.length - 1;
     return (
       <div className="flex flex-col gap-5">
-        <p className="text-center text-slate-500">지금 읽을 수 있는 낱말 {pool.length}개</p>
+        <p className="text-center text-slate-500">오늘 읽어볼 낱말 {round.length}개</p>
 
         <Card className="flex flex-col items-center gap-4 text-center">
           <button
@@ -141,7 +146,7 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
               ← 앞으로
             </Button>
             <span className="text-slate-400">
-              {card + 1} / {pool.length}
+              {card + 1} / {round.length}
             </span>
             {last ? (
               <Button onClick={begin}>다 봤어요</Button>
@@ -150,21 +155,6 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
             )}
           </div>
         </Card>
-
-        <div className="flex flex-wrap justify-center gap-2">
-          {pool.map((w, i) => (
-            <button
-              key={w}
-              onClick={() => setCard(i)}
-              aria-label={w}
-              className={`min-h-touch rounded-2xl px-3 text-lg font-bold transition-transform active:scale-95 ${
-                i === card ? 'bg-glow-500 text-white' : 'bg-white text-slate-700 ring-1 ring-glow-100'
-              }`}
-            >
-              {w}
-            </button>
-          ))}
-        </div>
 
         {!canSpeak() ? (
           <p className="text-center text-sm text-slate-400">

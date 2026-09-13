@@ -17,6 +17,13 @@ import { SENTENCE_ITEMS } from './content';
 export const SENTENCE_PROBLEM_COUNT = 5;
 /** 보기를 세 개 채우려면 문장이 적어도 셋은 있어야 한다. */
 export const MIN_POOL = 3;
+/**
+ * 한 판에 보여줄 문장 수.
+ *
+ * 읽을 수 있는 문장을 다 넘겨 본 뒤에 풀게 하면 아이가 못 견딘다. 오늘 볼 것만
+ * 뽑아 보고 그중에서 문제를 낸다. 다음에 열면 또 다른 것들이 나온다.
+ */
+export const SENTENCES_PER_ROUND = 8;
 
 export interface SentenceProblem {
   answer: string;
@@ -38,6 +45,15 @@ export function poolForStage(stage: number): string[] {
     const need = minStageFor(s);
     return need !== null && need <= stage;
   });
+}
+
+/** 오늘 볼 문장 여덟 개를 뽑는다. 읽을 수 있는 것이 여덟보다 적으면 있는 만큼. */
+export function pickRound(
+  pool: string[],
+  count = SENTENCES_PER_ROUND,
+  rand: () => number = Math.random,
+): string[] {
+  return shuffle(pool, rand).slice(0, Math.min(count, pool.length));
 }
 
 /** 두 문장이 몇 낱말이나 같은가. 많이 같을수록 헷갈리는 보기다. */
