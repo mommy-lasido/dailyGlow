@@ -211,7 +211,7 @@ function WeekStamps({ week }: { week: WeekDay[] }) {
                     : 'bg-white ring-1 ring-slate-200'
               } ${d.isToday ? 'ring-4 ring-glow-500' : ''}`}
             >
-              {d.minutes > 0 ? '⭐' : ''}
+              {d.minutes > 0 ? '❤️' : ''}
             </span>
           </div>
         ))}
