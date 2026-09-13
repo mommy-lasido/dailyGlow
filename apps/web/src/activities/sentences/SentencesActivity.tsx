@@ -217,7 +217,7 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
               data-sentence={c.sentence}
               onClick={() => pick(c.sentence)}
               aria-label={c.sentence}
-              className="min-h-touch rounded-3xl bg-glow-100 px-5 py-4 shadow-md transition-transform active:scale-95"
+              className="min-h-touch rounded-3xl bg-glow-100 px-5 py-4 transition-transform active:scale-95"
             >
               {problem.direction === 'toSentence' ? (
                 <span className="text-2xl font-bold text-slate-700">{c.sentence}</span>

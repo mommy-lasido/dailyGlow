@@ -212,7 +212,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
                   setOp(o.op);
                   setLevelId(1);
                 }}
-                className={`min-h-touch flex-1 rounded-2xl px-4 text-lg font-bold shadow-md ${
+                className={`min-h-touch flex-1 rounded-2xl px-4 text-lg font-bold ${
                   op === o.op ? 'bg-glow-500 text-white' : 'bg-glow-100 text-slate-700'
                 }`}
               >
@@ -231,7 +231,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
                 data-testid="level"
                 data-level={l.id}
                 onClick={() => setLevelId(l.id)}
-                className={`min-h-touch rounded-2xl px-4 text-left text-lg font-bold shadow-md ${
+                className={`min-h-touch rounded-2xl px-4 text-left text-lg font-bold ${
                   levelId === l.id ? 'bg-glow-500 text-white' : 'bg-glow-100 text-slate-700'
                 }`}
               >
@@ -250,7 +250,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
                 data-testid="size"
                 data-cells={s.cells}
                 onClick={() => setCells(s.cells)}
-                className={`min-h-touch flex-1 rounded-2xl px-3 text-base font-bold shadow-md ${
+                className={`min-h-touch flex-1 rounded-2xl px-3 text-base font-bold ${
                   cells === s.cells ? 'bg-glow-500 text-white' : 'bg-glow-100 text-slate-700'
                 }`}
               >
@@ -265,7 +265,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
             </p>
           ) : null}
           <p className="text-sm text-slate-400">
-            100칸이 버거우면 25칸부터 시작해도 괜찮아요.
+            100칸이 어려우면 25칸부터 도전해도 괜찮아요.
           </p>
         </Card>
 
@@ -309,10 +309,11 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
           <Button onClick={() => setStep('solve')}>💻 화면에서 풀기</Button>
           <Button onClick={() => window.print()}>🖨️ 인쇄하기</Button>
           <Button variant="ghost" onClick={freshPuzzle}>
-            🔄 새 문제 만들기
+            🎲 새 문제 만들기
           </Button>
+          {/* 답을 볼 때와 감출 때의 그림이 서로 달라야, 지금 어느 쪽인지 한눈에 보인다. */}
           <Button variant="ghost" onClick={() => setShowAnswers((v) => !v)}>
-            {showAnswers ? '답 숨기기' : '답 보기'}
+            {showAnswers ? '🙈 답 숨기기' : '👀 답 보기'}
           </Button>
         </Card>
 
@@ -530,7 +531,7 @@ export function GridDrillActivity({ lesson, onFinish }: ActivityProps) {
                 setStep('problem');
               }}
             >
-              새 문제
+              🎲 새 문제
             </Button>
             <Link to="/">
               <Button variant="ghost">홈으로</Button>

@@ -18,7 +18,7 @@ export const DRILL_OPS = [
   { op: '÷' as DrillOp, label: '나눗셈' },
 ] as const;
 
-/** 칸 수와 한 줄의 길이. 100칸이 버거우면 25칸부터 해도 된다. */
+/** 칸 수와 한 줄의 길이. 100칸이 어려우면 25칸부터 해도 된다. */
 export const DRILL_SIZES = [
   { cells: 25, side: 5, label: '25칸 (5×5)' },
   { cells: 64, side: 8, label: '64칸 (8×8)' },

@@ -51,7 +51,7 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
             data-testid="kind"
             data-kind={o.kind}
             onClick={() => begin(o.kind)}
-            className="min-h-touch rounded-3xl bg-white p-5 text-left text-2xl font-bold text-glow-700 shadow-lg ring-1 ring-black/5 transition-transform active:scale-95"
+            className="min-h-touch rounded-3xl bg-white p-5 text-left text-2xl font-bold text-glow-700 ring-1 ring-black/5 transition-transform active:scale-95"
           >
             ✏️ {o.label}
           </button>

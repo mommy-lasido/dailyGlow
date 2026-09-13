@@ -98,7 +98,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
           <button
             key={s.range}
             onClick={() => begin(s.range)}
-            className="min-h-touch rounded-3xl bg-white p-5 text-left shadow-lg ring-1 ring-black/5 transition-transform active:scale-95"
+            className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
           >
             <span className="flex items-center gap-5">
               <span className="text-5xl">{s.icon}</span>
@@ -169,7 +169,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
             type="button"
             onClick={() => speak(question)}
             aria-label="문제 읽어주기"
-            className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl shadow-md transition-transform active:scale-95"
+            className="min-h-touch min-w-touch rounded-full bg-glow-100 text-3xl transition-transform active:scale-95"
           >
             🔊
           </button>
@@ -193,7 +193,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
               data-value={c}
               onClick={() => pick(c)}
               aria-label={`${c}${problem.object.unit}`}
-              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 shadow-md transition-transform active:scale-95"
+              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 transition-transform active:scale-95"
             >
               <span className="block text-4xl font-bold text-slate-700">{c}</span>
               <span className="mt-1 flex max-w-[4.5rem] flex-wrap justify-center gap-[2px] leading-none">

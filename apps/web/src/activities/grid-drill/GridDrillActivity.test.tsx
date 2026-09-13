@@ -259,7 +259,7 @@ describe('GridDrillActivity — 문제 화면', () => {
     expect(screen.getByRole('button', { name: /화면에서 풀기/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /인쇄하기/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /새 문제 만들기/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '답 보기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /답 보기/ })).toBeInTheDocument();
   });
 
   it('할 일 단추 넷이 한 줄에 있다', () => {
@@ -414,9 +414,9 @@ describe('GridDrillActivity — 인쇄해서 풀기', () => {
     showProblem({ op: '+', cells: '25' });
     // 처음에는 칸이 비어 있다.
     expect(screen.getAllByTestId('cell')[0]!.textContent).toBe('');
-    fireEvent.click(screen.getByRole('button', { name: '답 보기' }));
+    fireEvent.click(screen.getByRole('button', { name: /답 보기/ }));
     expect(screen.getAllByTestId('cell')[0]!.textContent).not.toBe('');
-    fireEvent.click(screen.getByRole('button', { name: '답 숨기기' }));
+    fireEvent.click(screen.getByRole('button', { name: /답 숨기기/ }));
     expect(screen.getAllByTestId('cell')[0]!.textContent).toBe('');
   });
 

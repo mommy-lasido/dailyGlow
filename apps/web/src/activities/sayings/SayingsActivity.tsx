@@ -209,7 +209,7 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
               data-testid="choice"
               data-text={c.text}
               onClick={() => pick(c.text)}
-              className="min-h-touch rounded-3xl bg-glow-100 px-5 py-4 text-left text-lg font-bold text-slate-700 shadow-md transition-transform active:scale-95"
+              className="min-h-touch rounded-3xl bg-glow-100 px-5 py-4 text-left text-lg font-bold text-slate-700 transition-transform active:scale-95"
             >
               {choiceText(c, problem.direction)}
               {problem.direction === 'toText' && hanjaOf(c) ? (

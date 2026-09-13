@@ -96,7 +96,7 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
           <button
             key={s.setting}
             onClick={() => begin(s.setting)}
-            className="min-h-touch rounded-3xl bg-white p-5 text-left shadow-lg ring-1 ring-black/5 transition-transform active:scale-95"
+            className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
           >
             <span className="flex items-center gap-5">
               <span className="text-5xl">{s.icon}</span>
@@ -178,7 +178,7 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
               key={c}
               data-testid="choice"
               onClick={() => pick(c)}
-              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-6 text-3xl font-bold text-slate-700 shadow-md transition-transform active:scale-95"
+              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-6 text-3xl font-bold text-slate-700 transition-transform active:scale-95"
             >
               {c}
             </button>

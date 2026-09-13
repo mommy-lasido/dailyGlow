@@ -194,7 +194,7 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
               data-testid="choice"
               data-text={o.text}
               onClick={() => pick(o.text)}
-              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-8 text-3xl font-bold text-slate-700 shadow-md transition-transform active:scale-95"
+              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-8 text-3xl font-bold text-slate-700 transition-transform active:scale-95"
             >
               {o.text}
             </button>

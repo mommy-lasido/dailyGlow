@@ -119,7 +119,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
           <button
             key={m.mode}
             onClick={() => begin(m.mode)}
-            className="min-h-touch rounded-3xl bg-white p-5 text-left shadow-lg ring-1 ring-black/5 transition-transform active:scale-95"
+            className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
           >
             <span className="flex items-center gap-5">
               <span className="text-5xl font-bold text-glow-500">{m.icon}</span>
@@ -348,7 +348,7 @@ function JamoQuestion({
           type="button"
           onClick={() => speak(sound)}
           aria-label="다시 듣기"
-          className="min-h-touch rounded-full bg-glow-100 px-8 py-4 text-5xl shadow-md transition-transform active:scale-95"
+          className="min-h-touch rounded-full bg-glow-100 px-8 py-4 text-5xl transition-transform active:scale-95"
         >
           🔊
         </button>
@@ -372,7 +372,7 @@ function JamoQuestion({
               data-letter={c.letter}
               onClick={() => onPick(c.letter)}
               aria-label={c.letter}
-              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-6 py-4 text-5xl font-bold text-slate-700 shadow-md transition-transform active:scale-95"
+              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-6 py-4 text-5xl font-bold text-slate-700 transition-transform active:scale-95"
             >
               {c.letter}
             </button>

@@ -217,7 +217,7 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
               data-word={c.word}
               onClick={() => pick(c.word)}
               aria-label={c.word}
-              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 shadow-md transition-transform active:scale-95"
+              className="min-h-touch min-w-touch rounded-3xl bg-glow-100 px-5 py-3 transition-transform active:scale-95"
             >
               {problem.direction === 'toWord' ? (
                 <span className="text-3xl font-bold text-slate-700">{c.word}</span>
