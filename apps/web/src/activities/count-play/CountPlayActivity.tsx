@@ -14,6 +14,7 @@ import {
   type QuizState,
 } from '@/activities/quiz-flow';
 import {
+  countAloud,
   COUNT_SETTINGS,
   countHint,
   countQuestion,
@@ -65,6 +66,11 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     if (!quiz) return;
     const index = currentIndex(quiz);
     if (index === null) return;
+
+    // 고른 수를 소리 내어 말해준다 — "세 개".
+    // 만 세 살은 숫자 모양과 수량이 아직 이어지지 않아, 점을 보지 않고 그냥 찍는다.
+    // 누를 때마다 그 수의 이름을 들으면 3 과 '세 개' 가 같은 것이라는 것이 붙는다.
+    speak(countAloud(value, problems[index]!.object.unit));
 
     const isCorrect = value === problems[index]!.answer;
     // 3차에서 틀리면 같은 문제에 머문다 — 흐름은 submit 이 알아서 처리한다.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  countAloud,
   COUNT_OBJECTS,
   COUNT_SETTINGS,
   countHint,
@@ -147,5 +148,20 @@ describe('countHint', () => {
   it('그 물건을 세는 말로 세어준다', () => {
     expect(countHint({ icon: '🐟', name: '물고기', unit: '마리' })).toContain('한 마리, 두 마리');
     expect(countHint({ icon: '🍎', name: '사과', unit: '개' })).toContain('한 개, 두 개');
+  });
+});
+
+describe('countAloud', () => {
+  it('단위 앞에서는 "한 개, 두 개, 세 개" 로 읽는다', () => {
+    // "하나 개" 는 아이가 집에서 듣는 말이 아니다.
+    expect(countAloud(1, '개')).toBe('한 개');
+    expect(countAloud(2, '개')).toBe('두 개');
+    expect(countAloud(3, '개')).toBe('세 개');
+    expect(countAloud(4, '마리')).toBe('네 마리');
+  });
+
+  it('다섯부터는 수사 그대로다', () => {
+    expect(countAloud(5, '마리')).toBe('다섯 마리');
+    expect(countAloud(10, '개')).toBe('열 개');
   });
 });

@@ -72,6 +72,20 @@ export function subjectParticle(word: string): string {
   return (code - 0xac00) % 28 === 0 ? '가' : '이';
 }
 
+/**
+ * 단위 앞에 붙는 우리말 수사. 하나→**한** 개, 둘→**두** 개, 셋→**세** 개.
+ *
+ * "하나 개" 라고 읽으면 아이가 처음 듣는 말이 되어 버린다. 세는 말은 수사와
+ * 짝이 정해져 있고, 아이가 집에서 듣는 것도 "세 개" 지 "셋 개" 가 아니다.
+ */
+const COUNT_PREFIX = ['한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열'] as const;
+
+/** "세 개" / "다섯 마리" — 고른 숫자를 소리 내어 확인해준다. */
+export function countAloud(value: number, unit: string): string {
+  const prefix = COUNT_PREFIX[value - 1] ?? String(value);
+  return `${prefix} ${unit}`;
+}
+
 /** "사과가 몇 개일까?" / "물고기가 몇 마리일까?" */
 export function countQuestion(object: CountObject): string {
   return `${object.name}${subjectParticle(object.name)} 몇 ${object.unit}일까?`;
