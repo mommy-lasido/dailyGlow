@@ -102,6 +102,21 @@ export function selectActivities(
     }));
 }
 
+/**
+ * 초를 분으로. **한 일이 있으면 0분이 되지 않는다.**
+ *
+ * 그냥 버림하면 20초 걸린 활동이 "0분" 이 된다. 아이는 분명히 앉아서 풀었는데
+ * 화면에는 아무 일도 없었던 것처럼 나오고, 출석 도장도 안 찍힌다. 실제로 시윤이가
+ * 문장 읽기를 마쳤는데 그렇게 됐다.
+ *
+ * 그래서 한 일이 있으면 적어도 1분으로 센다. 조금 넉넉하게 세는 셈이지만,
+ * 한 것을 안 한 것으로 만드는 쪽보다 낫다.
+ */
+export function toMinutes(seconds: number): number {
+  if (seconds <= 0) return 0;
+  return Math.max(1, Math.round(seconds / 60));
+}
+
 /** 오늘 공부한 시간(분). 세션 요약을 합산한다. */
 export async function fetchTodayMinutes(profileId: string): Promise<number> {
   const start = new Date();
@@ -114,8 +129,7 @@ export async function fetchTodayMinutes(profileId: string): Promise<number> {
     .gte('created_at', start.toISOString());
 
   if (error || !data) return 0;
-  const totalSec = data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0);
-  return Math.floor(totalSec / 60);
+  return toMinutes(data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0));
 }
 
 /** 한 주는 월요일에 시작한다 — 아이들이 학교·어린이집에서 쓰는 주와 같다. */
@@ -175,7 +189,7 @@ export function toWeek(
       key,
       label,
       date: `${d.getMonth() + 1}/${d.getDate()}`,
-      minutes: Math.floor((minutes.get(key) ?? 0) / 60),
+      minutes: toMinutes(minutes.get(key) ?? 0),
       isToday: key === todayKey,
       isFuture: key > todayKey,
     };
@@ -207,7 +221,7 @@ export async function fetchTotalMinutes(profileId: string): Promise<number> {
     .eq('profile_id', profileId);
 
   if (error || !data) return 0;
-  return Math.floor(data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0) / 60);
+  return toMinutes(data.reduce((sum, r) => sum + (r.duration_sec ?? 0), 0));
 }
 
 /**

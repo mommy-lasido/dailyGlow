@@ -4,6 +4,7 @@ import {
   activityIconId,
   selectActivities,
   streakOf,
+  toMinutes,
   type LessonGateRow,
   weekComplete,
 } from './activities';
@@ -181,5 +182,25 @@ describe('weekComplete', () => {
 
   it('한 날이라도 빠지면 거짓이다', () => {
     expect(weekComplete(fullWeek([true, true, false, true, true, true, true], 6))).toBe(false);
+  });
+});
+
+describe('toMinutes', () => {
+  it('한 일이 있으면 0분이 되지 않는다', () => {
+    // 20초 걸린 활동이 "0분" 이 되면 아이가 한 것이 안 한 것이 된다.
+    expect(toMinutes(20)).toBe(1);
+    expect(toMinutes(1)).toBe(1);
+    expect(toMinutes(59)).toBe(1);
+  });
+
+  it('아무것도 안 했으면 0분이다', () => {
+    expect(toMinutes(0)).toBe(0);
+    expect(toMinutes(-5)).toBe(0);
+  });
+
+  it('가까운 분으로 센다', () => {
+    expect(toMinutes(90)).toBe(2);
+    expect(toMinutes(100)).toBe(2);
+    expect(toMinutes(600)).toBe(10);
   });
 });

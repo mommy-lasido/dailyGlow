@@ -257,7 +257,7 @@ function WeekStamps({ week }: { week: WeekDay[] }) {
                   : d.isFuture
                     ? 'bg-glow-50/60'
                     : 'bg-white ring-2 ring-slate-100'
-              } ${d.isToday ? 'ring-4 ring-glow-500' : ''}`}
+              } ${d.isToday ? 'ring-1 ring-glow-500' : ''}`}
             >
               <span
                 data-testid="stamp-date"
