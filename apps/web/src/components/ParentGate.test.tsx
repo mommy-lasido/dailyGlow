@@ -18,9 +18,10 @@ function memoryStorage(): Storage {
 }
 
 beforeEach(() => {
-  for (const name of ['localStorage', 'sessionStorage']) {
-    Object.defineProperty(window, name, { value: memoryStorage(), configurable: true });
-  }
+  Object.defineProperty(window, 'localStorage', {
+    value: memoryStorage(),
+    configurable: true,
+  });
 });
 
 function renderGate() {
@@ -95,5 +96,20 @@ describe('ParentGate', () => {
     fireEvent.change(screen.getByTestId('pin-input'), { target: { value: '2468' } });
     fireEvent.click(screen.getByRole('button', { name: '들어가기' }));
     expect(screen.getByText('설정 내용')).toBeInTheDocument();
+  });
+
+  it('설정을 나갔다 들어오면 다시 묻는다', () => {
+    // 한 번 풀면 창을 닫을 때까지 묻지 않게 했더니, 태블릿은 앱을 며칠씩 닫지
+    // 않아 아이가 그냥 들어갈 수 있었다.
+    const first = renderGate();
+    fireEvent.change(screen.getByTestId('pin-first'), { target: { value: '2468' } });
+    fireEvent.change(screen.getByTestId('pin-again'), { target: { value: '2468' } });
+    fireEvent.click(screen.getByText('정하기'));
+    expect(screen.getByText('설정 내용')).toBeInTheDocument();
+
+    first.unmount();
+    renderGate();
+    expect(screen.getByText('부모님만 들어갈 수 있어요')).toBeInTheDocument();
+    expect(screen.queryByText('설정 내용')).not.toBeInTheDocument();
   });
 });

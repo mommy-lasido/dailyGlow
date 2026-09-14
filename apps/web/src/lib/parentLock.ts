@@ -12,12 +12,13 @@
  * 하고, 아이 계정마다 따로 두면 세 번 정해야 한다. 기기 하나에 하나면 태블릿을
  * 누가 쓰든 같은 비밀번호로 막힌다.
  *
- * 한 번 풀면 그 창을 닫을 때까지는 다시 묻지 않는다(sessionStorage). 설정을
- * 고치다가 다른 데 갔다 올 때마다 네 자리를 다시 치게 할 이유가 없다.
+ * **설정에 들어갈 때마다 묻는다.** 처음에는 한 번 풀면 그 창을 닫을 때까지 묻지
+ * 않게 했는데, 태블릿은 앱을 며칠씩 닫지 않는다. 그러면 아이가 그냥 들어갈 수
+ * 있어 잠금이 하는 일이 없어진다. 부모가 설정에 드나드는 일은 드물고, 네 자리를
+ * 치는 것은 잠깐이다.
  */
 
 const PIN_KEY = 'dailyglow.parentPin';
-const UNLOCKED_KEY = 'dailyglow.parentUnlocked';
 
 /** 비밀번호는 네 자리 숫자다. */
 export const PIN_LENGTH = 4;
@@ -41,7 +42,6 @@ export function setPin(pin: string): boolean {
   if (!isValidPin(pin)) return false;
   try {
     window.localStorage.setItem(PIN_KEY, pin);
-    unlock();
     return true;
   } catch {
     return false;
@@ -51,11 +51,7 @@ export function setPin(pin: string): boolean {
 export function checkPin(pin: string): boolean {
   try {
     const saved = window.localStorage.getItem(PIN_KEY);
-    if (saved && saved === pin) {
-      unlock();
-      return true;
-    }
-    return false;
+    return Boolean(saved) && saved === pin;
   } catch {
     return false;
   }
@@ -65,25 +61,7 @@ export function checkPin(pin: string): boolean {
 export function clearPin(): void {
   try {
     window.localStorage.removeItem(PIN_KEY);
-    window.sessionStorage.removeItem(UNLOCKED_KEY);
   } catch {
     // 지우지 못해도 화면은 그대로 돌아간다.
-  }
-}
-
-function unlock(): void {
-  try {
-    window.sessionStorage.setItem(UNLOCKED_KEY, '1');
-  } catch {
-    // 기억해 두지 못하면 설정에 들어갈 때마다 다시 물을 뿐이다.
-  }
-}
-
-/** 이 창에서 이미 풀었는가. */
-export function isUnlocked(): boolean {
-  try {
-    return window.sessionStorage.getItem(UNLOCKED_KEY) === '1';
-  } catch {
-    return false;
   }
 }

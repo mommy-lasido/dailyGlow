@@ -3,7 +3,6 @@ import {
   checkPin,
   clearPin,
   hasPin,
-  isUnlocked,
   isValidPin,
   setPin,
 } from './parentLock';
@@ -27,10 +26,6 @@ function memoryStorage(): Storage {
 
 beforeEach(() => {
   Object.defineProperty(window, 'localStorage', {
-    value: memoryStorage(),
-    configurable: true,
-  });
-  Object.defineProperty(window, 'sessionStorage', {
     value: memoryStorage(),
     configurable: true,
   });
@@ -61,18 +56,13 @@ describe('setPin · checkPin', () => {
     expect(hasPin()).toBe(false);
   });
 
-  it('정하고 나면 바로 풀린 것으로 친다', () => {
-    // 방금 정한 사람에게 곧바로 다시 물을 까닭이 없다.
+  it('맞게 쳤다고 해서 어딘가에 풀린 표시를 남기지 않는다', () => {
+    // 풀린 것은 그 화면이 떠 있는 동안에만이다. 저장해 두면 태블릿을 며칠씩
+    // 켜 두는 집에서 아이가 그냥 들어가게 된다.
     setPin('2468');
-    expect(isUnlocked()).toBe(true);
-  });
-
-  it('한 번 풀면 그 창에서는 다시 묻지 않는다', () => {
-    setPin('2468');
-    window.sessionStorage.clear();
-    expect(isUnlocked()).toBe(false);
-    checkPin('2468');
-    expect(isUnlocked()).toBe(true);
+    const before = window.localStorage.length;
+    expect(checkPin('2468')).toBe(true);
+    expect(window.localStorage.length).toBe(before);
   });
 
   it('지우면 처음으로 돌아간다', () => {
@@ -80,6 +70,5 @@ describe('setPin · checkPin', () => {
     setPin('2468');
     clearPin();
     expect(hasPin()).toBe(false);
-    expect(isUnlocked()).toBe(false);
   });
 });

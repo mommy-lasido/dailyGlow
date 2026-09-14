@@ -16,9 +16,8 @@ import { flushAttemptQueue, flushSessionQueue } from '@/lib/sync';
 function HomeLink() {
   const { pathname } = useLocation();
   // 홈·로그인·처음 설정에는 돌아갈 곳이 없거나 돌아가면 안 된다.
-  // 설정은 부모님 비밀번호로 막혀 있고, 그 화면 안에 이미 "← 홈으로" 가 있다.
-  // 껍데기까지 홈 단추를 얹으면 한 화면에 둘이 된다.
-  const hidden = ['/', '/login', '/onboarding', '/settings'];
+  // 설정에는 (비밀번호를 묻는 화면에도, 들어간 뒤에도) 이 단추 하나만 나온다.
+  const hidden = ['/', '/login', '/onboarding'];
   if (hidden.includes(pathname)) return null;
 
   return (

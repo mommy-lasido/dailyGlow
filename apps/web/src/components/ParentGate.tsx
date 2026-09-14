@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Card } from '@dailyglow/ui';
-import { checkPin, hasPin, isUnlocked, isValidPin, PIN_LENGTH, setPin } from '@/lib/parentLock';
+import { checkPin, hasPin, isValidPin, PIN_LENGTH, setPin } from '@/lib/parentLock';
 
 /**
  * 설정 앞을 막는 문.
@@ -10,10 +9,16 @@ import { checkPin, hasPin, isUnlocked, isValidPin, PIN_LENGTH, setPin } from '@/
  * 달라진다. 라윤이가 자꾸 열어 이것저것 바꾸어 놓는다고 영숙님이 알려주었다.
  *
  * 비밀번호가 아직 없으면 **정하는 화면**을, 있으면 **묻는 화면**을 보여준다.
- * 한 번 풀면 그 창을 닫을 때까지 다시 묻지 않는다.
+ *
+ * **설정에 들어올 때마다 묻는다.** 한 번 풀면 창을 닫을 때까지 묻지 않게 했더니,
+ * 태블릿은 앱을 며칠씩 닫지 않아 잠금이 하는 일이 없었다. 풀린 것은 이 화면이
+ * 떠 있는 동안에만이고, 홈에 갔다 돌아오면 다시 묻는다.
+ *
+ * 비밀번호를 막 정한 사람에게는 곧바로 다시 묻지 않는다 — 방금 정한 사람이
+ * 부모라는 것은 이미 드러났다.
  */
 export function ParentGate({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(() => isUnlocked());
+  const [open, setOpen] = useState(false);
   const [making] = useState(() => !hasPin());
 
   if (open) return <>{children}</>;
@@ -138,9 +143,6 @@ function MakePin({ onDone }: { onDone: () => void }) {
       <Button size="lg" onClick={save}>
         정하기
       </Button>
-      <Link to="/">
-        <Button variant="ghost">← 홈으로</Button>
-      </Link>
     </Card>
   );
 }
@@ -178,9 +180,6 @@ function AskPin({ onDone }: { onDone: () => void }) {
       <Button size="lg" onClick={submit}>
         들어가기
       </Button>
-      <Link to="/">
-        <Button variant="ghost">← 홈으로</Button>
-      </Link>
     </Card>
   );
 }
