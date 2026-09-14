@@ -26,16 +26,65 @@ function onlyDigits(text: string): string {
 }
 
 /**
- * 네 자리가 다 보여야 한다.
+ * 비밀번호 칸 — **네 자리를 네 칸으로 나눠 보여준다.**
  *
- * 글자 사이를 띄우면(`tracking`) **마지막 글자 뒤에도 그만큼 띄개가 붙는다.**
- * 가운데 맞춤은 그 띄개까지 글자로 치므로 전체가 왼쪽으로 밀리고, 칸이 좁으면
- * 네 번째 점이 밖으로 밀려 나간다. 영숙님이 점 세 개만 찍힌다고 알려주었다.
+ * 한 칸에 글자 사이만 띄워 두었더니 마지막 점이 칸 밖으로 밀려 나가, 네 자리를
+ * 쳤는데 점이 셋만 보였다. 칸을 넓혀도 글꼴이나 화면 크기가 바뀌면 또 어긋난다.
  *
- * 칸을 넉넉히 넓히고, 밀린 만큼(`indent`) 되돌려 가운데로 맞춘다.
+ * 칸을 아예 나누면 어긋날 자리가 없다. **몇 자리를 쳤는지 눈으로 셀 수 있고**,
+ * 네 자리를 다 채웠는지도 한눈에 보인다.
+ *
+ * 글자를 받는 것은 눈에 보이지 않는 칸 하나가 맡는다. 칸을 넷으로 나눠 각각
+ * 입력을 받으면 지우고 옮겨 다니는 일을 일일이 다뤄야 하는데, 그럴 까닭이 없다.
  */
-const INPUT_CLASS =
-  'w-52 rounded-2xl border-2 border-glow-300 bg-white px-4 py-3 text-center text-3xl tracking-[0.4em] indent-[0.4em] text-slate-700 outline-none focus:border-glow-500';
+function PinField({
+  id,
+  label,
+  value,
+  onChange,
+  onEnter,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  onEnter?: () => void;
+}) {
+  return (
+    <label className="flex flex-col items-center gap-1">
+      <span className="text-sm font-bold text-slate-500">{label}</span>
+
+      <span className="relative inline-block">
+        <input
+          data-testid={id}
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={PIN_LENGTH}
+          value={value}
+          onChange={(e) => onChange(onlyDigits(e.target.value))}
+          onKeyDown={(e) => e.key === 'Enter' && onEnter?.()}
+          // 글자는 이 칸이 받되 눈에는 보이지 않는다. 보이는 것은 아래 네 칸이다.
+          className="absolute inset-0 h-full w-full cursor-pointer rounded-2xl text-transparent caret-transparent opacity-0"
+        />
+        <span aria-hidden className="pointer-events-none flex gap-2">
+          {Array.from({ length: PIN_LENGTH }).map((_, i) => (
+            <span
+              key={i}
+              data-testid={`${id}-cell`}
+              data-filled={i < value.length ? 'yes' : undefined}
+              className={`flex h-14 w-12 items-center justify-center rounded-2xl border-2 text-3xl text-slate-700 ${
+                i < value.length ? 'border-glow-500 bg-white' : 'border-glow-300 bg-glow-50'
+              }`}
+            >
+              {i < value.length ? '●' : ''}
+            </span>
+          ))}
+        </span>
+      </span>
+    </label>
+  );
+}
 
 function MakePin({ onDone }: { onDone: () => void }) {
   const [first, setFirst] = useState('');
@@ -59,40 +108,28 @@ function MakePin({ onDone }: { onDone: () => void }) {
         잘못 눌러 엉뚱한 번호가 정해지지 않게 두 번 적습니다.
       </p>
 
-      {/* 칸마다 이름을 붙여 둔다. 자리표시 글씨로 알리면 글자 사이가 넓어
-          잘려 보이고, 치기 시작하면 사라져 무슨 칸인지 알 수 없게 된다. */}
-      <label className="flex flex-col items-center gap-1">
-        <span className="text-sm font-bold text-slate-500">비밀번호</span>
-        <input
-          data-testid="pin-first"
-          type="password"
-          inputMode="numeric"
-          autoComplete="new-password"
-          value={first}
-          onChange={(e) => {
-            setFirst(onlyDigits(e.target.value));
-            setError('');
-          }}
-          className={INPUT_CLASS}
-        />
-      </label>
+      {/* 칸마다 이름을 붙여 둔다. 자리표시 글씨로 알리면 치기 시작할 때 사라져
+          무슨 칸인지 알 수 없게 된다. */}
+      <PinField
+        id="pin-first"
+        label="비밀번호"
+        value={first}
+        onChange={(v) => {
+          setFirst(v);
+          setError('');
+        }}
+      />
 
-      <label className="flex flex-col items-center gap-1">
-        <span className="text-sm font-bold text-slate-500">비밀번호 확인</span>
-        <input
-          data-testid="pin-again"
-          type="password"
-          inputMode="numeric"
-          autoComplete="new-password"
-          value={again}
-          onChange={(e) => {
-            setAgain(onlyDigits(e.target.value));
-            setError('');
-          }}
-          onKeyDown={(e) => e.key === 'Enter' && save()}
-          className={INPUT_CLASS}
-        />
-      </label>
+      <PinField
+        id="pin-again"
+        label="비밀번호 확인"
+        value={again}
+        onChange={(v) => {
+          setAgain(v);
+          setError('');
+        }}
+        onEnter={save}
+      />
 
       <p data-testid="pin-error" className="min-h-[1.5rem] font-bold text-rose-500">
         {error}
@@ -123,19 +160,15 @@ function AskPin({ onDone }: { onDone: () => void }) {
       <span className="text-5xl">🔒</span>
       <h1 className="text-2xl font-bold text-glow-600">부모님만 들어갈 수 있어요</h1>
 
-      <input
-        data-testid="pin-input"
-        type="password"
-        inputMode="numeric"
-        autoComplete="current-password"
-        aria-label="비밀번호"
+      <PinField
+        id="pin-input"
+        label="비밀번호"
         value={pin}
-        onChange={(e) => {
-          setValue(onlyDigits(e.target.value));
+        onChange={(v) => {
+          setValue(v);
           setError('');
         }}
-        onKeyDown={(e) => e.key === 'Enter' && submit()}
-        className={INPUT_CLASS}
+        onEnter={submit}
       />
 
       <p data-testid="pin-error" className="min-h-[1.5rem] font-bold text-rose-500">
