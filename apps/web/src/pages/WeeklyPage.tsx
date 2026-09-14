@@ -7,8 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
 import { queueSession } from '@/lib/sync';
-import { LetterGlyph, StrokeOrder } from '@/components/StrokeGuide';
-import { hasStrokes } from '@/lib/strokes';
 import {
   spotProblems,
   stepForDay,
@@ -116,27 +114,12 @@ function MeetStep({
           🔊
         </button>
 
-        {/* 왼쪽은 익혀야 할 글자 모양 그대로, 오른쪽은 쓰는 법.
-            어디서 시작해 어디로 긋는지를 알려주지 않으면 모양만 베끼게 된다. */}
-        {hasStrokes(letter) ? (
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center justify-center gap-5">
-              <LetterGlyph letter={letter} className="h-40 w-40" />
-              <div className="flex flex-col items-center gap-1">
-                <p className="font-bold text-glow-700">이렇게 써요</p>
-                <StrokeOrder letter={letter} className="h-40 w-40" />
-              </div>
-            </div>
-            <p className="text-sm text-slate-400">번호 차례대로, 화살표 쪽으로 그어요</p>
-          </div>
-        ) : (
-          <span
-            data-testid="weekly-big-letter"
-            className="rounded-3xl bg-glow-50 px-12 py-6 text-[8rem] font-bold leading-none text-slate-700"
-          >
-            {letter}
-          </span>
-        )}
+        <span
+          data-testid="weekly-big-letter"
+          className="rounded-3xl bg-glow-50 px-12 py-6 text-[8rem] font-bold leading-none text-slate-700"
+        >
+          {letter}
+        </span>
 
         {words.length > 0 ? (
           <div className="flex w-full flex-col items-center gap-1 border-t border-glow-100 pt-4">

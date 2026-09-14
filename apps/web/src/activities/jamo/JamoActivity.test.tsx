@@ -147,7 +147,12 @@ describe('JamoActivity — 배우기', () => {
     renderActivity(2);
     chooseSyllables();
     expect(screen.getByTestId('letter')).toHaveTextContent('가');
-    expect(screen.getByText(/기본 자음/)).toBeInTheDocument();
+  });
+
+  it('아이 화면에는 단계 번호를 적지 않는다', () => {
+    // 아이가 자기가 몇 단계인지 알 까닭이 없고, 알면 남과 견주는 숫자가 될 뿐이다.
+    renderActivity(7);
+    expect(screen.queryByText(/단계/)).not.toBeInTheDocument();
   });
 
   it('글자를 누르면 소리를 들려준다', () => {

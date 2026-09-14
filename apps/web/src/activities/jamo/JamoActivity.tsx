@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
-import { hangulStage } from '@dailyglow/utils';
 import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
-import { StrokeGuide } from '@/components/StrokeGuide';
-import { hasStrokes } from '@/lib/strokes';
 import {
   createQuiz,
   currentIndex,
@@ -48,7 +45,6 @@ const ROUND_TITLE: Record<number, string> = {
 export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   // 아이가 배운 데까지. 14단계를 넘긴 아이는 자음·모음을 이미 다 뗐으므로 거기서 멈춘다.
   const stage = Math.min(Math.max(lesson.childLevel, 1), JAMO_MAX_STAGE);
-  const stageLabel = hangulStage(stage)?.label ?? '자음과 모음';
   const leads = learnedLeads(stage);
 
   const [mode, setMode] = useState<JamoMode | null>(null);
@@ -83,13 +79,12 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
     if (chosen === 'consonant') return show(consonantsForStage(stage), '자음 배우기');
     if (chosen === 'vowel') return show(BASIC_VOWELS, '모음 배우기');
     // 배운 자음이 하나뿐이면 고를 것이 없다 — 바로 그 글자들을 연다.
-    if (leads.length <= 1) return show(lettersForStage(stage), `${stage}단계 · ${stageLabel}`);
+    if (leads.length <= 1) return show(lettersForStage(stage), '글자 배우기');
     setPickingLead(true);
   }
 
   // ── 무엇을 배울지 고르기 ───────────────────────────────
   if (mode === null) {
-    const consonantCount = consonantsForStage(stage).length;
     // 칸 밑에 글자를 늘어놓지 않는다. 들어가면 어차피 하나씩 보게 되고,
     // 늘어놓은 글씨가 작아 아이에게는 읽히지도 않는다. 큰 글자와 이름이면 된다.
     const menu = [
@@ -104,10 +99,9 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
 
     return (
       <div className="flex flex-col gap-4">
+        {/* 단계 번호는 적지 않는다. 아이가 자기가 몇 단계인지 알 까닭이 없고,
+            알면 남과 견주는 숫자가 될 뿐이다. 단계는 설정에서 부모가 본다. */}
         <h1 className="text-center text-4xl font-bold text-glow-600">뭘 배워볼까?</h1>
-        <p className="text-center text-slate-500">
-          {stage}단계 · 자음 {consonantCount}개
-        </p>
         {menu.map((m) => (
           <button
             key={m.mode}
@@ -246,15 +240,6 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
               🔊{item.sound === item.letter ? '' : ` ${item.sound}`}
             </span>
           </button>
-
-          {/* 자음·모음을 배우는 자리에서는 쓰는 순서를 함께 보여준다.
-              글자 모양만 보고 베끼면 획이 뒤집히는 버릇이 든다. */}
-          {hasStrokes(item.letter) ? (
-            <div className="flex flex-col items-center gap-1">
-              <StrokeGuide letter={item.letter} size="md" />
-              <p className="text-sm text-slate-400">번호 차례대로, 화살표 쪽으로 그어요</p>
-            </div>
-          ) : null}
 
           <p className="text-slate-500">글자를 누르면 소리가 나요</p>
 

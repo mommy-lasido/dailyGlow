@@ -313,10 +313,9 @@ function WeeklyCard({ week, isPreReader }: { week: WeeklyFocus; isPreReader: boo
 
   return (
     <Card className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-xl font-bold text-glow-600">이번 주에 배울 글자</span>
-        <span className="text-sm text-slate-400">{week.stage}단계</span>
-      </div>
+      {/* 단계 번호는 적지 않는다. 아이가 자기가 몇 단계인지 알 까닭이 없고,
+          알면 남과 견주는 숫자가 될 뿐이다. 단계는 설정에서 부모가 본다. */}
+      <span className="text-xl font-bold text-glow-600">이번 주에 배울 글자</span>
 
       <Link to="/weekly" className="flex items-center gap-5">
         <span
