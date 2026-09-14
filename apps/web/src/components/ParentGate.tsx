@@ -53,7 +53,7 @@ function MakePin({ onDone }: { onDone: () => void }) {
       {/* 칸마다 이름을 붙여 둔다. 자리표시 글씨로 알리면 글자 사이가 넓어
           잘려 보이고, 치기 시작하면 사라져 무슨 칸인지 알 수 없게 된다. */}
       <label className="flex flex-col items-center gap-1">
-        <span className="text-sm font-bold text-slate-500">정할 비밀번호</span>
+        <span className="text-sm font-bold text-slate-500">비밀번호</span>
         <input
           data-testid="pin-first"
           type="password"
@@ -69,7 +69,7 @@ function MakePin({ onDone }: { onDone: () => void }) {
       </label>
 
       <label className="flex flex-col items-center gap-1">
-        <span className="text-sm font-bold text-slate-500">한 번 더</span>
+        <span className="text-sm font-bold text-slate-500">비밀번호 확인</span>
         <input
           data-testid="pin-again"
           type="password"
