@@ -79,13 +79,33 @@ describe('WorksheetActivity — 연습지', () => {
     expect(boxes / WRITES_PER_ROW).toBeGreaterThanOrEqual(1);
   });
 
-  it('첫 칸만 본보기를 흐리게 보여준다', () => {
+  it('14단계까지는 두 칸을 따라 쓰고 나머지 셋은 스스로 쓴다', () => {
+    // 글자 모양을 익히는 중에는 한 번 덧그려서는 손에 남지 않는다.
     renderActivity(5);
     choose('vowel');
     const row = screen.getAllByTestId('sheet-row')[0]!;
-    const boxes = [...row.querySelectorAll('[data-testid="box"] > span')];
-    expect(boxes[0]!.className).toContain('text-glow-300');
-    for (const b of boxes.slice(1)) expect(b.className).toContain('text-transparent');
+    const boxes = [...row.querySelectorAll('[data-testid="box"]')];
+    expect(boxes.filter((b) => b.getAttribute('data-trace') === 'yes')).toHaveLength(2);
+    const marks = [...row.querySelectorAll('[data-testid="box"] > span')];
+    expect(marks[0]!.className).toContain('text-trace');
+    expect(marks[1]!.className).toContain('text-trace');
+    for (const b of marks.slice(2)) expect(b.className).toContain('text-transparent');
+  });
+
+  it('자음·모음을 다 뗀 뒤에는 한 칸만 본보기로 둔다', () => {
+    renderActivity(20);
+    choose('vowel');
+    const row = screen.getAllByTestId('sheet-row')[0]!;
+    const boxes = [...row.querySelectorAll('[data-testid="box"]')];
+    expect(boxes.filter((b) => b.getAttribute('data-trace') === 'yes')).toHaveLength(1);
+  });
+
+  it('한 글자짜리는 다섯 칸이 늘 한 줄에 들어간다', () => {
+    // 화면이 좁을 때 넷+하나로 갈라지면 "네 칸" 처럼 보인다.
+    renderActivity(5);
+    choose('consonant');
+    const row = screen.getAllByTestId('sheet-row')[0]!;
+    expect(row.querySelector('.grid')?.className).toContain('grid-cols-5');
   });
 
   it('문장은 칸이 아니라 줄에 쓴다', () => {

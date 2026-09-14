@@ -10,7 +10,12 @@
  * 그대로 쓰므로, 읽을 수 있는 것만 쓰게 된다.
  */
 
-import { BASIC_VOWELS, consonantsForStage, lettersForStage } from '@/activities/jamo/generate';
+import {
+  BASIC_VOWELS,
+  consonantsForStage,
+  JAMO_MAX_STAGE,
+  lettersForStage,
+} from '@/activities/jamo/generate';
 import { poolForStage as wordsForStage } from '@/activities/words/generate';
 import { poolForStage as sentencesForStage } from '@/activities/sentences/generate';
 
@@ -70,6 +75,19 @@ export function layoutFor(kind: SheetKind): SheetLayout {
   if (kind === 'word')
     return { writes: WRITES_PER_ROW, rows: 5, ruled: false, blankLines: 0 };
   return { writes: WRITES_PER_ROW, rows: ROWS_PER_SHEET, ruled: false, blankLines: 0 };
+}
+
+/**
+ * 앞에서 몇 칸을 따라 쓰게 할지.
+ *
+ * **14단계까지는 두 칸을 따라 쓴다.** 아직 글자 모양을 익히는 중이라 한 번
+ * 덧그려서는 손에 남지 않는다. 두 번 덧그리고 나머지 세 번을 스스로 쓰면,
+ * 보고 베끼는 것에서 기억해서 쓰는 것으로 넘어가는 걸음이 한 줄 안에 들어간다.
+ *
+ * 자음·모음을 다 뗀 뒤(15단계부터)는 한 칸만 본보기로 두고 네 번을 스스로 쓴다.
+ */
+export function traceFor(stage: number): number {
+  return stage <= JAMO_MAX_STAGE ? 2 : 1;
 }
 
 export interface SheetRow {

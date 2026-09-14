@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ROWS_PER_SHEET,
+  WRITES_PER_ROW,
   layoutFor,
   makeSheet,
   optionsForStage,
-  ROWS_PER_SHEET,
   sourceFor,
-  WRITES_PER_ROW,
+  traceFor,
 } from './generate';
 
 describe('optionsForStage', () => {
@@ -125,5 +126,15 @@ describe('makeSheet', () => {
   it('한 줄에 다섯 번 쓴다', () => {
     // 첫 번째는 따라 쓰는 본보기다.
     expect(WRITES_PER_ROW).toBe(5);
+  });
+});
+
+describe('traceFor', () => {
+  it('14단계까지는 두 칸을 따라 쓴다', () => {
+    for (const s of [1, 5, 14]) expect(traceFor(s)).toBe(2);
+  });
+
+  it('자음·모음을 다 뗀 뒤에는 한 칸만 본보기다', () => {
+    for (const s of [15, 21, 35]) expect(traceFor(s)).toBe(1);
   });
 });

@@ -7,6 +7,7 @@ import {
   layoutFor,
   makeSheet,
   optionsForStage,
+  traceFor,
   type SheetKind,
   type SheetRow,
 } from './generate';
@@ -80,7 +81,7 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
         </Button>
       </Card>
 
-      <Sheet rows={rows} kind={kind} onSpeak={(t) => speak(t)} />
+      <Sheet rows={rows} kind={kind} traceCount={traceFor(stage)} onSpeak={(t) => speak(t)} />
 
       <Card className="flex flex-col items-center gap-3 text-center print:hidden">
         {saved ? (
@@ -124,18 +125,20 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
 function Sheet({
   rows,
   kind,
+  traceCount,
   onSpeak,
 }: {
   rows: SheetRow[];
   kind: SheetKind;
+  /** 앞에서 몇 칸을 따라 쓰게 할지 */
+  traceCount: number;
   onSpeak: (text: string) => void;
 }) {
   const layout = layoutFor(kind);
-  // 낱말은 글자가 둘셋이라 다섯 번이면 줄이 길어진다. 칸을 조금 줄여 한 줄에 담는다.
-  const boxSize =
-    kind === 'word'
-      ? 'h-14 w-14 text-3xl print:h-16 print:w-16 print:text-4xl'
-      : 'h-20 w-20 text-5xl print:h-28 print:w-28 print:text-6xl';
+  // 한 글자짜리(자음·모음·글자)는 **다섯 칸이 늘 한 줄에** 들어가야 한다.
+  // 정해진 크기로 두면 화면이 좁을 때 넷+하나로 갈라져 "네 칸" 처럼 보인다.
+  // 다섯 칸이 폭을 고르게 나눠 갖게 하면 태블릿에서도 한 줄을 지킨다.
+  const singleChar = rows.every((r) => [...r.text].length === 1);
 
   return (
     <div data-testid="sheet" className="flex flex-col gap-6 print:gap-10">
@@ -153,7 +156,13 @@ function Sheet({
           {layout.ruled ? (
             <RuledSentence text={row.text} blankLines={layout.blankLines} />
           ) : (
-            <div className="flex flex-wrap gap-3 print:gap-4">
+            <div
+              className={
+                singleChar
+                  ? 'grid grid-cols-5 gap-1'
+                  : 'flex flex-wrap gap-3 print:gap-4'
+              }
+            >
               {Array.from({ length: layout.writes }).map((_, i) => (
                 // 한 벌은 통째로 붙어 있어야 한다 — 낱말이 줄 끝에서 쪼개지면
                 // 아이가 무엇을 쓰는 중인지 놓친다.
@@ -162,10 +171,20 @@ function Sheet({
                     <span
                       key={ci}
                       data-testid="box"
-                      className={`flex items-center justify-center rounded-xl border-2 border-dashed border-glow-300 font-bold ${boxSize}`}
+                      data-trace={i < traceCount ? 'yes' : undefined}
+                      className={`flex items-center justify-center rounded-xl border-2 border-dashed border-glow-300 font-bold ${
+                        singleChar
+                          ? 'trace-box aspect-square w-full overflow-hidden'
+                          : 'h-14 w-14 text-3xl print:h-16 print:w-16 print:text-4xl'
+                      }`}
                     >
-                      {/* 첫 번째만 본보기. 흐리게 보여줘 따라 쓰게 한다. */}
-                      <span className={i === 0 ? 'text-glow-300' : 'text-transparent'}>
+                      {/* 앞의 몇 칸은 따라 쓰는 칸 — 속이 빈 글자를 얹어 그 위를
+                          덧그리게 한다. 나머지는 스스로 쓴다. */}
+                      <span
+                        className={`${singleChar ? 'trace-glyph' : ''} ${
+                          i < traceCount ? 'text-trace' : 'text-transparent'
+                        }`}
+                      >
                         {ch}
                       </span>
                     </span>

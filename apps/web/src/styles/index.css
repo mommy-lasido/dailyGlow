@@ -88,3 +88,37 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-pop { animation: none; }
 }
+
+/*
+  따라 쓰는 글자.
+
+  속을 비우고 테두리만 남긴다 — 시중 교재의 따라쓰기 칸과 같은 모양이다.
+  꽉 찬 흐린 글자는 아이가 그 위에 써도 제 글씨가 묻혀 보이지 않는다.
+*/
+.text-trace {
+  color: transparent;
+  -webkit-text-stroke: 2px #a8d18c;
+}
+
+@media print {
+  /* 종이에서는 조금 더 또렷하게 — 연필 선과 구분되어야 한다. */
+  .text-trace {
+    -webkit-text-stroke: 2.5px #94a3b8;
+  }
+}
+
+/*
+  연습지 칸의 글자 크기.
+
+  칸마다 정해진 글씨 크기를 주면, 화면 폭이나 종이 크기가 바뀔 때 글자가 칸에
+  비해 작아지거나 삐져나간다. 그래서 **칸의 너비를 기준으로** 글씨 크기를 잡는다
+  (`cqw` = 칸 너비의 1%). 어떤 크기에서든 글자가 칸을 꽉 채운다.
+*/
+.trace-box {
+  container-type: inline-size;
+}
+
+.trace-glyph {
+  font-size: 92cqw;
+  line-height: 1;
+}
