@@ -6,18 +6,16 @@ import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
 import {
-  buildDailyPlan,
-  fetchTodayLessons,
   fetchTodayMinutes,
   fetchWeek,
   selectActivities,
   streakOf,
   weekComplete,
   type LessonGateRow,
-  type PlanItem,
   type WeekDay,
 } from '@/lib/activities';
 import { buildSuggestion, fetchRecentSessions } from '@/lib/promotion';
+import { stepForDay, weeklyFocus, type WeeklyFocus } from '@/lib/weekly';
 import { LevelSuggestionCard } from '@/components/LevelSuggestionCard';
 import { ActivityIcon } from '@/components/ActivityIcon';
 
@@ -75,13 +73,6 @@ export function HomePage() {
     queryFn: () => fetchTodayMinutes(profile!.id),
   });
 
-  /** 오늘 이미 마친 활동. 오늘 할 것에 체크를 찍는 데 쓴다. */
-  const { data: doneToday = [] } = useQuery({
-    queryKey: ['today-lessons', profile?.id],
-    enabled: Boolean(profile),
-    queryFn: () => fetchTodayLessons(profile!.id),
-  });
-
   /** 이번 주 출석. 공부한 날에 도장이 찍힌다. */
   const { data: week = [] } = useQuery({
     queryKey: ['week', profile?.id],
@@ -99,7 +90,9 @@ export function HomePage() {
   // DB 타입은 grade 를 string 으로 주므로 도메인 타입으로 좁힌다.
   const grade = (profile?.grade as Grade | null) ?? null;
   const activities = selectActivities(lessons ?? [], grade, levels);
-  const plan = profile ? buildDailyPlan(activities, doneToday, profile.id) : [];
+  // 한글 단계가 가리키는 이번 주의 글자. 한글 과목의 레벨을 그대로 쓴다.
+  const hangulLevel = lessons?.find((l) => l.subject_slug === 'hangul')?.subject_id;
+  const weekly = hangulLevel ? weeklyFocus(levels[hangulLevel]?.level ?? 1) : null;
   const suggestion = buildSuggestion(lessons ?? [], levels, recentSessions, grade);
   const isPreReader = profile?.reading_level === 'pre_reader';
   // 부를 때는 성을 뺀 이름으로. given_name 이 비었거나(빈 문자열 포함) 없는 예전 행은 온전한 이름으로 대신한다.
@@ -149,13 +142,7 @@ export function HomePage() {
         <WeekStamps week={week} />
       </Card>
 
-      {/*
-        오늘 할 것.
-
-        아이가 목록에서 고르게만 두면 매일 같은 것만 하거나 무엇을 할지 몰라
-        헤맨다. 과목마다 하나씩 짚어 주어, 혼자 앉아도 시작할 수 있게 한다.
-      */}
-      {plan.length > 0 ? <DailyPlan plan={plan} isPreReader={isPreReader} /> : null}
+      {weekly ? <WeeklyCard week={weekly} isPreReader={isPreReader} /> : null}
 
       {/* 단계 제안은 활동 목록 위에 둔다. 아래에 두면 카드를 다 지나쳐야 보인다. */}
       {suggestion ? (
@@ -313,52 +300,48 @@ function WeekStamps({ week }: { week: WeekDay[] }) {
 }
 
 /**
- * 오늘 할 것.
+ * 이번 주의 글자.
  *
- * 마친 것은 지우지 않고 체크만 찍는다. 사라지면 무엇을 했는지 알 수 없고,
- * 아이가 "다 했다" 를 눈으로 확인할 자리도 없어진다.
+ * 한 주 내내 같은 글자를 파고든다. 아이가 목록에서 아무거나 골라 풀면 그날그날
+ * 다른 것을 조금씩 건드리고 끝나는데, 교재가 한 주에 글자 하나를 붙잡는 데는
+ * 까닭이 있다 — 같은 글자를 여러 날에 걸쳐 여러 방식으로 만나야 남는다.
+ *
+ * 획순(어떻게 긋는지)은 아직 없다. 영숙님이 옆에서 알려주기로 했다.
  */
-function DailyPlan({ plan, isPreReader }: { plan: PlanItem[]; isPreReader: boolean }) {
-  const left = plan.filter((p) => !p.done).length;
+function WeeklyCard({ week, isPreReader }: { week: WeeklyFocus; isPreReader: boolean }) {
+  const shown = week.words.length > 0 ? week.words.join('  ') : week.examples;
+  const step = stepForDay();
 
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-xl font-bold text-glow-600">오늘 할 것</span>
-        <span data-testid="plan-left" className="text-sm text-slate-500">
-          {left === 0 ? '다 했어요! 🎉' : `${left}개 남았어요`}
-        </span>
+        <span className="text-xl font-bold text-glow-600">이번 주에 배울 글자</span>
+        <span className="text-sm text-slate-400">{week.stage}단계</span>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {plan.map((p) => (
-          <Link key={p.activity.id} to={`/activity/${p.activity.id}`}>
-            <div
-              data-testid="plan-item"
-              data-done={p.done ? 'yes' : undefined}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-2 transition-transform active:scale-[0.99] ${
-                p.done ? 'bg-glow-50' : 'bg-white ring-1 ring-glow-100'
-              }`}
-            >
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg ${
-                  p.done ? 'bg-glow-500 text-white' : 'bg-glow-50 text-glow-300'
-                }`}
-              >
-                {p.done ? '✓' : ''}
-              </span>
-              <ActivityIcon id={p.activity.iconId} className="h-10 w-10 shrink-0" />
-              <span
-                className={`font-bold ${isPreReader ? 'text-2xl' : 'text-xl'} ${
-                  p.done ? 'text-slate-400' : 'text-glow-700'
-                }`}
-              >
-                {p.activity.title}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <Link to="/weekly" className="flex items-center gap-5">
+        <span
+          data-testid="weekly-letter"
+          className="flex shrink-0 items-center justify-center rounded-3xl bg-glow-50 px-6 py-3 text-6xl font-bold text-glow-700"
+        >
+          {week.letters.join(' ')}
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm text-slate-400">오늘은 · {step.name}</p>
+          <p
+            data-testid="weekly-words"
+            className={`font-bold text-slate-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}
+          >
+            {shown}
+          </p>
+        </div>
+      </Link>
+
+      <Link to="/weekly">
+        <Button size="lg" className="w-full">
+          오늘의 {week.letters[0]} 하러 가기 →
+        </Button>
+      </Link>
     </Card>
   );
 }
