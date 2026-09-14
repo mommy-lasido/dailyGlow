@@ -25,8 +25,17 @@ function onlyDigits(text: string): string {
   return text.replace(/[^0-9]/g, '').slice(0, PIN_LENGTH);
 }
 
+/**
+ * 네 자리가 다 보여야 한다.
+ *
+ * 글자 사이를 띄우면(`tracking`) **마지막 글자 뒤에도 그만큼 띄개가 붙는다.**
+ * 가운데 맞춤은 그 띄개까지 글자로 치므로 전체가 왼쪽으로 밀리고, 칸이 좁으면
+ * 네 번째 점이 밖으로 밀려 나간다. 영숙님이 점 세 개만 찍힌다고 알려주었다.
+ *
+ * 칸을 넉넉히 넓히고, 밀린 만큼(`indent`) 되돌려 가운데로 맞춘다.
+ */
 const INPUT_CLASS =
-  'w-40 rounded-2xl border-2 border-glow-300 bg-white px-4 py-3 text-center text-3xl tracking-[0.4em] text-slate-700 outline-none focus:border-glow-500';
+  'w-52 rounded-2xl border-2 border-glow-300 bg-white px-4 py-3 text-center text-3xl tracking-[0.4em] indent-[0.4em] text-slate-700 outline-none focus:border-glow-500';
 
 function MakePin({ onDone }: { onDone: () => void }) {
   const [first, setFirst] = useState('');
