@@ -7,6 +7,8 @@ import type { ActivityProps } from '@/activities/types';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
+import { StrokeGuide } from '@/components/StrokeGuide';
+import { hasStrokes } from '@/lib/strokes';
 import {
   createQuiz,
   currentIndex,
@@ -244,6 +246,15 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
               🔊{item.sound === item.letter ? '' : ` ${item.sound}`}
             </span>
           </button>
+
+          {/* 자음·모음을 배우는 자리에서는 쓰는 순서를 함께 보여준다.
+              글자 모양만 보고 베끼면 획이 뒤집히는 버릇이 든다. */}
+          {hasStrokes(item.letter) ? (
+            <div className="flex flex-col items-center gap-1">
+              <StrokeGuide letter={item.letter} size="md" />
+              <p className="text-sm text-slate-400">번호 차례대로, 화살표 쪽으로 그어요</p>
+            </div>
+          ) : null}
 
           <p className="text-slate-500">글자를 누르면 소리가 나요</p>
 

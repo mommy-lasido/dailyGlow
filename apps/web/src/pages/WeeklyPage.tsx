@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '@/stores/profile';
 import { supabase } from '@/lib/supabase';
 import { queueSession } from '@/lib/sync';
+import { LetterGlyph, StrokeOrder } from '@/components/StrokeGuide';
+import { hasStrokes } from '@/lib/strokes';
 import {
   spotProblems,
   stepForDay,
@@ -104,7 +106,7 @@ function MeetStep({
 
   if (kind === 'meet' || words.length === 0) {
     return (
-      <Card className="flex flex-col items-center gap-5 text-center">
+      <Card className="flex flex-col items-center gap-4 text-center">
         <button
           type="button"
           onClick={() => speak(letter)}
@@ -114,21 +116,35 @@ function MeetStep({
           🔊
         </button>
 
-        <span
-          data-testid="weekly-big-letter"
-          className="rounded-3xl bg-glow-50 px-12 py-6 text-[8rem] font-bold leading-none text-slate-700"
-        >
-          {letter}
-        </span>
-
-        <p className="text-slate-500">{focus.label}</p>
+        {/* 왼쪽은 익혀야 할 글자 모양 그대로, 오른쪽은 쓰는 법.
+            어디서 시작해 어디로 긋는지를 알려주지 않으면 모양만 베끼게 된다. */}
+        {hasStrokes(letter) ? (
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center justify-center gap-5">
+              <LetterGlyph letter={letter} className="h-40 w-40" />
+              <div className="flex flex-col items-center gap-1">
+                <p className="font-bold text-glow-700">이렇게 써요</p>
+                <StrokeOrder letter={letter} className="h-40 w-40" />
+              </div>
+            </div>
+            <p className="text-sm text-slate-400">번호 차례대로, 화살표 쪽으로 그어요</p>
+          </div>
+        ) : (
+          <span
+            data-testid="weekly-big-letter"
+            className="rounded-3xl bg-glow-50 px-12 py-6 text-[8rem] font-bold leading-none text-slate-700"
+          >
+            {letter}
+          </span>
+        )}
 
         {words.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-slate-400">이런 낱말에 들어 있어요</p>
+          <div className="flex w-full flex-col items-center gap-1 border-t border-glow-100 pt-4">
+            <p className="font-bold text-glow-700">이런 낱말에 들어가 있어요</p>
+            <p className="text-sm text-slate-400">낱말을 누르면 읽어줘요</p>
             {/* 낱말마다 스피커를 따로 달지 않는다 — 낱말 자체가 단추다.
                 여기는 글자를 처음 만나는 자리라 소리가 곧 배울 내용이다. */}
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
               {words.map((w) => (
                 <button
                   key={w}
@@ -142,7 +158,6 @@ function MeetStep({
                 </button>
               ))}
             </div>
-            <p className="text-sm text-slate-400">낱말을 누르면 읽어줘요</p>
           </div>
         ) : null}
 

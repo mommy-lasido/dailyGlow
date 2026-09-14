@@ -309,7 +309,6 @@ function WeekStamps({ week }: { week: WeekDay[] }) {
  * 획순(어떻게 긋는지)은 아직 없다. 영숙님이 옆에서 알려주기로 했다.
  */
 function WeeklyCard({ week, isPreReader }: { week: WeeklyFocus; isPreReader: boolean }) {
-  const shown = week.words.length > 0 ? week.words.join('  ') : week.examples;
   const step = stepForDay();
 
   return (
@@ -326,13 +325,15 @@ function WeeklyCard({ week, isPreReader }: { week: WeeklyFocus; isPreReader: boo
         >
           {week.letters.join(' ')}
         </span>
+        {/* 낱말은 여기 적지 않는다 — 들어가면 눌러서 들을 수 있고, 여기서는
+            오늘 무엇을 하는지만 크게 보이면 된다. */}
         <div className="min-w-0">
-          <p className="text-sm text-slate-400">오늘은 · {step.name}</p>
+          <p className="text-sm text-slate-400">오늘은</p>
           <p
-            data-testid="weekly-words"
-            className={`font-bold text-slate-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}
+            data-testid="weekly-step"
+            className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}
           >
-            {shown}
+            {step.name}
           </p>
         </div>
       </Link>
