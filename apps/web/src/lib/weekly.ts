@@ -45,7 +45,7 @@ export function wordHasLetter(word: string, letter: string): boolean {
  * **아이가 읽을 수 있는 낱말에서만 고른다.** 이번 주에 배우는 글자가 들어 있어도
  * 나머지 자모를 아직 못 배웠으면 읽을 방법이 없다.
  */
-export function weeklyWords(stage: number, max = 8): string[] {
+export function weeklyWords(stage: number, max = 5): string[] {
   const letters = weeklyLetters(stage);
   if (letters.length === 0) return [];
   return poolForStage(stage)
@@ -183,25 +183,37 @@ export function spotProblems(
 }
 
 /** 요일마다 무엇을 할지. 월요일이 0 이다. */
-export type WeeklyStepKind = 'meet' | 'words' | 'spot' | 'find' | 'write';
+export type WeeklyStepKind = 'meet' | 'words' | 'spot' | 'find' | 'write' | 'review';
 
-export const WEEKLY_STEPS: { kind: WeeklyStepKind; name: string; desc: string }[] = [
+export interface WeeklyStep {
+  kind: WeeklyStepKind;
+  name: string;
+  desc: string;
+}
+
+/**
+ * 월요일부터 일요일까지 이레.
+ *
+ * 평일 닷새는 글자를 여러 방식으로 만나고, **토·일요일은 한 주에 배운 글자가 든
+ * 낱말을 읽는다.** 영숙님이 정한 것이다 — 주말은 새것을 배우는 자리가 아니라 한
+ * 주에 만난 것을 모아 읽어 보는 자리다. 토요일과 일요일은 같은 것을 한다.
+ *
+ * 낱말은 다섯 개씩이다. 단계에 따라 읽을 수 있는 낱말이 넉넉하지 않다 —
+ * 'ㅝ, ㅞ' 단계는 넷뿐이다. 열 개로 잡으면 어떤 주에는 절반이 빈다.
+ */
+export const WEEKLY_STEPS: WeeklyStep[] = [
   { kind: 'meet', name: '글자 만나기', desc: '어떻게 생겼고 어떤 소리가 나는지' },
   { kind: 'words', name: '낱말 만나기', desc: '이 글자가 든 낱말을 하나씩' },
   { kind: 'spot', name: '틀린 글자 찾기', desc: '닮은 글자 사이에서 찾아내기' },
   { kind: 'find', name: '낱말에서 찾기', desc: '이 글자가 든 낱말 고르기' },
   { kind: 'write', name: '써보기', desc: '연습지에 인쇄해서 연필로' },
+  { kind: 'review', name: '낱말 읽기', desc: '이번 주에 배운 글자가 든 낱말' },
+  { kind: 'review', name: '낱말 읽기', desc: '이번 주에 배운 글자가 든 낱말' },
 ];
 
-/**
- * 오늘은 무엇을 할 차례인가.
- *
- * 한 주 내내 같은 것을 보여주면 이틀째부터는 볼 것이 없다. 날마다 같은 글자를
- * **다른 방식으로** 만나게 한다. 토·일요일은 한 주를 돌아보는 자리라 앞의 것을
- * 다시 돌린다.
- */
-export function stepForDay(today = new Date()): (typeof WEEKLY_STEPS)[number] {
+/** 오늘은 무엇을 할 차례인가. */
+export function stepForDay(today = new Date()): WeeklyStep {
   // getDay(): 일요일이 0. 월요일을 0 으로 옮긴다.
   const fromMonday = (today.getDay() + 6) % 7;
-  return WEEKLY_STEPS[fromMonday % WEEKLY_STEPS.length]!;
+  return WEEKLY_STEPS[fromMonday]!;
 }

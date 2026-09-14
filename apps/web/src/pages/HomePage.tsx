@@ -339,7 +339,7 @@ function WeeklyCard({ week, isPreReader }: { week: WeeklyFocus; isPreReader: boo
 
       <Link to="/weekly">
         <Button size="lg" className="w-full">
-          오늘의 {week.letters[0]} 하러 가기 →
+          오늘의 공부 하러 가기 →
         </Button>
       </Link>
     </Card>

@@ -73,6 +73,8 @@ export function WeeklyPage() {
         <SpotGame focus={focus} letter={letter} />
       ) : step.kind === 'write' ? (
         <WriteStep />
+      ) : step.kind === 'review' ? (
+        <ReviewStep focus={focus} letter={letter} />
       ) : (
         <MeetStep focus={focus} letter={letter} kind={step.kind} />
       )}
@@ -175,6 +177,68 @@ function MeetStep({
           다음 →
         </Button>
       </div>
+    </Card>
+  );
+}
+
+/**
+ * 주말 — 이번 주에 배운 글자가 든 낱말을 열 개 읽는다.
+ *
+ * 새것을 배우는 자리가 아니라 한 주에 만난 것을 모아 읽어 보는 자리다.
+ * 낱말을 한꺼번에 늘어놓고, 하나씩 눌러 읽어 보게 한다. 누른 낱말에는 표시가
+ * 남아 어디까지 읽었는지 아이가 스스로 안다.
+ */
+function ReviewStep({ focus, letter }: { focus: WeeklyFocus; letter: string }) {
+  const [read, setRead] = useState<Set<string>>(new Set());
+  const words = focus.words;
+
+  if (words.length === 0) {
+    return (
+      <Card className="text-center text-slate-500">
+        아직 읽을 수 있는 낱말이 적어요. 활동을 조금 더 하고 와요.
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="flex flex-col items-center gap-4 text-center">
+      <p className="text-xl font-bold text-glow-700">
+        <span className="text-2xl">{letter}</span> 가 든 낱말을 읽어봐요
+      </p>
+      <p data-testid="review-progress" className="text-slate-400">
+        {read.size} / {words.length}
+      </p>
+
+      <div className="flex w-full flex-col gap-2">
+        {words.map((w) => (
+          <button
+            key={w}
+            type="button"
+            data-testid="review-word"
+            data-read={read.has(w) ? 'yes' : undefined}
+            onClick={() => {
+              speak(w);
+              setRead((prev) => new Set(prev).add(w));
+            }}
+            aria-label={`${w} 읽어주기`}
+            className={`min-h-touch rounded-2xl px-5 py-3 text-3xl font-bold transition-transform active:scale-95 ${
+              read.has(w) ? 'bg-glow-100 text-slate-400' : 'bg-glow-50 text-slate-700'
+            }`}
+          >
+            {w}
+          </button>
+        ))}
+      </div>
+
+      <p className="text-sm text-slate-400">
+        먼저 읽어보고, 눌러서 맞는지 들어봐요
+      </p>
+
+      {read.size === words.length ? (
+        <p data-testid="review-done" className="font-bold text-glow-600">
+          다 읽었어요! 🎉
+        </p>
+      ) : null}
     </Card>
   );
 }

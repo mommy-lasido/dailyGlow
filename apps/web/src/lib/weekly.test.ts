@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { weeklyFocus, weeklyLetters, weeklyWords, wordHasLetter } from './weekly';
+import { stepForDay, weeklyFocus, weeklyLetters, weeklyWords, wordHasLetter } from './weekly';
 
 describe('weeklyLetters', () => {
   it('단계 이름의 따옴표 안 글자를 꺼낸다', () => {
@@ -60,5 +60,40 @@ describe('weeklyFocus', () => {
   it('배울 글자가 없는 단계에는 아무것도 돌려주지 않는다', () => {
     // 34·35단계는 정리 학습이라 붙잡을 글자가 따로 없다. 빈 칸을 두느니 없는 편이 낫다.
     expect(weeklyFocus(35)).toBeNull();
+  });
+});
+
+describe('stepForDay', () => {
+  /** 2026-09-14 는 월요일이다. */
+  const monday = new Date(2026, 8, 14);
+  function day(offset: number) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + offset);
+    return d;
+  }
+
+  it('평일에는 날마다 다른 걸음이 나온다', () => {
+    const kinds = [0, 1, 2, 3, 4].map((i) => stepForDay(day(i)).kind);
+    expect(kinds).toEqual(['meet', 'words', 'spot', 'find', 'write']);
+  });
+
+  it('토·일요일은 이번 주 글자가 든 낱말을 읽는다', () => {
+    // 주말은 새것을 배우는 자리가 아니라 한 주에 만난 것을 모아 읽는 자리다.
+    expect(stepForDay(day(5)).kind).toBe('review');
+    expect(stepForDay(day(6)).kind).toBe('review');
+  });
+});
+
+describe('weeklyWords — 주말 읽기', () => {
+  it('복잡한 모음 단계마다 읽을 낱말이 다섯 개는 있다', () => {
+    // 낱말이 서넛뿐이면 주말에 읽을 것이 없다.
+    for (const stage of [22, 23, 24, 25, 26, 28]) {
+      expect(weeklyWords(stage)).toHaveLength(5);
+    }
+  });
+
+  it('다섯 개를 넘겨 내지 않는다', () => {
+    // 단계에 따라 읽을 수 있는 낱말이 넉넉하지 않다. 열로 잡으면 절반이 빈다.
+    expect(weeklyWords(22)).toHaveLength(5);
   });
 });
