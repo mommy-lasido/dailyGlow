@@ -19,7 +19,7 @@ import {
   countHint,
   countQuestion,
   KOREAN_COUNT,
-  makeCountProblem,
+  makeCountSet,
   settingsOf,
   stepOf,
   type CountGroup,
@@ -77,7 +77,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   function begin(chosen: CountSetting) {
     setSetting(chosen);
     if (chosen.mode === 'count') {
-      setProblems(Array.from({ length: PROBLEM_COUNT }, () => makeCountProblem(chosen.range)));
+      setProblems(makeCountSet(chosen.range, PROBLEM_COUNT));
       setNumbers([]);
     } else {
       setProblems([]);

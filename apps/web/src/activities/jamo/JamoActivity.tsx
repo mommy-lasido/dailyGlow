@@ -57,8 +57,6 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   const [items, setItems] = useState<JamoItem[]>([]);
   /** 배우기 화면에서 지금 보고 있는 글자 */
   const [card, setCard] = useState(0);
-  /** 배우기 화면에서 한 번이라도 소리를 들은 글자들 */
-  const [heard, setHeard] = useState<Set<number>>(new Set());
   /** 지금 보고 있는 것이 어느 묶음인지 (화면 위 안내에 쓴다) */
   const [setLabel, setSetLabel] = useState('');
 
@@ -76,7 +74,6 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
     setPickingLead(false);
     setPhase('learn');
     setCard(0);
-    setHeard(new Set());
   }
 
   function begin(chosen: JamoMode) {
@@ -189,7 +186,6 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
 
   function playCard(index: number) {
     speak(items[index]!.sound);
-    setHeard((prev) => new Set(prev).add(index));
   }
 
   function startQuiz() {
@@ -289,27 +285,6 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
             )}
           </div>
         </Card>
-
-        {/* 어디까지 들어봤는지는 **바탕색**으로만 나타낸다. 글자를 흐리게 하면
-            자모 모양이 뭉개지는데, 이 활동은 바로 그 모양을 익히는 자리다. */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {items.map((it, i) => (
-            <button
-              key={it.letter}
-              onClick={() => setCard(i)}
-              aria-label={it.letter}
-              className={`min-h-touch min-w-touch rounded-2xl px-3 text-2xl font-bold transition-transform active:scale-95 ${
-                i === card
-                  ? 'bg-glow-500 text-white'
-                  : heard.has(i)
-                    ? 'bg-glow-100 text-slate-700'
-                    : 'bg-white text-slate-700 ring-1 ring-glow-100'
-              }`}
-            >
-              {it.letter}
-            </button>
-          ))}
-        </div>
 
         {!speechOk ? (
           <p className="text-center text-sm text-slate-400">

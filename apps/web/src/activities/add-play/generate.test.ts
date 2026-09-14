@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ADD_SETTINGS, addHint, makeAddProblem, type AddSetting } from './generate';
+import {
+  ADD_SETTINGS,
+  addHint,
+  makeAddProblem,
+  makeAddSet,
+  type AddSetting,
+} from './generate';
 
 /** 정해둔 값을 차례로 돌려주는 가짜 난수. 결과가 결정적이 된다. */
 function seq(values: number[]): () => number {
@@ -93,5 +99,32 @@ describe('ADD_SETTINGS', () => {
     expect(ADD_SETTINGS.map((s) => s.setting)).toEqual([1, 2, 3, 0]);
     expect(ADD_SETTINGS[0]!.name).toBe('하나 더하기');
     expect(ADD_SETTINGS[3]!.name).toBe('섞어서 하기');
+  });
+});
+
+describe('makeAddSet', () => {
+  it('같은 문제가 잇달아 나오지 않는다', () => {
+    // 다섯 살에게 방금 푼 문제를 곧바로 또 내면, 두 번째는 세어 보지 않고
+    // 조금 전 손이 갔던 자리를 누른다. 문제 하나가 통째로 사라진다.
+    for (const setting of [1, 2, 3, 0] as const) {
+      for (let i = 0; i < 200; i += 1) {
+        const set = makeAddSet(setting);
+        for (let j = 1; j < set.length; j += 1) {
+          const before = set[j - 1]!;
+          const now = set[j]!;
+          expect(`${before.a}+${before.b}`).not.toBe(`${now.a}+${now.b}`);
+        }
+      }
+    }
+  });
+
+  it('열 문제를 낸다', () => {
+    expect(makeAddSet(1)).toHaveLength(10);
+  });
+
+  it('떨어져서 겹치는 것은 막지 않는다', () => {
+    // '하나 더하기' 는 낼 수 있는 문제가 다섯뿐이라 열 문제면 반드시 겹친다.
+    const set = makeAddSet(1);
+    expect(new Set(set.map((p) => `${p.a}+${p.b}`)).size).toBeLessThan(set.length);
   });
 });

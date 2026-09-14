@@ -16,7 +16,7 @@ import {
 import {
   ADD_SETTINGS,
   addHint,
-  makeAddProblem,
+  makeAddSet,
   type AddProblem,
   type AddSetting,
 } from './generate';
@@ -39,7 +39,7 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
 
   function begin(chosen: AddSetting) {
     setSetting(chosen);
-    setProblems(Array.from({ length: PROBLEM_COUNT }, () => makeAddProblem(chosen)));
+    setProblems(makeAddSet(chosen, PROBLEM_COUNT));
     setQuiz(createQuiz(PROBLEM_COUNT));
     setStartedAt(Date.now());
     setRetryMessage('');

@@ -44,6 +44,13 @@ function chooseSyllables() {
   fireEvent.click(screen.getByRole('button', { name: /글자 배우기/ }));
 }
 
+/** 마지막 카드까지 넘긴다 — 거기서만 문제로 들어갈 수 있다. */
+function goToLastCard(count = 10) {
+  for (let i = 1; i < count; i += 1) {
+    fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
+  }
+}
+
 /** 배우기 화면을 지나 문제 화면으로 넘어간다. */
 function goToQuiz() {
   fireEvent.click(screen.getByRole('button', { name: '다 봤어요' }));
@@ -165,18 +172,20 @@ describe('JamoActivity — 배우기', () => {
     expect(screen.getByText('2 / 10')).toBeInTheDocument();
   });
 
-  it('아래 목록에서 글자를 바로 골라 볼 수 있다', () => {
+  it('글자 목록을 아래에 늘어놓지 않는다', () => {
+    // 카드를 넘겨 보는 것과 하는 일이 같아 자리만 차지한다.
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅜ' }));
-    expect(screen.getByTestId('letter')).toHaveTextContent('ㅜ');
+    expect(screen.queryByRole('button', { name: 'ㅜ' })).not.toBeInTheDocument();
   });
 
   it('마지막 글자에서만 문제로 넘어가는 버튼이 나온다', () => {
     renderActivity(1);
     chooseVowels();
     expect(screen.queryByRole('button', { name: '다 봤어요' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    for (let i = 1; i < 10; i += 1) {
+      fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
+    }
     expect(screen.getByRole('button', { name: '다 봤어요' })).toBeInTheDocument();
   });
 
@@ -193,7 +202,7 @@ describe('JamoActivity — 찾기', () => {
     // 여기서 소리는 거들어 주는 것이 아니라 문제 그 자체다.
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     speak.mockClear();
     goToQuiz();
     expect(speak).toHaveBeenCalledTimes(1);
@@ -202,7 +211,7 @@ describe('JamoActivity — 찾기', () => {
   it('보기는 3개이고 그중에 정답이 있다', () => {
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     expect(screen.getAllByTestId('choice')).toHaveLength(3);
     const letters = screen.getAllByTestId('choice').map((b) => b.getAttribute('data-letter'));
@@ -212,7 +221,7 @@ describe('JamoActivity — 찾기', () => {
   it('1차에서는 맞았는지 알려주지 않고 다음으로 넘어간다', () => {
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     expect(screen.getByText('5개 남았어요')).toBeInTheDocument();
     clickWrong();
@@ -225,7 +234,7 @@ describe('JamoActivity — 찾기', () => {
     const onFinish = vi.fn();
     renderActivity(1, onFinish);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     for (let i = 0; i < 5; i += 1) clickCorrect();
     expect(screen.queryByRole('button', { name: /다시 찾기/ })).not.toBeInTheDocument();
@@ -238,7 +247,7 @@ describe('JamoActivity — 찾기', () => {
     const onFinish = vi.fn();
     renderActivity(1, onFinish);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     clickWrong();
     for (let i = 0; i < 4; i += 1) clickCorrect();
@@ -250,7 +259,7 @@ describe('JamoActivity — 찾기', () => {
   it('3차에는 글자를 보여주고, 맞힐 때까지 같은 문제가 남는다', () => {
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     clickWrong();
     for (let i = 0; i < 4; i += 1) clickCorrect();
@@ -268,7 +277,7 @@ describe('JamoActivity — 찾기', () => {
   it('같은 문제에 머무는 동안 소리가 거듭 나지 않는다', () => {
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     clickWrong();
     for (let i = 0; i < 4; i += 1) clickCorrect();
@@ -291,7 +300,7 @@ describe('JamoActivity — 찾기', () => {
   it('다시 듣기 버튼을 누르면 소리가 난다', () => {
     renderActivity(1);
     chooseVowels();
-    fireEvent.click(screen.getByRole('button', { name: 'ㅣ' }));
+    goToLastCard();
     goToQuiz();
     speak.mockClear();
     fireEvent.click(screen.getByRole('button', { name: '다시 듣기' }));

@@ -55,6 +55,43 @@ export function makeAddProblem(
   return { a, b, answer, icon: ICONS[setting], choices: shuffle([answer, ...wrong], rand) };
 }
 
+/** 한 판에 낼 문제 수 */
+export const ADD_PROBLEM_COUNT = 10;
+
+/** 두 문제가 같은 셈인가 */
+function sameProblem(a: AddProblem, b: AddProblem): boolean {
+  return a.a === b.a && a.b === b.b;
+}
+
+/**
+ * 한 판 분량을 한꺼번에 만든다.
+ *
+ * **같은 문제가 잇달아 나오지 않게 한다.** 시윤이가 풀 때 같은 문제가 연달아
+ * 두 번 나왔다고 영숙님이 알려주었다. 다섯 살에게 방금 푼 문제를 곧바로 또 내면
+ * 두 번째는 세어 보지 않고 조금 전 손이 갔던 자리를 누른다. 문제 하나가 통째로
+ * 사라지는 셈이다.
+ *
+ * 한 판 안에서 아예 겹치지 않게 하지는 않는다. '하나 더하기' 는 낼 수 있는 문제가
+ * 다섯뿐이라 열 문제를 채우려면 반드시 겹친다. 떨어져 나오는 것은 복습이 되지만
+ * 붙어 나오는 것은 그렇지 않다.
+ */
+export function makeAddSet(
+  setting: AddSetting,
+  count = ADD_PROBLEM_COUNT,
+  rand: () => number = Math.random,
+): AddProblem[] {
+  const out: AddProblem[] = [];
+  for (let i = 0; i < count; i += 1) {
+    let next = makeAddProblem(setting, rand);
+    // 스무 번까지만 다시 뽑는다. 난수를 주입한 검사에서 끝없이 돌지 않게 한다.
+    for (let t = 0; t < 20 && i > 0 && sameProblem(out[i - 1]!, next); t += 1) {
+      next = makeAddProblem(setting, rand);
+    }
+    out.push(next);
+  }
+  return out;
+}
+
 /**
  * 3차(힌트 라운드)에 띄울 안내. 이어세기를 그대로 읽어준다 —
  * 5세에게는 "3 더하기 2" 보다 "3 다음에 4, 5" 가 훨씬 잡힌다.

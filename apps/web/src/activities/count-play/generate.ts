@@ -180,6 +180,31 @@ export function makeCountProblem(
 }
 
 /**
+ * 한 판 분량을 한꺼번에 만든다.
+ *
+ * **같은 문제가 잇달아 나오지 않게 한다.** 더하기 놀이와 같은 까닭이다 — 방금
+ * 센 것을 곧바로 또 내면 아이는 세어 보지 않고 조금 전 손이 갔던 자리를 누른다.
+ * 여기는 셋까지 세는 단계가 있어 낼 수 있는 문제가 셋뿐일 때도 있으므로, 한 판
+ * 안에서 아예 겹치지 않게 하지는 않는다. 붙어 나오지만 않으면 된다.
+ */
+export function makeCountSet(
+  range: CountRange,
+  count: number,
+  rand: () => number = Math.random,
+): CountProblem[] {
+  const out: CountProblem[] = [];
+  for (let i = 0; i < count; i += 1) {
+    let next = makeCountProblem(range, rand);
+    // 스무 번까지만 다시 뽑는다. 난수를 주입한 검사에서 끝없이 돌지 않게 한다.
+    for (let t = 0; t < 20 && i > 0 && out[i - 1]!.answer === next.answer; t += 1) {
+      next = makeCountProblem(range, rand);
+    }
+    out.push(next);
+  }
+  return out;
+}
+
+/**
  * 3차(힌트 라운드)에 띄울 안내.
  *
  * 더하기와 달리 정답인 수를 말해주지 않는다. 세는 것 자체가 배울 내용이라
