@@ -66,29 +66,25 @@ describe('SayingsActivity', () => {
     // 배경지식이 없으면 찍는 것밖에 못 한다.
     renderActivity('proverb');
     expect(screen.queryByTestId('choice')).not.toBeInTheDocument();
-    for (const s of sayingsOf('proverb').slice(0, 5)) {
-      expect(screen.getByText(s.text)).toBeInTheDocument();
-      expect(screen.getByText(s.meaning)).toBeInTheDocument();
-    }
+    // 오늘 뽑힌 것 중 첫 쪽 다섯 개가 뜻과 함께 나온다.
+    expect(screen.getAllByTestId('saying-card')).toHaveLength(5);
   });
 
-  it('한 쪽에 다섯 개씩만 보여준다', () => {
-    // 아이가 스크롤을 내리지 않고 한눈에 볼 수 있어야 한다.
+  it('오늘 볼 것만 뽑아 두 쪽으로 줄인다', () => {
+    // 속담이 마흔일곱이라 다섯씩이면 열 쪽이 넘는다. 그것을 다 넘겨야 문제를 풀 수
+    // 있으면 아이가 끝까지 가지 못한다.
     renderActivity('proverb');
-    const pool = sayingsOf('proverb');
-    expect(screen.getByTestId('pager')).toHaveTextContent(`1 / ${Math.ceil(pool.length / 5)}쪽`);
-    expect(screen.getByText(pool[4]!.text)).toBeInTheDocument();
-    expect(screen.queryByText(pool[5]!.text)).not.toBeInTheDocument();
+    expect(sayingsOf('proverb').length).toBeGreaterThan(10);
+    expect(screen.getByTestId('pager')).toHaveTextContent('1 / 2쪽');
   });
 
   it('다음 쪽으로 넘길 수 있고 앞으로도 돌아간다', () => {
     renderActivity('proverb');
-    const pool = sayingsOf('proverb');
+    const first = screen.getAllByTestId('saying-card')[0]!.textContent;
     fireEvent.click(screen.getByRole('button', { name: '다음 →' }));
-    expect(screen.getByText(pool[5]!.text)).toBeInTheDocument();
-    expect(screen.queryByText(pool[0]!.text)).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('saying-card')[0]!.textContent).not.toBe(first);
     fireEvent.click(screen.getByRole('button', { name: '← 앞으로' }));
-    expect(screen.getByText(pool[0]!.text)).toBeInTheDocument();
+    expect(screen.getAllByTestId('saying-card')[0]!.textContent).toBe(first);
   });
 
   it('마지막 쪽에서만 퀴즈로 넘어간다', () => {
@@ -110,10 +106,9 @@ describe('SayingsActivity', () => {
 
   it('사자성어는 모아 보기에서 한자와 글자별 뜻을 함께 보여준다', () => {
     renderActivity('idiom');
-    for (const s of sayingsOf('idiom').slice(0, 5)) {
-      expect(screen.getByText(s.hanja!)).toBeInTheDocument();
-      expect(screen.getByText(s.chars!.join(' · '))).toBeInTheDocument();
-    }
+    // 오늘 뽑힌 다섯 개마다 한자와 글자별 뜻이 붙는다.
+    expect(screen.getAllByTestId('saying-card')).toHaveLength(5);
+    expect(screen.getAllByTestId('list-hanja')).toHaveLength(5);
   });
 
   it('속담에는 한자를 붙이지 않는다', () => {

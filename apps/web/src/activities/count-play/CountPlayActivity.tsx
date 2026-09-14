@@ -27,6 +27,12 @@ import {
   type CountSetting,
 } from './generate';
 import {
+  bondHint,
+  bondQuestion,
+  makeBondSet,
+  type BondProblem,
+} from './bonds';
+import {
   makeLineSet,
   makeNumberSet,
   makeOrderSet,
@@ -57,6 +63,8 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   const [problems, setProblems] = useState<CountProblem[]>([]);
   /** 스물이 넘는 단계에서 쓰는 문제들. 그림 세기와 서로 배타적이다. */
   const [numbers, setNumbers] = useState<NumberProblem[]>([]);
+  /** 모으기·가르기 문제들 */
+  const [bonds, setBonds] = useState<BondProblem[]>([]);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [startedAt, setStartedAt] = useState(0);
   /** 3차에서 방금 틀렸을 때만 쓰는 안내 */
@@ -84,8 +92,14 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     if (chosen.mode === 'count') {
       setProblems(makeCountSet(chosen.range, PROBLEM_COUNT));
       setNumbers([]);
+      setBonds([]);
+    } else if (chosen.mode === 'gather' || chosen.mode === 'split') {
+      setProblems([]);
+      setNumbers([]);
+      setBonds(makeBondSet(chosen.mode, PROBLEM_COUNT));
     } else {
       setProblems([]);
+      setBonds([]);
       // 단계마다 내는 것이 다르다.
       //   순서 — 빠진 수 채우기만. 수직선 — 화살표가 가리키는 수만.
       //   읽기 — 듣고 찾기와 빈칸 채우기를 번갈아. 뛰어 세기 — 다섯씩·열씩.
@@ -142,7 +156,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     if (index === null) return;
     setChosen(null);
 
-    const isCorrect = value === (problems[index] ?? numbers[index]!).answer;
+    const isCorrect = value === (problems[index] ?? numbers[index] ?? bonds[index]!).answer;
     // 3차에서 틀리면 같은 문제에 머문다 — 흐름은 submit 이 알아서 처리한다.
     setRetryMessage(
       quiz.round === 3 && !isCorrect
@@ -232,19 +246,23 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   if (index === null) return null;
   const problem = problems[index] ?? null;
   const number = numbers[index] ?? null;
-  const current = problem ?? number!;
+  const bond = bonds[index] ?? null;
+  const current = problem ?? number ?? bond!;
   const done = quiz.cursor;
   const left = quiz.queue.length - quiz.cursor;
   // 3차에서는 그림마다 번호를 붙여준다. 이것이 이 활동의 진짜 힌트다 —
   // 답을 말해주는 대신 세는 방법을 보여준다.
   const numbered = quiz.round === 3 && problem !== null;
+  const bondHelp = quiz.round === 3 && bond !== null;
   // "사과가 몇 개일까?" / "물고기가 몇 마리일까?" — 세는 말도 같이 익힌다.
   // 스물이 넘는 단계는 무엇을 묻는지가 문제마다 다르다.
   const question = problem
     ? countQuestion(problem.object)
-    : setting?.mode === 'line'
-      ? '화살표가 가리키는 수는?'
-      : numberQuestion(number!);
+    : bond
+      ? bondQuestion(bond.kind)
+      : setting?.mode === 'line'
+        ? '화살표가 가리키는 수는?'
+        : numberQuestion(number!);
 
   return (
     <div className="flex flex-col gap-5">
@@ -271,6 +289,8 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
               </span>
             ))}
           </div>
+        ) : bond ? (
+          <BondBoard bond={bond} />
         ) : setting?.mode === 'line' ? (
           <NumberLine problem={number as LineProblem} />
         ) : number!.sequence ? (
@@ -312,7 +332,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
           <span data-testid="question" className="text-4xl font-bold text-slate-700">
             {question}
           </span>
-          {problem || number?.sequence || setting?.mode === 'line' ? (
+          {problem || bond || number?.sequence || setting?.mode === 'line' ? (
             <button
               type="button"
               onClick={() => speak(question)}
@@ -324,12 +344,12 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
           ) : null}
         </div>
 
-        {numbered ? (
+        {numbered || bondHelp ? (
           <p
             data-testid="hint"
             className="rounded-2xl bg-glow-50 px-4 py-3 text-lg text-glow-700"
           >
-            💡 {countHint(problem!.object)}
+            💡 {bondHelp ? bondHint(bond!) : countHint(problem!.object)}
           </p>
         ) : null}
 
@@ -478,6 +498,57 @@ function NumberLine({ problem }: { problem: LineProblem }) {
           );
         })}
       </svg>
+    </div>
+  );
+}
+
+/**
+ * 모으기·가르기 판.
+ *
+ * 교재의 모양을 그대로 따른다 — 위에 전체, 아래에 두 몫, 사이를 선으로 잇는다.
+ * 비어 있는 자리에는 물음표를 둔다.
+ *
+ * 아는 수 아래에는 **점을 그 수만큼 찍는다.** 이 나이의 아이는 숫자 5 를 보고
+ * 곧바로 다섯을 떠올리지 못한다. 점이 있어야 세어 보고 모으고 덜어낼 수 있다.
+ */
+function BondBoard({ bond }: { bond: BondProblem }) {
+  const cell = (value: number, hidden: boolean, testId: string) => (
+    <div
+      data-testid={testId}
+      className={`flex min-w-[4.5rem] flex-col items-center gap-1 rounded-2xl px-3 py-2 ${
+        hidden ? 'border-2 border-dashed border-glow-500' : 'bg-white'
+      }`}
+    >
+      <span className="text-4xl font-bold text-slate-700">{hidden ? '?' : value}</span>
+      <span className="flex min-h-[0.9rem] max-w-[4rem] flex-wrap justify-center gap-[2px] leading-none">
+        {hidden
+          ? null
+          : Array.from({ length: value }).map((_, i) => (
+              <span key={i} className="text-[10px] text-glow-600">
+                ●
+              </span>
+            ))}
+      </span>
+    </div>
+  );
+
+  return (
+    <div
+      data-testid="bond-board"
+      className="flex w-full flex-col items-center gap-1 rounded-2xl bg-glow-50 px-4 py-4"
+    >
+      {cell(bond.total, bond.missing === 'total', 'bond-total')}
+
+      {/* 위와 아래를 잇는 두 줄 */}
+      <svg viewBox="0 0 100 18" className="h-5 w-40" aria-hidden>
+        <line x1="50" y1="0" x2="18" y2="18" stroke="#a8d18c" strokeWidth="2" />
+        <line x1="50" y1="0" x2="82" y2="18" stroke="#a8d18c" strokeWidth="2" />
+      </svg>
+
+      <div className="flex items-start gap-4">
+        {cell(bond.left, bond.missing === 'left', 'bond-left')}
+        {cell(bond.right, bond.missing === 'right', 'bond-right')}
+      </div>
     </div>
   );
 }

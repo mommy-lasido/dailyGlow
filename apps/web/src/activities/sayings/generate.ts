@@ -100,6 +100,26 @@ export function makeSayingSet(
 }
 
 /** 이 과목에서 낼 표현들. 지금은 세 권 모두에 실린 것만 담겨 있다. */
+/**
+ * 오늘 볼 것 수.
+ *
+ * 속담이 마흔일곱, 사자성어가 쉰일곱이라 **한 쪽에 다섯씩이면 열 쪽이 넘는다.**
+ * 그것을 다 넘겨야 문제를 풀 수 있었으니 라윤이가 매번 끝까지 보기 어려웠다.
+ *
+ * 오늘 볼 것만 뽑아 한 쪽으로 줄인다. 다음에 열면 다른 것이 나오므로 자료가 많은
+ * 것이 그대로 이득이 된다. 낱말 읽기에서 쓴 것과 같은 방법이다.
+ */
+export const SAYINGS_PER_ROUND = 10;
+
+/** 오늘 볼 속담·사자성어를 뽑는다. */
+export function pickRound(
+  pool: Saying[],
+  count = SAYINGS_PER_ROUND,
+  rand: () => number = Math.random,
+): Saying[] {
+  return shuffle(pool, rand).slice(0, Math.min(count, pool.length));
+}
+
 export function poolFor(kind: SayingKind): Saying[] {
   return sayingsOf(kind);
 }
