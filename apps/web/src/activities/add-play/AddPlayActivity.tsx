@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@dailyglow/ui';
+import { hasMenuArt, MenuIcon } from '@/components/MenuIcon';
 import { useProfile } from '@/stores/profile';
 import { spawnConfetti } from '@/lib/confetti';
 import type { ActivityProps } from '@/activities/types';
@@ -99,7 +100,13 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
             className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
           >
             <span className="flex items-center gap-5">
-              <span className="text-5xl">{s.icon}</span>
+              <span className="flex w-16 shrink-0 justify-center text-5xl">
+                {hasMenuArt(s.art) ? (
+                  <MenuIcon id={s.art} alt={s.name} className="h-16 w-16" />
+                ) : (
+                  s.icon
+                )}
+              </span>
               <span>
                 <span
                   className={`block font-bold text-slate-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}

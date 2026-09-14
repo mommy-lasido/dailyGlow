@@ -24,10 +24,10 @@ export interface AddProblem {
 const ICONS: Record<AddSetting, string> = { 1: '⭐', 2: '🍎', 3: '🎈', 0: '🧸' };
 
 export const ADD_SETTINGS = [
-  { setting: 1 as AddSetting, name: '하나 더하기', icon: '⭐', desc: '1을 더해요' },
-  { setting: 2 as AddSetting, name: '둘 더하기', icon: '🍎', desc: '2를 더해요' },
-  { setting: 3 as AddSetting, name: '셋 더하기', icon: '🎈', desc: '3을 더해요' },
-  { setting: 0 as AddSetting, name: '섞어서 하기', icon: '🧸', desc: '1, 2, 3을 섞어서' },
+  { setting: 1 as AddSetting, name: '하나 더하기', icon: '⭐', art: 'add-1', desc: '1을 더해요' },
+  { setting: 2 as AddSetting, name: '둘 더하기', icon: '🍎', art: 'add-2', desc: '2를 더해요' },
+  { setting: 3 as AddSetting, name: '셋 더하기', icon: '🎈', art: 'add-3', desc: '3을 더해요' },
+  { setting: 0 as AddSetting, name: '섞어서 하기', icon: '🧸', art: 'add-mix', desc: '1, 2, 3을 섞어서' },
 ] as const;
 
 function shuffle<T>(arr: T[], rand: () => number): T[] {

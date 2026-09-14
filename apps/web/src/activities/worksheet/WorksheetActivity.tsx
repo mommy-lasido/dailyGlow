@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
+import { MenuIcon } from '@/components/MenuIcon';
 import { spawnConfetti } from '@/lib/confetti';
 import { speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
@@ -51,9 +52,10 @@ export function WorksheetActivity({ lesson, onFinish }: ActivityProps) {
             data-testid="kind"
             data-kind={o.kind}
             onClick={() => begin(o.kind)}
-            className="min-h-touch rounded-3xl bg-white p-5 text-left text-2xl font-bold text-glow-700 ring-1 ring-black/5 transition-transform active:scale-95"
+            className="min-h-touch flex items-center gap-4 rounded-3xl bg-white p-5 text-left text-2xl font-bold text-glow-700 ring-1 ring-black/5 transition-transform active:scale-95"
           >
-            ✏️ {o.label}
+            <MenuIcon id="worksheet" alt="" className="h-14 w-14 shrink-0" />
+            {o.label}
           </button>
         ))}
       </div>

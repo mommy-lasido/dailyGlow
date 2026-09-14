@@ -77,20 +77,23 @@ export type CountGroup = 'count' | 'order' | 'bond' | 'read' | 'skip';
 export interface CountGroupInfo {
   group: CountGroup;
   name: string;
+  /** 그림이 없을 때 대신 쓸 글자나 그림글자 */
   icon: string;
+  /** `public/menu-art/` 의 그림 이름 */
+  art: string;
   desc: string;
 }
 
 export const COUNT_GROUPS: readonly CountGroupInfo[] = [
-  { group: 'count', name: '하나씩 세기', icon: '🍎', desc: '그림을 짚어가며 세어요' },
+  { group: 'count', name: '하나씩 세기', icon: '🍎', art: 'count-count', desc: '그림을 짚어가며 세어요' },
   // 『기적의 계산법 예비초등』 2·3단계. 세는 것 다음에 오는 자리다 —
   // 수가 어떤 차례로 늘어서는지, 줄 위 어디에 놓이는지를 안다.
-  { group: 'order', name: '수의 순서', icon: '🔢', desc: '빠진 수 채우고, 수직선에서 찾아요' },
+  { group: 'order', name: '수의 순서', icon: '🔢', art: 'count-order', desc: '빠진 수 채우고, 수직선에서 찾아요' },
   // 『기적의 계산법 예비초등』 9·10단계. 덧셈보다 **먼저** 오는 자리다 —
   // "5는 2와 3" 을 몸으로 알아야 2+3 이 손가락 세기가 아닌 셈이 된다.
-  { group: 'bond', name: '모으기 가르기', icon: '🧩', desc: '둘을 모으고, 하나를 가르고' },
-  { group: 'read', name: '숫자 읽기', icon: '🔢', desc: '듣고 찾고, 빠진 수 채워요' },
-  { group: 'skip', name: '뛰어 세기', icon: '🐇', desc: '다섯씩, 열씩 건너뛰어요' },
+  { group: 'bond', name: '모으기 가르기', icon: '🧩', art: 'count-bond', desc: '둘을 모으고, 하나를 가르고' },
+  { group: 'read', name: '숫자 읽기', icon: '🔢', art: 'count-read', desc: '듣고 찾고, 빠진 수 채워요' },
+  { group: 'skip', name: '뛰어 세기', icon: '🐇', art: 'count-skip', desc: '다섯씩, 열씩 건너뛰어요' },
 ] as const;
 
 export interface CountSetting {
@@ -98,31 +101,33 @@ export interface CountSetting {
   range: CountRange;
   mode: CountMode;
   name: string;
-  /** 고르는 화면에 크게 띄울 것. 숫자 단계는 **그 숫자 자체**가 가장 잘 보인다. */
+  /** 그림이 없을 때 대신 쓸 글자나 그림글자 */
   icon: string;
+  /** `public/menu-art/` 의 그림 이름 */
+  art: string;
   desc: string;
 }
 
 export const COUNT_SETTINGS: readonly CountSetting[] = [
   // 그림을 하나씩 짚어 세는 단계
-  { group: 'count', range: 3, mode: 'count', name: '셋까지 세기', icon: '🍎', desc: '1부터 3까지' },
-  { group: 'count', range: 5, mode: 'count', name: '다섯까지 세기', icon: '🐟', desc: '1부터 5까지' },
-  { group: 'count', range: 10, mode: 'count', name: '열까지 세기', icon: '🐤', desc: '1부터 10까지' },
+  { group: 'count', range: 3, mode: 'count', name: '셋까지 세기', icon: '🍎', art: 'count-count', desc: '1부터 3까지' },
+  { group: 'count', range: 5, mode: 'count', name: '다섯까지 세기', icon: '🐟', art: 'count-count', desc: '1부터 5까지' },
+  { group: 'count', range: 10, mode: 'count', name: '열까지 세기', icon: '🐤', art: 'count-count', desc: '1부터 10까지' },
   // 수의 순서 — 『기적의 계산법 예비초등』 2·3단계
-  { group: 'order', range: 10, mode: 'order', name: '빠진 수 채우기', icon: '10', desc: '1 2 3 ? 5' },
-  { group: 'order', range: 10, mode: 'line', name: '수직선에서 찾기', icon: '📏', desc: '화살표가 가리키는 수' },
+  { group: 'order', range: 10, mode: 'order', name: '빠진 수 채우기', icon: '10', art: 'count-order-fill', desc: '1 2 3 ? 5' },
+  { group: 'order', range: 10, mode: 'line', name: '수직선에서 찾기', icon: '📏', art: 'count-order-line', desc: '화살표가 가리키는 수' },
   // 모으기 가르기 — 9·10단계. 책이 "2~9" 라고 못 박아 두었다.
-  { group: 'bond', range: 10, mode: 'gather', name: '모으기', icon: '🧩', desc: '2와 3을 모으면?' },
-  { group: 'bond', range: 10, mode: 'split', name: '가르기', icon: '✂️', desc: '5는 2와 얼마?' },
+  { group: 'bond', range: 10, mode: 'gather', name: '모으기', icon: '🧩', art: 'count-gather', desc: '2와 3을 모으면?' },
+  { group: 'bond', range: 10, mode: 'split', name: '가르기', icon: '✂️', art: 'count-split', desc: '5는 2와 얼마?' },
   // 숫자를 읽고 순서를 아는 단계.
   // 그림글자(2️⃣ 5️⃣)로는 스물·쉰이 보이지 않는다. 숫자를 그대로 크게 띄운다.
-  { group: 'read', range: 20, mode: 'read', name: '스물까지 읽기', icon: '20', desc: '1부터 20까지' },
-  { group: 'read', range: 50, mode: 'read', name: '쉰까지 읽기', icon: '50', desc: '1부터 50까지' },
-  { group: 'read', range: 100, mode: 'read', name: '백까지 읽기', icon: '100', desc: '1부터 100까지' },
+  { group: 'read', range: 20, mode: 'read', name: '스물까지 읽기', icon: '20', art: 'count-read-20', desc: '1부터 20까지' },
+  { group: 'read', range: 50, mode: 'read', name: '쉰까지 읽기', icon: '50', art: 'count-read-50', desc: '1부터 50까지' },
+  { group: 'read', range: 100, mode: 'read', name: '백까지 읽기', icon: '100', art: 'count-read-100', desc: '1부터 100까지' },
   // 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
   // 다섯씩이 열씩보다 촘촘해 먼저 온다.
-  { group: 'skip', range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '5', desc: '5 10 15 … 100' },
-  { group: 'skip', range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '10', desc: '10 20 30 … 100' },
+  { group: 'skip', range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '5', art: 'count-skip5', desc: '5 10 15 … 100' },
+  { group: 'skip', range: 100, mode: 'skip', name: '열씩 뛰어 세기', icon: '10', art: 'count-skip10', desc: '10 20 30 … 100' },
 ] as const;
 
 /** 이 묶음에 든 단계들 */

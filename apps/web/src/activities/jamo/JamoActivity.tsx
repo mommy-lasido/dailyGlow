@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
+import { hasMenuArt, MenuIcon } from '@/components/MenuIcon';
 import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
@@ -88,12 +89,12 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
     // 칸 밑에 글자를 늘어놓지 않는다. 들어가면 어차피 하나씩 보게 되고,
     // 늘어놓은 글씨가 작아 아이에게는 읽히지도 않는다. 큰 글자와 이름이면 된다.
     const menu = [
-      { mode: 'consonant' as JamoMode, icon: 'ㄱ', name: '자음 배우기' },
-      { mode: 'vowel' as JamoMode, icon: 'ㅏ', name: '모음 배우기' },
+      { mode: 'consonant' as JamoMode, icon: 'ㄱ', art: 'jamo-consonant', name: '자음 배우기' },
+      { mode: 'vowel' as JamoMode, icon: 'ㅏ', art: 'jamo-vowel', name: '모음 배우기' },
       // 자음과 모음이 만난 글자는 책의 2단계부터다. 아직 거기 못 간 아이에게는
       // 무엇을 배우는 칸인지 알 수 없는 빈 카드가 되므로 보여주지 않는다.
       ...(stage >= 2
-        ? [{ mode: 'syllable' as JamoMode, icon: '가', name: '글자 배우기' }]
+        ? [{ mode: 'syllable' as JamoMode, icon: '가', art: 'jamo-syllable', name: '글자 배우기' }]
         : []),
     ];
 
@@ -109,7 +110,13 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
             className="min-h-touch rounded-3xl bg-white p-5 text-left ring-1 ring-black/5 transition-transform active:scale-95"
           >
             <span className="flex items-center gap-5">
-              <span className="text-5xl font-bold text-glow-500">{m.icon}</span>
+              <span className="flex w-16 shrink-0 justify-center text-5xl font-bold text-glow-500">
+                {hasMenuArt(m.art) ? (
+                  <MenuIcon id={m.art} alt={m.name} className="h-16 w-16" />
+                ) : (
+                  m.icon
+                )}
+              </span>
               <span className="text-2xl font-bold text-slate-700">{m.name}</span>
             </span>
           </button>

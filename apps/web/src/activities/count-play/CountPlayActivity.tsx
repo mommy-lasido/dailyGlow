@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
+import { hasMenuArt, MenuIcon } from '@/components/MenuIcon';
 import { spawnConfetti } from '@/lib/confetti';
 import { speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
@@ -199,6 +200,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
               key={g.group}
               testId="group"
               icon={g.icon}
+              art={g.art}
               name={g.name}
               desc={g.desc}
               onClick={() => setGroup(g.group)}
@@ -216,6 +218,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
             key={`${s.mode}-${s.range}`}
             testId="setting"
             icon={s.icon}
+            art={s.art}
             name={s.name}
             desc={s.desc}
             mode={s.mode}
@@ -412,6 +415,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
 function MenuRow({
   testId,
   icon,
+  art,
   name,
   desc,
   mode,
@@ -420,6 +424,8 @@ function MenuRow({
 }: {
   testId: string;
   icon: string;
+  /** `public/menu-art/` 의 그림 이름. 그림이 없으면 icon 을 글자로 그린다. */
+  art?: string;
   name: string;
   desc: string;
   mode?: string;
@@ -436,7 +442,7 @@ function MenuRow({
     >
       <span className="flex items-center gap-5">
         <span className="flex w-16 shrink-0 justify-center text-5xl font-bold text-glow-600">
-          {icon}
+          {art && hasMenuArt(art) ? <MenuIcon id={art} alt={name} className="h-16 w-16" /> : icon}
         </span>
         <span>
           <span className="block text-2xl font-bold text-glow-700">{name}</span>
