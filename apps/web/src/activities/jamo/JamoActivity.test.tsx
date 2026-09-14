@@ -84,19 +84,20 @@ describe('JamoActivity — 무엇을 배울지 고르기', () => {
     expect(names[1]).toContain('모음 배우기');
   });
 
-  it('1단계 아이에게는 자음 넷만 보여준다', () => {
-    // 열넷을 한꺼번에 늘어놓으면 네 살에게는 너무 많다.
+  it('1단계 아이에게는 자음 하나만 보여준다', () => {
+    // 배운 것보다 앞질러 보여주지 않는다. 1단계 모음(아·야·어·여)이 곧
+    // 'ㅇ' 과 모음이 만난 소리라, 아이가 가장 먼저 만나는 자음은 'ㅇ' 이다.
     renderActivity(1);
     chooseConsonants();
-    expect(screen.getByTestId('letter')).toHaveTextContent('ㄱ');
-    expect(screen.getByText('1 / 4')).toBeInTheDocument();
+    expect(screen.getByTestId('letter')).toHaveTextContent('ㅇ');
+    expect(screen.getByText('1 / 1')).toBeInTheDocument();
   });
 
   it('자음은 이름으로 읽어준다', () => {
-    renderActivity(1);
+    renderActivity(2);
     chooseConsonants();
-    fireEvent.click(screen.getByRole('button', { name: '기역 소리 듣기' }));
-    expect(speak).toHaveBeenCalledWith('기역');
+    fireEvent.click(screen.getByRole('button', { name: '이응 소리 듣기' }));
+    expect(speak).toHaveBeenCalledWith('이응');
   });
 
   it('아직 글자를 배울 단계가 아니면 글자 배우기를 보여주지 않는다', () => {
@@ -109,10 +110,13 @@ describe('JamoActivity — 무엇을 배울지 고르기', () => {
     expect(screen.getByRole('button', { name: /글자 배우기/ })).toBeInTheDocument();
   });
 
-  it('단계가 오르면 자음이 늘어난다', () => {
-    renderActivity(6);
+  it('단계가 오르면 자음이 하나씩 늘어난다', () => {
+    // 책은 한 단계에 자음 하나씩이다 — 2단계 ㄱ, 3단계 ㄴ, 4단계 ㄷ …
+    // 7단계까지 온 아이는 ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ 여섯을 배웠다.
+    renderActivity(7);
     chooseConsonants();
-    expect(screen.getByText('1 / 9')).toBeInTheDocument();
+    expect(screen.getByText('1 / 7')).toBeInTheDocument();
+    expect(screen.getByTestId('letter')).toHaveTextContent('ㅇ');
   });
 });
 

@@ -62,15 +62,29 @@ export const BASIC_CONSONANTS: JamoItem[] = [
   { letter: 'ㅎ', sound: '히읗' },
 ];
 
+/** 자음 글자를 이름으로 찾는다. */
+function consonant(letter: string): JamoItem {
+  return BASIC_CONSONANTS.find((c) => c.letter === letter)!;
+}
+
 /**
  * 이 단계의 아이에게 보여줄 자음.
  *
- * 처음에는 'ㄱ ㄴ ㄷ ㄹ' 넷만 본다. 열넷을 한꺼번에 늘어놓으면 네 살에게는
- * 너무 많다. 단계가 오를수록 하나씩 늘어 열넷을 다 채운다.
+ * **책의 차례를 그대로 따른다.** 2단계 'ㄱ', 3단계 'ㄴ', 4단계 'ㄷ' … 한 단계에
+ * 자음 하나씩이다. 그러니 5단계 아이가 아는 자음은 ㄱ ㄴ ㄷ ㄹ 넷뿐이다.
+ *
+ * **배운 것보다 앞질러 보여주지 않는다.** 한동안 처음 다섯(ㄱ ㄴ ㄷ ㄹ ㅁ)을
+ * 깔아 두었는데, 영숙님이 짚었다 — *"아직 2단계도 못 배웠는데 ㄴ ㄷ ㄹ ㅁ 이
+ * 나오는 건 좀 그렇다."* 맞는 말이다. 시윤이는 ㄱ 만 익히고 다음 단계로 넘어가면
+ * 된다. 한 번에 하나씩이라야 그 하나가 손에 남는다.
+ *
+ * **'ㅇ' 이 맨 앞이다.** 책의 1단계는 기본 모음인데, 그것을 소리 내어 읽으면
+ * 아·야·어·여 — 곧 'ㅇ' 과 모음이 만난 소리다. 아이가 가장 먼저 만나는 자음이
+ * 'ㅇ' 인 셈이다. 책이 이 글자를 15단계 받침에서야 이름 붙여 다룰 뿐이다.
+ * 그래서 차례의 맨 앞에 두고, 그 뒤로 책의 차례가 하나씩 이어진다.
  */
 export function consonantsForStage(stage: number): JamoItem[] {
-  const count = Math.max(4, Math.min(stage + 3, BASIC_CONSONANTS.length));
-  return BASIC_CONSONANTS.slice(0, count);
+  return [consonant('ㅇ'), ...learnedLeads(stage).map(consonant)];
 }
 
 /** 유니코드에서 한글 첫소리(초성)가 놓인 순서 */
@@ -200,17 +214,24 @@ export const JAMO_PROBLEM_COUNT = 5;
  * 문제를 하나씩 따로 뽑으면 **같은 글자가 한 판에 두 번 나온다.** 방금 찾은 글자를
  * 또 찾는 셈이라 다섯 문제가 다섯 문제 몫을 못 한다. 먼저 섞은 뒤 앞에서부터
  * 가져다 쓰고, 글자가 문제 수보다 적으면 있는 만큼만 낸다.
+ *
+ * **오답은 배운 것 밖에서 가져와도 된다**(`pool`). 자음은 책의 차례대로 한 단계에
+ * 하나씩 배우므로, 갓 시작한 아이가 아는 자음은 하나나 둘뿐이다. 그 안에서만
+ * 보기를 채우려 하면 보기 셋을 못 만든다. 답은 늘 배운 글자에서 내되, 곁에 놓는
+ * 글자는 아직 안 배운 것이어도 괜찮다 — 아이가 하는 일은 **모양을 가리는 것**이고,
+ * 낯선 모양이 곁에 있어야 그 일이 성립한다.
  */
 export function makeJamoSet(
   items: JamoItem[],
   count = JAMO_PROBLEM_COUNT,
   rand: () => number = Math.random,
+  pool: JamoItem[] = items,
 ): JamoProblem[] {
   return shuffle(items, rand)
     .slice(0, Math.min(count, items.length))
     .map((answer) => {
       const others = shuffle(
-        items.filter((i) => i.letter !== answer.letter),
+        pool.filter((i) => i.letter !== answer.letter),
         rand,
       );
       return {

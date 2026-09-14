@@ -136,11 +136,20 @@ describe('WorksheetActivity — 연습지', () => {
     expect(spaces).toHaveLength(marks.length);
   });
 
-  it('1단계 아이는 ㄱ ㄴ ㄷ ㄹ 을 쓴다', () => {
+  it('배운 자음만 쓴다 — 1단계는 ㅇ 하나', () => {
+    // 1단계 모음(아·야·어·여)이 곧 'ㅇ' 과 모음이 만난 소리다.
     renderActivity(1);
     choose('consonant');
-    const shown = screen.getAllByTestId('sheet-row').map((r) => r.textContent);
-    expect(shown.join('')).toMatch(/[ㄱㄴㄷㄹ]/);
+    const rows = screen.getAllByTestId('sheet-row');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.textContent).toContain('ㅇ');
+  });
+
+  it('단계가 오르면 쓸 자음이 하나씩 늘어난다', () => {
+    renderActivity(5);
+    choose('consonant');
+    // ㅇ + 책이 5단계까지 가르친 ㄱ ㄴ ㄷ ㄹ.
+    expect(screen.getAllByTestId('sheet-row')).toHaveLength(5);
   });
 
   it('인쇄 단추가 있다', () => {

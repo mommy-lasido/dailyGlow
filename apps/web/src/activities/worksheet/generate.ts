@@ -121,8 +121,13 @@ function shuffle<T>(arr: T[], rand: () => number): T[] {
 /**
  * 연습지 한 장.
  *
- * 쓸 것이 여덟 개보다 적으면 있는 만큼만 넣는다 — 같은 글자를 두 줄에 넣어
- * 억지로 채우면 연습지가 지루해진다.
+ * **자음과 모음은 섞지 않는다.** ㅏ ㅑ ㅓ ㅕ … 는 책의 차례이자 아이가 외우는
+ * 순서다. 섞어 내면 아이가 아는 차례와 어긋나고, 열 개 중 여덟 개만 뽑히면서
+ * 어떤 날은 'ㅡ' 가 빠지기도 한다. 배운 것을 통째로 차례대로 준다.
+ *
+ * 글자·낱말·문장은 쓸 것이 많아 다 담을 수 없으므로 섞어서 뽑는다. 그래야 낼
+ * 때마다 다른 것이 나온다. 쓸 것이 한 장 분량보다 적으면 있는 만큼만 넣는다 —
+ * 같은 글자를 두 줄에 넣어 억지로 채우면 연습지가 지루해진다.
  */
 export function makeSheet(
   kind: SheetKind,
@@ -130,6 +135,8 @@ export function makeSheet(
   rand: () => number = Math.random,
 ): SheetRow[] {
   const source = sourceFor(kind, stage);
+  if (kind === 'vowel' || kind === 'consonant') return source;
+
   const { rows } = layoutFor(kind);
   return shuffle(source, rand).slice(0, Math.min(rows, source.length));
 }

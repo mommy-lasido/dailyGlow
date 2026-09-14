@@ -23,6 +23,7 @@ import {
   makeJamoSet,
   pickLetters,
   syllablesOf,
+  BASIC_CONSONANTS,
   BASIC_VOWELS,
   type JamoItem,
   type JamoProblem,
@@ -193,7 +194,14 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
 
   function startQuiz() {
     // 한 판 분량을 한꺼번에 만든다 — 하나씩 뽑으면 같은 글자가 겹쳐 나온다.
-    const set = makeJamoSet(items);
+    // 자음은 아는 것이 하나뿐일 수 있다. 그때는 아직 안 배운 자음을 곁에 놓아
+    // 보기 셋을 채운다 — 답은 늘 배운 글자에서 낸다.
+    const set = makeJamoSet(
+      items,
+      undefined,
+      undefined,
+      mode === 'consonant' ? BASIC_CONSONANTS : items,
+    );
     setProblems(set);
     setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());

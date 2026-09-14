@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { HANGUL_STAGES } from '@dailyglow/utils';
 import {
+  BASIC_CONSONANTS,
   BASIC_VOWELS,
-  composeSyllable,
   JAMO_MAX_STAGE,
+  composeSyllable,
+  consonantsForStage,
   jamoHint,
   learnedLeads,
   lettersForStage,
@@ -184,5 +186,35 @@ describe('learnedLeads · pickLetters', () => {
     const letters = picked.map((i) => i.letter);
     expect(new Set(letters).size).toBe(10);
     for (const l of letters) expect(many.some((i) => i.letter === l)).toBe(true);
+  });
+});
+
+describe('makeJamoSet — 배운 것이 몇 개 안 될 때', () => {
+  it('아는 자음이 하나뿐이어도 보기 셋을 만든다', () => {
+    // 책은 한 단계에 자음 하나씩 가르친다. 갓 시작한 아이가 아는 자음은 하나다.
+    // 그 안에서만 보기를 채우려 하면 보기가 비어 버린다.
+    const known = consonantsForStage(1);
+    expect(known).toHaveLength(1);
+
+    for (let i = 0; i < 50; i += 1) {
+      const set = makeJamoSet(known, 5, Math.random, BASIC_CONSONANTS);
+      expect(set).toHaveLength(1);
+      for (const p of set) {
+        expect(p.choices).toHaveLength(3);
+        expect(new Set(p.choices.map((c) => c.letter)).size).toBe(3);
+        expect(p.choices).toContain(p.answer);
+      }
+    }
+  });
+
+  it('답은 늘 배운 글자에서 낸다', () => {
+    // 곁에 놓는 글자는 안 배운 것이어도 되지만, 답은 그러면 안 된다.
+    const known = consonantsForStage(3);
+    const allowed = new Set(known.map((i) => i.letter));
+    for (let i = 0; i < 50; i += 1) {
+      for (const p of makeJamoSet(known, 5, Math.random, BASIC_CONSONANTS)) {
+        expect(allowed.has(p.answer.letter)).toBe(true);
+      }
+    }
   });
 });

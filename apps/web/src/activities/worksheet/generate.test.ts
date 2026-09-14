@@ -29,8 +29,8 @@ describe('optionsForStage', () => {
     expect(optionsForStage(14).map((o) => o.kind)).toContain('sentence');
   });
 
-  it('1단계 아이도 ㄱ ㄴ ㄷ ㄹ 은 쓸 수 있다', () => {
-    expect(sourceFor('consonant', 1).map((r) => r.text)).toEqual(['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ']);
+  it('1단계 아이는 ㅇ 하나를 쓴다', () => {
+    expect(sourceFor('consonant', 1).map((r) => r.text)).toEqual(['ㅇ']);
   });
 
   it('자음이 맨 앞이다', () => {
@@ -46,7 +46,7 @@ describe('sourceFor', () => {
   });
 
   it('자음은 단계에 따라 늘어난다', () => {
-    expect(sourceFor('consonant', 1)).toHaveLength(4);
+    expect(sourceFor('consonant', 1)).toHaveLength(1);
     expect(sourceFor('consonant', 10).length).toBeGreaterThan(4);
   });
 
@@ -102,7 +102,7 @@ describe('makeSheet', () => {
 
   it('쓸 것이 적으면 있는 만큼만 넣는다', () => {
     // 같은 글자를 두 줄에 넣어 억지로 채우면 연습지가 지루해진다.
-    expect(makeSheet('consonant', 1)).toHaveLength(4);
+    expect(makeSheet('consonant', 1)).toHaveLength(1);
   });
 
   it('같은 글자가 두 줄에 나오지 않는다', () => {
@@ -136,5 +136,33 @@ describe('traceFor', () => {
 
   it('자음·모음을 다 뗀 뒤에는 한 칸만 본보기다', () => {
     for (const s of [15, 21, 35]) expect(traceFor(s)).toBe(1);
+  });
+});
+
+describe('makeSheet — 자음·모음은 차례대로', () => {
+  it('모음은 책의 차례 그대로 열 개를 다 낸다', () => {
+    // ㅏ ㅑ ㅓ ㅕ … 는 아이가 외우는 순서다. 섞으면 아는 차례와 어긋난다.
+    const sheet = makeSheet('vowel', 5).map((r) => r.text);
+    expect(sheet.join('')).toBe('ㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ');
+  });
+
+  it('자음은 책 차례대로, 단계마다 하나씩 늘어난다', () => {
+    const at = (s: number) => makeSheet('consonant', s).map((r) => r.text).join('');
+    // 1단계 모음(아·야·어·여)이 곧 'ㅇ' 과 모음이 만난 소리라 ㅇ 이 맨 앞이다.
+    expect(at(1)).toBe('ㅇ');
+    // 그 뒤로 책의 차례가 한 단계에 하나씩 이어진다.
+    expect(at(2)).toBe('ㅇㄱ');
+    expect(at(3)).toBe('ㅇㄱㄴ');
+    expect(at(6)).toBe('ㅇㄱㄴㄷㄹㅁ');
+    expect(at(7)).toBe('ㅇㄱㄴㄷㄹㅁㅂ');
+    // 14단계면 책이 다루는 열셋을 다 배운다.
+    expect(at(14)).toBe('ㅇㄱㄴㄷㄹㅁㅂㅅㅈㅊㅋㅌㅍㅎ');
+  });
+
+  it('낼 때마다 같은 연습지가 나온다', () => {
+    // 자음·모음은 배운 것 전부라 뽑을 것이 없다. 섞지 않으므로 늘 같다.
+    const a = makeSheet('vowel', 5).map((r) => r.text).join('');
+    const b = makeSheet('vowel', 5).map((r) => r.text).join('');
+    expect(a).toBe(b);
   });
 });
