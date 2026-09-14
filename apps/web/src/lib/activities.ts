@@ -252,3 +252,67 @@ export function weekComplete(week: WeekDay[]): boolean {
   const past = week.filter((d) => !d.isFuture);
   return past.length === 7 && past.every((d) => d.minutes > 0);
 }
+
+/** 오늘 이미 마친 활동들. 오늘의 학습에 체크를 찍는 데 쓴다. */
+export async function fetchTodayLessons(profileId: string): Promise<string[]> {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('lesson_id')
+    .eq('profile_id', profileId)
+    .gte('created_at', start.toISOString());
+
+  if (error || !data) return [];
+  return data.map((r) => r.lesson_id).filter((id): id is string => Boolean(id));
+}
+
+export interface PlanItem {
+  activity: ActivityCard;
+  done: boolean;
+}
+
+/** 같은 날 같은 아이에게는 늘 같은 것이 나오도록 하는 수. */
+function seedOf(text: string): number {
+  let h = 0;
+  for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) % 100000;
+  return h;
+}
+
+/**
+ * 오늘 할 것을 고른다.
+ *
+ * 아이가 목록에서 고르게만 두면 **매일 같은 것만 하거나, 무엇을 할지 몰라
+ * 헤맨다.** 시윤이가 쓰던 학습기는 켜면 오늘 할 것이 딱 나왔다. 그 자리를
+ * 우리도 만들어야 아이가 혼자 앉아도 시작할 수 있다.
+ *
+ * **과목마다 하나씩** 고른다. 한글만 세 개 나오면 그날 수학은 통째로 빠진다.
+ * 어느 것을 고를지는 날짜와 아이로 정해, 같은 날에는 새로고침해도 바뀌지 않고
+ * 날이 바뀌면 다른 것이 돌아온다.
+ *
+ * 이미 마친 것도 목록에 남겨 두고 체크만 찍는다. 사라지면 무엇을 했는지 알 수
+ * 없고, 아이가 "다 했다" 를 눈으로 확인할 자리도 없어진다.
+ */
+export function buildDailyPlan(
+  activities: ActivityCard[],
+  doneLessonIds: string[],
+  profileId: string,
+  today = new Date(),
+): PlanItem[] {
+  const done = new Set(doneLessonIds);
+  const bySubject = new Map<string, ActivityCard[]>();
+  for (const a of activities) {
+    const list = bySubject.get(a.subjectSlug) ?? [];
+    list.push(a);
+    bySubject.set(a.subjectSlug, list);
+  }
+
+  const seed = seedOf(`${dayKey(today)}-${profileId}`);
+  return [...bySubject.values()].map((list, i) => {
+    // 오늘 이미 한 것이 있으면 그것을 그대로 보여준다 — 체크가 찍힌 채로 남는다.
+    const already = list.find((a) => done.has(a.id));
+    const picked = already ?? list[(seed + i) % list.length]!;
+    return { activity: picked, done: done.has(picked.id) };
+  });
+}

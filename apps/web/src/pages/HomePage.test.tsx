@@ -188,7 +188,8 @@ describe('HomePage', () => {
   it('맞는 활동이 있으면 활동 카드를 보여준다', async () => {
     catalog.response = { data: [lessonRow()], error: null };
     renderHome();
-    expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
+    // "오늘 할 것" 에도 같은 활동이 오르므로 두 곳에 나온다.
+    expect((await screen.findAllByText('덧셈 놀이')).length).toBeGreaterThan(0);
     // 과목 이름은 카드에 적지 않는다 — 아이에게는 제목만 있으면 된다.
     expect(screen.queryByText('수학')).not.toBeInTheDocument();
     expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
@@ -205,8 +206,27 @@ describe('HomePage', () => {
   it('config.hint 가 없으면 예시 줄 없이 제목만 보여준다', async () => {
     catalog.response = { data: [lessonRow({ config: {} })], error: null };
     const { container } = renderHome();
-    expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
+    expect((await screen.findAllByText('덧셈 놀이')).length).toBeGreaterThan(0);
     // 카드에는 제목만 남는다 — 예시 자리에 빈 요소가 남지 않는다.
     expect(container.querySelectorAll('a p')).toHaveLength(0);
+  });
+});
+
+describe('HomePage — 오늘 할 것', () => {
+  beforeEach(() => {
+    catalog.response = { data: [lessonRow()], error: null };
+    useProfile.setState({ profile: profile(), levels: {}, status: 'ready' });
+  });
+
+  it('오늘 할 것을 과목마다 하나씩 짚어준다', async () => {
+    // 목록에서 고르게만 두면 매일 같은 것만 하거나 무엇을 할지 몰라 헤맨다.
+    renderHome();
+    expect(await screen.findByText('오늘 할 것')).toBeInTheDocument();
+    expect(screen.getAllByTestId('plan-item')).toHaveLength(1);
+  });
+
+  it('아직 안 한 것이 몇 개인지 알려준다', async () => {
+    renderHome();
+    expect(await screen.findByTestId('plan-left')).toHaveTextContent('1개 남았어요');
   });
 });

@@ -88,32 +88,15 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   // ── 무엇을 배울지 고르기 ───────────────────────────────
   if (mode === null) {
     const consonantCount = consonantsForStage(stage).length;
+    // 칸 밑에 글자를 늘어놓지 않는다. 들어가면 어차피 하나씩 보게 되고,
+    // 늘어놓은 글씨가 작아 아이에게는 읽히지도 않는다. 큰 글자와 이름이면 된다.
     const menu = [
-      {
-        mode: 'consonant' as JamoMode,
-        icon: 'ㄱ',
-        name: '자음 배우기',
-        desc: consonantsForStage(stage)
-          .map((i) => i.letter)
-          .join(' '),
-      },
-      {
-        mode: 'vowel' as JamoMode,
-        icon: 'ㅏ',
-        name: '모음 배우기',
-        desc: BASIC_VOWELS.map((i) => i.letter).join(' '),
-      },
+      { mode: 'consonant' as JamoMode, icon: 'ㄱ', name: '자음 배우기' },
+      { mode: 'vowel' as JamoMode, icon: 'ㅏ', name: '모음 배우기' },
       // 자음과 모음이 만난 글자는 책의 2단계부터다. 아직 거기 못 간 아이에게는
       // 무엇을 배우는 칸인지 알 수 없는 빈 카드가 되므로 보여주지 않는다.
       ...(stage >= 2
-        ? [
-            {
-              mode: 'syllable' as JamoMode,
-              icon: '가',
-              name: '글자 배우기',
-              desc: leads.map((l) => syllablesOf(l)[0]!.letter).join(' '),
-            },
-          ]
+        ? [{ mode: 'syllable' as JamoMode, icon: '가', name: '글자 배우기' }]
         : []),
     ];
 
@@ -131,10 +114,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
           >
             <span className="flex items-center gap-5">
               <span className="text-5xl font-bold text-glow-500">{m.icon}</span>
-              <span className="min-w-0">
-                <span className="block text-2xl font-bold text-slate-700">{m.name}</span>
-                <span className="block truncate text-sm text-slate-400">{m.desc}</span>
-              </span>
+              <span className="text-2xl font-bold text-slate-700">{m.name}</span>
             </span>
           </button>
         ))}

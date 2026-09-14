@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   activityHint,
   activityIconId,
+  buildDailyPlan,
   selectActivities,
   streakOf,
   toMinutes,
@@ -202,5 +203,57 @@ describe('toMinutes', () => {
     expect(toMinutes(90)).toBe(2);
     expect(toMinutes(100)).toBe(2);
     expect(toMinutes(600)).toBe(10);
+  });
+});
+
+describe('buildDailyPlan', () => {
+  function card(id: string, subjectSlug: string, title = id) {
+    return { id, title, activityKind: 'x', subjectSlug, iconId: 'x', hint: null };
+  }
+
+  const cards = [
+    card('h1', 'hangul', '낱말 읽기'),
+    card('h2', 'hangul', '문장 읽기'),
+    card('m1', 'math', '더하기 놀이'),
+    card('m2', 'math', '수 세기'),
+  ];
+
+  it('과목마다 하나씩 고른다', () => {
+    // 한글만 셋 나오면 그날 수학은 통째로 빠진다.
+    const plan = buildDailyPlan(cards, [], 'u1');
+    expect(plan).toHaveLength(2);
+    expect(new Set(plan.map((p) => p.activity.subjectSlug))).toEqual(
+      new Set(['hangul', 'math']),
+    );
+  });
+
+  it('같은 날에는 새로고침해도 같은 것이 나온다', () => {
+    const day = new Date('2026-09-14T09:00:00');
+    const a = buildDailyPlan(cards, [], 'u1', day).map((p) => p.activity.id);
+    const b = buildDailyPlan(cards, [], 'u1', new Date('2026-09-14T21:00:00')).map(
+      (p) => p.activity.id,
+    );
+    expect(a).toEqual(b);
+  });
+
+  it('날이 바뀌면 다른 것이 돌아온다', () => {
+    const seen = new Set<string>();
+    for (let d = 1; d <= 20; d += 1) {
+      const day = new Date(2026, 8, d);
+      seen.add(buildDailyPlan(cards, [], 'u1', day).map((p) => p.activity.id).join());
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('오늘 마친 것은 체크를 찍은 채로 남는다', () => {
+    // 사라지면 무엇을 했는지 알 수 없고, "다 했다" 를 볼 자리도 없어진다.
+    const plan = buildDailyPlan(cards, ['h2'], 'u1');
+    const hangul = plan.find((p) => p.activity.subjectSlug === 'hangul')!;
+    expect(hangul.activity.id).toBe('h2');
+    expect(hangul.done).toBe(true);
+  });
+
+  it('할 것이 없으면 빈 목록이다', () => {
+    expect(buildDailyPlan([], [], 'u1')).toEqual([]);
   });
 });
