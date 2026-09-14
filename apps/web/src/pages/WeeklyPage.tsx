@@ -126,9 +126,23 @@ function MeetStep({
         {words.length > 0 ? (
           <div className="flex flex-col gap-2">
             <p className="text-sm text-slate-400">이런 낱말에 들어 있어요</p>
-            <p data-testid="weekly-words" className="text-2xl font-bold text-glow-700">
-              {words.join('  ')}
-            </p>
+            {/* 낱말마다 스피커를 따로 달지 않는다 — 낱말 자체가 단추다.
+                여기는 글자를 처음 만나는 자리라 소리가 곧 배울 내용이다. */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {words.map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  data-testid="weekly-word-button"
+                  onClick={() => speak(w)}
+                  aria-label={`${w} 읽어주기`}
+                  className="min-h-touch rounded-2xl bg-glow-100 px-4 py-2 text-2xl font-bold text-glow-700 transition-transform active:scale-95"
+                >
+                  {w}
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-slate-400">낱말을 누르면 읽어줘요</p>
           </div>
         ) : null}
 
