@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { OnboardingPage } from '@/pages/OnboardingPage';
 import { HomePage } from '@/pages/HomePage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { ParentGate } from '@/components/ParentGate';
 import { ActivityPage } from '@/pages/ActivityPage';
 import { WeeklyPage } from '@/pages/WeeklyPage';
 
@@ -22,7 +23,16 @@ export const router = createBrowserRouter([
             element: <RequireProfile />,
             children: [
               { index: true, element: <HomePage /> },
-              { path: 'settings', element: <SettingsPage /> },
+              // 설정에는 아이의 단계와 학년이 들어 있다. 아이가 바꾸면 그날 나오는
+              // 문제가 통째로 달라지므로 부모만 들어가게 막는다.
+              {
+                path: 'settings',
+                element: (
+                  <ParentGate>
+                    <SettingsPage />
+                  </ParentGate>
+                ),
+              },
               { path: 'activity/:lessonId', element: <ActivityPage /> },
               { path: 'weekly', element: <WeeklyPage /> },
             ],
