@@ -139,3 +139,61 @@ export function makeNumberSet(
 export function numberQuestion(p: NumberProblem): string {
   return p.sequence ? '빠진 수는 무엇일까?' : '어떤 수일까?';
 }
+
+/**
+ * 수의 순서 — 빠진 수 채우기만 낸다.
+ *
+ * 『기적의 계산법 예비초등』 2단계다. 스물까지 읽기에서도 빠진 수를 채우지만,
+ * 거기는 듣고 찾기와 번갈아 나온다. 이 단계는 **순서 하나만** 붙잡는 자리라
+ * 줄에서 빠진 수를 찾는 것만 낸다.
+ */
+export function makeOrderSet(
+  max: number,
+  count: number,
+  rand: () => number = Math.random,
+): NumberProblem[] {
+  const pool: number[] = [];
+  for (let n = 1; n <= max; n += 1) pool.push(n);
+
+  return shuffle(pool, rand)
+    .slice(0, Math.min(count, pool.length))
+    .map((answer) => makeOne(answer, max, makeSequence(answer, 1, max), rand));
+}
+
+export interface LineProblem extends NumberProblem {
+  /** 수직선의 끝 수. 0 부터 이 수까지 그린다. */
+  lineMax: number;
+}
+
+/**
+ * 수직선 — 화살표가 가리키는 수 찾기.
+ *
+ * 『기적의 계산법 예비초등』 3단계다. 수를 세는 것도 읽는 것도 아니고, **수가
+ * 줄 위에 나란히 놓여 있다**는 것을 아는 자리다. 이것을 알아야 나중에 "7은 5보다
+ * 오른쪽" 같은 말이 뜻을 갖는다.
+ *
+ * 오답은 바로 옆 수로 낸다. 멀리 있는 수를 붙이면 화살표를 안 보고도 답이 보인다.
+ */
+export function makeLineSet(
+  max: number,
+  count: number,
+  rand: () => number = Math.random,
+): LineProblem[] {
+  const pool: number[] = [];
+  for (let n = 1; n <= max; n += 1) pool.push(n);
+
+  return shuffle(pool, rand)
+    .slice(0, Math.min(count, pool.length))
+    .map((answer) => {
+      const near = [answer - 1, answer + 1, answer - 2, answer + 2].filter(
+        (n) => n >= 0 && n <= max && n !== answer,
+      );
+      const wrong = shuffle(near, rand).slice(0, 2);
+      return {
+        answer,
+        choices: shuffle([answer, ...wrong], rand),
+        sequence: null,
+        lineMax: max,
+      };
+    });
+}

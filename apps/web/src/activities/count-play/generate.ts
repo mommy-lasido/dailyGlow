@@ -16,7 +16,7 @@ export type CountRange = 3 | 5 | 10 | 20 | 50 | 100;
  * 읽고 순서를 아는 것으로 넘어간다. 시중 교재의 차례도 이렇게 나뉜다 —
  * 9까지의 수(세기) → 50까지의 수(읽기) → 100까지의 수(읽기·뛰어 세기).
  */
-export type CountMode = 'count' | 'read' | 'skip5' | 'skip';
+export type CountMode = 'count' | 'order' | 'line' | 'read' | 'skip5' | 'skip';
 
 /** 한 번에 몇씩 건너뛰는가. 뛰어 세기가 아니면 하나씩이다. */
 export function stepOf(mode: CountMode): number {
@@ -64,7 +64,7 @@ export const COUNT_OBJECTS: readonly CountObject[] = [
  * 단계가 여덟이 되니 고르는 화면이 길어져, 아이가 무엇이 무엇인지 가리기 어려워졌다.
  * **하는 일이 같은 것끼리** 셋으로 묶는다 — 세는 것, 읽는 것, 뛰는 것.
  */
-export type CountGroup = 'count' | 'read' | 'skip';
+export type CountGroup = 'count' | 'order' | 'read' | 'skip';
 
 export interface CountGroupInfo {
   group: CountGroup;
@@ -75,6 +75,9 @@ export interface CountGroupInfo {
 
 export const COUNT_GROUPS: readonly CountGroupInfo[] = [
   { group: 'count', name: '하나씩 세기', icon: '🍎', desc: '그림을 짚어가며 세어요' },
+  // 『기적의 계산법 예비초등』 2·3단계. 세는 것 다음에 오는 자리다 —
+  // 수가 어떤 차례로 늘어서는지, 줄 위 어디에 놓이는지를 안다.
+  { group: 'order', name: '수의 순서', icon: '🔢', desc: '빠진 수 채우고, 수직선에서 찾아요' },
   { group: 'read', name: '숫자 읽기', icon: '🔢', desc: '듣고 찾고, 빠진 수 채워요' },
   { group: 'skip', name: '뛰어 세기', icon: '🐇', desc: '다섯씩, 열씩 건너뛰어요' },
 ] as const;
@@ -94,6 +97,9 @@ export const COUNT_SETTINGS: readonly CountSetting[] = [
   { group: 'count', range: 3, mode: 'count', name: '셋까지 세기', icon: '🍎', desc: '1부터 3까지' },
   { group: 'count', range: 5, mode: 'count', name: '다섯까지 세기', icon: '🐟', desc: '1부터 5까지' },
   { group: 'count', range: 10, mode: 'count', name: '열까지 세기', icon: '🐤', desc: '1부터 10까지' },
+  // 수의 순서 — 『기적의 계산법 예비초등』 2·3단계
+  { group: 'order', range: 10, mode: 'order', name: '빠진 수 채우기', icon: '10', desc: '1 2 3 ? 5' },
+  { group: 'order', range: 10, mode: 'line', name: '수직선에서 찾기', icon: '📏', desc: '화살표가 가리키는 수' },
   // 숫자를 읽고 순서를 아는 단계.
   // 그림글자(2️⃣ 5️⃣)로는 스물·쉰이 보이지 않는다. 숫자를 그대로 크게 띄운다.
   { group: 'read', range: 20, mode: 'read', name: '스물까지 읽기', icon: '20', desc: '1부터 20까지' },

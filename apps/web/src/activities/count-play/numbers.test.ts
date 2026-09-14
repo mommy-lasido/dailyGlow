@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  makeLineSet,
   makeNumberSet,
+  makeOrderSet,
   numberQuestion,
   pickNumberDistractors,
   readNumber,
@@ -104,5 +106,57 @@ describe('numberQuestion', () => {
     expect(numberQuestion({ answer: 3, choices: [3], sequence: [2, null, 4] })).toBe(
       '빠진 수는 무엇일까?',
     );
+  });
+});
+
+describe('makeOrderSet — 수의 순서', () => {
+  it('빠진 수 채우기만 낸다', () => {
+    // 이 단계는 순서 하나만 붙잡는 자리다. 듣고 찾기를 섞지 않는다.
+    for (const p of makeOrderSet(10, 5)) {
+      expect(p.sequence).not.toBeNull();
+      expect(p.sequence!.filter((n) => n === null)).toHaveLength(1);
+    }
+  });
+
+  it('열까지의 수 안에서만 낸다', () => {
+    for (const p of makeOrderSet(10, 5)) {
+      expect(p.answer).toBeGreaterThanOrEqual(1);
+      expect(p.answer).toBeLessThanOrEqual(10);
+      for (const c of p.choices) expect(c).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it('한 판 안에서 같은 수가 두 번 나오지 않는다', () => {
+    for (let i = 0; i < 50; i += 1) {
+      const answers = makeOrderSet(10, 5).map((p) => p.answer);
+      expect(new Set(answers).size).toBe(answers.length);
+    }
+  });
+});
+
+describe('makeLineSet — 수직선', () => {
+  it('줄의 끝 수를 함께 준다', () => {
+    for (const p of makeLineSet(10, 5)) {
+      expect(p.lineMax).toBe(10);
+      expect(p.sequence).toBeNull();
+    }
+  });
+
+  it('오답은 바로 옆 수로 낸다', () => {
+    // 멀리 있는 수를 붙이면 화살표를 안 보고도 답이 보인다.
+    for (let i = 0; i < 100; i += 1) {
+      for (const p of makeLineSet(10, 5)) {
+        for (const c of p.choices) {
+          expect(Math.abs(c - p.answer)).toBeLessThanOrEqual(2);
+        }
+      }
+    }
+  });
+
+  it('보기는 서로 다른 3개이고 정답이 들어 있다', () => {
+    for (const p of makeLineSet(10, 5)) {
+      expect(new Set(p.choices).size).toBe(3);
+      expect(p.choices).toContain(p.answer);
+    }
   });
 });

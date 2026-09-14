@@ -27,9 +27,12 @@ import {
   type CountSetting,
 } from './generate';
 import {
+  makeLineSet,
   makeNumberSet,
+  makeOrderSet,
   numberQuestion,
   readNumber,
+  type LineProblem,
   type NumberProblem,
 } from './numbers';
 
@@ -67,7 +70,9 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
    */
   const askIndex = quiz && quiz.phase === 'solving' ? currentIndex(quiz) : null;
   const askNumber = askIndex === null ? null : (numbers[askIndex] ?? null);
-  const askAloud = askNumber && !askNumber.sequence ? askNumber.answer : null;
+  // 수직선은 소리로 묻지 않는다 — 화살표를 보고 찾는 것이 이 단계의 일이다.
+  const askAloud =
+    askNumber && !askNumber.sequence && setting?.mode !== 'line' ? askNumber.answer : null;
   useEffect(() => {
     if (askAloud === null) return;
     const id = setTimeout(() => speak(readNumber(askAloud)), SPEAK_DELAY_MS);
@@ -81,8 +86,16 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
       setNumbers([]);
     } else {
       setProblems([]);
-      // 뛰어 세기는 다섯씩·열씩 건너뛴다 — 10 20 □ 40 50.
-      setNumbers(makeNumberSet(chosen.range, PROBLEM_COUNT, stepOf(chosen.mode)));
+      // 단계마다 내는 것이 다르다.
+      //   순서 — 빠진 수 채우기만. 수직선 — 화살표가 가리키는 수만.
+      //   읽기 — 듣고 찾기와 빈칸 채우기를 번갈아. 뛰어 세기 — 다섯씩·열씩.
+      setNumbers(
+        chosen.mode === 'order'
+          ? makeOrderSet(chosen.range, PROBLEM_COUNT)
+          : chosen.mode === 'line'
+            ? makeLineSet(chosen.range, PROBLEM_COUNT)
+            : makeNumberSet(chosen.range, PROBLEM_COUNT, stepOf(chosen.mode)),
+      );
     }
     setQuiz(createQuiz(PROBLEM_COUNT));
     setStartedAt(Date.now());
@@ -227,7 +240,11 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
   const numbered = quiz.round === 3 && problem !== null;
   // "사과가 몇 개일까?" / "물고기가 몇 마리일까?" — 세는 말도 같이 익힌다.
   // 스물이 넘는 단계는 무엇을 묻는지가 문제마다 다르다.
-  const question = problem ? countQuestion(problem.object) : numberQuestion(number!);
+  const question = problem
+    ? countQuestion(problem.object)
+    : setting?.mode === 'line'
+      ? '화살표가 가리키는 수는?'
+      : numberQuestion(number!);
 
   return (
     <div className="flex flex-col gap-5">
@@ -254,6 +271,8 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
               </span>
             ))}
           </div>
+        ) : setting?.mode === 'line' ? (
+          <NumberLine problem={number as LineProblem} />
         ) : number!.sequence ? (
           // 빠진 수 채우기. 라윤이가 쓰던 수 배열판(100칸)을 한 줄로 자른 것이다.
           <div
@@ -293,7 +312,7 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
           <span data-testid="question" className="text-4xl font-bold text-slate-700">
             {question}
           </span>
-          {problem || number?.sequence ? (
+          {problem || number?.sequence || setting?.mode === 'line' ? (
             <button
               type="button"
               onClick={() => speak(question)}
@@ -405,5 +424,60 @@ function MenuRow({
         </span>
       </span>
     </button>
+  );
+}
+
+/**
+ * 수직선.
+ *
+ * 0 부터 끝 수까지 눈금을 긋고, 찾아야 할 자리에 화살표를 세운다. 수를 세는 것도
+ * 읽는 것도 아니고 **수가 줄 위에 나란히 놓여 있다**는 것을 아는 자리다. 이것을
+ * 알아야 나중에 "7은 5보다 오른쪽" 같은 말이 뜻을 갖는다.
+ *
+ * 눈금에 수를 적어 두지 않는다 — 적어 두면 화살표 아래를 읽기만 하면 되어,
+ * 줄을 따라 세어 보는 일이 없어진다. 처음(0)과 끝만 적는다.
+ */
+function NumberLine({ problem }: { problem: LineProblem }) {
+  const { answer, lineMax } = problem;
+  const ticks = Array.from({ length: lineMax + 1 }, (_, i) => i);
+
+  return (
+    <div
+      data-testid="number-line"
+      data-answer={answer}
+      className="w-full rounded-2xl bg-glow-50 px-3 py-5"
+    >
+      <svg viewBox="0 0 100 26" className="w-full" role="img" aria-label="수직선">
+        {/* 줄 */}
+        <line x1="4" y1="16" x2="96" y2="16" stroke="#94a3b8" strokeWidth="0.8" />
+
+        {ticks.map((n) => {
+          const x = 4 + (n / lineMax) * 92;
+          return (
+            <g key={n}>
+              <line x1={x} y1="13" x2={x} y2="19" stroke="#94a3b8" strokeWidth="0.8" />
+              {/* 처음과 끝에만 수를 적는다 */}
+              {n === 0 || n === lineMax ? (
+                <text x={x} y="25" textAnchor="middle" fontSize="5" fill="#94a3b8">
+                  {n}
+                </text>
+              ) : null}
+              {/* 찾아야 할 자리 */}
+              {n === answer ? (
+                <g>
+                  <polygon
+                    points={`${x},11 ${x - 3},5 ${x + 3},5`}
+                    fill="#5e9a44"
+                  />
+                  <text x={x} y="3.5" textAnchor="middle" fontSize="4.5" fill="#5e9a44">
+                    ?
+                  </text>
+                </g>
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }

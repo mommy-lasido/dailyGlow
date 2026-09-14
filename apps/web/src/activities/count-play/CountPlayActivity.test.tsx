@@ -319,3 +319,41 @@ describe('CountPlayActivity — 숫자 읽기', () => {
     expect(screen.getByRole('button', { name: /열씩 뛰어 세기/ })).toBeInTheDocument();
   });
 });
+
+describe('CountPlayActivity — 수의 순서', () => {
+  it('세기 다음 묶음으로 수의 순서가 있다', () => {
+    // 『기적의 계산법 예비초등』 2·3단계 — 세는 것 다음에 오는 자리다.
+    renderActivity();
+    fireEvent.click(screen.getByRole('button', { name: /수의 순서/ }));
+    expect(screen.getByRole('button', { name: /빠진 수 채우기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /수직선에서 찾기/ })).toBeInTheDocument();
+  });
+
+  it('빠진 수 채우기는 늘 수 줄이 나온다', () => {
+    // 듣고 찾기를 섞지 않는다. 이 단계는 순서 하나만 붙잡는 자리다.
+    renderActivity();
+    start(/빠진 수 채우기/, /수의 순서/);
+    expect(screen.getByTestId('sequence')).toBeInTheDocument();
+    expect(screen.getAllByTestId('blank')).toHaveLength(1);
+    expect(screen.queryByTestId('say-number')).not.toBeInTheDocument();
+  });
+
+  it('수직선에는 화살표가 서고 소리로 묻지 않는다', () => {
+    renderActivity();
+    start(/수직선에서 찾기/, /수의 순서/);
+    const line = screen.getByTestId('number-line');
+    expect(line).toBeInTheDocument();
+    expect(screen.getByText('화살표가 가리키는 수는?')).toBeInTheDocument();
+    // 화살표를 보고 찾는 것이 이 단계의 일이라 읽어주지 않는다.
+    expect(screen.queryByTestId('say-number')).not.toBeInTheDocument();
+  });
+
+  it('수직선의 보기는 화살표 언저리 수다', () => {
+    renderActivity();
+    start(/수직선에서 찾기/, /수의 순서/);
+    const answer = Number(screen.getByTestId('number-line').getAttribute('data-answer'));
+    for (const b of screen.getAllByTestId('choice')) {
+      expect(Math.abs(Number(b.getAttribute('data-value')) - answer)).toBeLessThanOrEqual(2);
+    }
+  });
+});
