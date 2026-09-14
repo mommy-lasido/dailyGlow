@@ -46,36 +46,44 @@ function MakePin({ onDone }: { onDone: () => void }) {
       <h1 className="text-2xl font-bold text-glow-600">부모님 비밀번호를 정해주세요</h1>
       <p className="text-slate-500">
         설정에 들어올 때 물어볼 숫자 네 자리예요. 아이가 모르는 숫자로 정해주세요.
+        <br />
+        잘못 눌러 엉뚱한 번호가 정해지지 않게 두 번 적습니다.
       </p>
 
-      <input
-        data-testid="pin-first"
-        type="password"
-        inputMode="numeric"
-        autoComplete="new-password"
-        aria-label="비밀번호"
-        value={first}
-        onChange={(e) => {
-          setFirst(onlyDigits(e.target.value));
-          setError('');
-        }}
-        className={INPUT_CLASS}
-      />
-      <input
-        data-testid="pin-again"
-        type="password"
-        inputMode="numeric"
-        autoComplete="new-password"
-        aria-label="비밀번호 다시"
-        placeholder="다시 한 번"
-        value={again}
-        onChange={(e) => {
-          setAgain(onlyDigits(e.target.value));
-          setError('');
-        }}
-        onKeyDown={(e) => e.key === 'Enter' && save()}
-        className={INPUT_CLASS}
-      />
+      {/* 칸마다 이름을 붙여 둔다. 자리표시 글씨로 알리면 글자 사이가 넓어
+          잘려 보이고, 치기 시작하면 사라져 무슨 칸인지 알 수 없게 된다. */}
+      <label className="flex flex-col items-center gap-1">
+        <span className="text-sm font-bold text-slate-500">정할 비밀번호</span>
+        <input
+          data-testid="pin-first"
+          type="password"
+          inputMode="numeric"
+          autoComplete="new-password"
+          value={first}
+          onChange={(e) => {
+            setFirst(onlyDigits(e.target.value));
+            setError('');
+          }}
+          className={INPUT_CLASS}
+        />
+      </label>
+
+      <label className="flex flex-col items-center gap-1">
+        <span className="text-sm font-bold text-slate-500">한 번 더</span>
+        <input
+          data-testid="pin-again"
+          type="password"
+          inputMode="numeric"
+          autoComplete="new-password"
+          value={again}
+          onChange={(e) => {
+            setAgain(onlyDigits(e.target.value));
+            setError('');
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && save()}
+          className={INPUT_CLASS}
+        />
+      </label>
 
       <p data-testid="pin-error" className="min-h-[1.5rem] font-bold text-rose-500">
         {error}
