@@ -5,6 +5,7 @@ import {
   makeSayingProblem,
   makeSayingSet,
   pickDistractors,
+  pickRound,
   poolFor,
   sayingHint,
   sayingQuestion,
@@ -172,5 +173,46 @@ describe('sayingHint', () => {
     const s = sayingsOf('proverb')[0]!;
     const hint = sayingHint({ answer: s, direction: 'toMeaning', choices: [s] });
     expect(hint).toBe(s.example);
+  });
+});
+
+describe('pickRound — 하루에 열 개', () => {
+  const proverbs = poolFor('proverb');
+
+  it('하루에 열 개를 뽑는다', () => {
+    expect(pickRound(proverbs, 'proverb')).toHaveLength(10);
+  });
+
+  it('같은 날에는 몇 번을 열어도 같은 열 개다', () => {
+    // 열 때마다 새로 뽑으면 아이가 "오늘 건 다 봤다" 를 알 수 없다.
+    const day = new Date(2026, 8, 14);
+    const a = pickRound(proverbs, 'proverb', day).map((s) => s.text);
+    const b = pickRound(proverbs, 'proverb', day).map((s) => s.text);
+    expect(a).toEqual(b);
+  });
+
+  it('날이 바뀌면 다른 열 개가 나온다', () => {
+    const seen = new Set<string>();
+    for (let d = 1; d <= 30; d += 1) {
+      seen.add(
+        pickRound(proverbs, 'proverb', new Date(2026, 8, d)).map((s) => s.text).join('|'),
+      );
+    }
+    // 서른 날 중 스물다섯 날 넘게 서로 다르면 넉넉하다.
+    expect(seen.size).toBeGreaterThan(25);
+  });
+
+  it('속담과 사자성어가 같은 자리에서 뽑히지 않는다', () => {
+    const day = new Date(2026, 8, 14);
+    const p = pickRound(proverbs, 'proverb', day).map((s) => proverbs.indexOf(s));
+    const idioms = poolFor('idiom');
+    const i = pickRound(idioms, 'idiom', day).map((s) => idioms.indexOf(s));
+    expect(p).not.toEqual(i);
+  });
+
+  it('뽑힌 것은 모두 그 갈래 안에 있고 겹치지 않는다', () => {
+    const picked = pickRound(proverbs, 'proverb');
+    expect(new Set(picked).size).toBe(picked.length);
+    for (const s of picked) expect(proverbs).toContain(s);
   });
 });

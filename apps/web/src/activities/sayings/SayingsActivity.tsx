@@ -54,11 +54,10 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
    * 오늘 볼 것만 뽑는다. 마흔일곱 개를 다 넘겨야 문제를 풀 수 있으면 아이가
    * 끝까지 가지 못한다. 다음에 열면 다른 것이 나온다.
    *
-   * **갈래(kind)로만 기억한다.** `poolFor(kind)` 는 부를 때마다 새 배열을 만들므로
-   * 그것을 딸림값으로 쓰면 화면이 다시 그려질 때마다 속담이 새로 뽑힌다 —
-   * 쪽을 넘겼다 돌아오면 다른 속담이 놓여 있게 된다.
+   * 뽑는 것은 **날짜로 정해진다** — 하루에 열 개다. 오늘 두 번 열어도 같은 열
+   * 개가 나오고, 아이는 "오늘 건 다 봤다" 를 알 수 있다.
    */
-  const pool = useMemo(() => pickRound(poolFor(kind)), [kind]);
+  const pool = useMemo(() => pickRound(poolFor(kind), kind), [kind]);
 
   /** 먼저 모아 보고, 그다음에 푼다. 배경지식이 없으면 찍는 것밖에 못 한다. */
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');

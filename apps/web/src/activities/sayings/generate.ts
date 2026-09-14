@@ -111,13 +111,45 @@ export function makeSayingSet(
  */
 export const SAYINGS_PER_ROUND = 10;
 
-/** 오늘 볼 속담·사자성어를 뽑는다. */
+/**
+ * 날짜를 수 하나로 바꾼다. 같은 날에는 늘 같은 수가 나온다.
+ *
+ * 갈래(속담/사자성어)도 함께 섞는다 — 같은 날 둘이 같은 자리에서 뽑히면
+ * 한쪽만 보아도 다른 쪽이 무엇일지 짐작할 수 있게 되므로.
+ */
+function seedOf(text: string): number {
+  let h = 2166136261;
+  for (const ch of text) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** 같은 씨앗을 주면 늘 같은 차례를 내주는 난수. */
+function seededRand(seed: number): () => number {
+  let state = seed || 1;
+  return () => {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    return state / 2147483648;
+  };
+}
+
+/**
+ * 오늘 볼 속담·사자성어를 뽑는다.
+ *
+ * **날짜로 뽑는다 — 하루에 열 개다.** 열 때마다 새로 뽑으면 오늘 두 번 열었을 때
+ * 다른 열 개가 나오고, 아이는 "오늘 건 다 봤다" 를 알 수 없다. 같은 것을 하루
+ * 안에 다시 보는 편이 외우는 데도 낫다.
+ */
 export function pickRound(
   pool: Saying[],
+  kind: SayingKind,
+  today = new Date(),
   count = SAYINGS_PER_ROUND,
-  rand: () => number = Math.random,
 ): Saying[] {
-  return shuffle(pool, rand).slice(0, Math.min(count, pool.length));
+  const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}-${kind}`;
+  return shuffle(pool, seededRand(seedOf(key))).slice(0, Math.min(count, pool.length));
 }
 
 export function poolFor(kind: SayingKind): Saying[] {
