@@ -16,6 +16,9 @@ import { Button } from '@dailyglow/ui';
  *    영상들을 바둑판처럼 띄우는데, 그것이 뜨기 전에 가린다.
  * 4. 누르기 전에는 영상을 아예 불러오지 않는다. 안 볼 수도 있는 영상 때문에
  *    유튜브가 아이 기기를 들여다보게 둘 까닭이 없다(`youtube-nocookie`).
+ * 5. **자막을 강제로 끈다.** 유튜브는 자기가 기계로 만든 자막을 제멋대로 켜서
+ *    시작하는 때가 있다(`cc_load_policy: 0` 은 "끈다" 가 아니라 "보던 대로
+ *    한다" 는 뜻이라 막지 못한다). 재생이 시작될 때마다 자막을 내려서 끈다.
  *
  * **다만 완전히 막지는 못한다.** 화면을 꾹 누르면 브라우저 메뉴가 뜰 수 있다.
  * 일부러 찾아서 눌러야 나가는 수준이라고 보면 된다.
@@ -87,6 +90,9 @@ export function SafeVideo({
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
   const [showCaptions, setShowCaptions] = useState(false);
+  // 재생이 시작될 때마다 자막을 꺼야 하는데, 그 자리에서는 위의 값이 처음 값으로
+  // 굳어 보인다. 지금 값을 따로 들고 있는다.
+  const wantCaptions = useRef(false);
   const holder = useRef<HTMLDivElement>(null);
   const player = useRef<YouTubePlayer | null>(null);
 
@@ -115,8 +121,14 @@ export function SafeVideo({
           cc_load_policy: 0,
         },
         events: {
-          onReady: () => setPlaying(true),
-          onStateChange: (e: { data: number }) => {
+          onReady: (e: { target: YouTubePlayer }) => {
+            // 유튜브가 켜 둔 기계 자막을 내린다.
+            if (!wantCaptions.current) e.target.unloadModule('captions');
+            setPlaying(true);
+          },
+          onStateChange: (e: { data: number; target: YouTubePlayer }) => {
+            // 자막은 재생이 시작될 때 다시 올라오기도 한다. 그때마다 내린다.
+            if (!wantCaptions.current) e.target.unloadModule('captions');
             if (e.data !== YT.PlayerState.ENDED) return;
             // 바둑판이 뜨기 전에 덮는다.
             setEnded(true);
@@ -140,6 +152,7 @@ export function SafeVideo({
   function toggleCaptions() {
     const next = !showCaptions;
     setShowCaptions(next);
+    wantCaptions.current = next;
     if (!player.current) return;
     if (next) {
       player.current.loadModule('captions');
