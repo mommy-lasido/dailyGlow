@@ -121,9 +121,9 @@ export const COUNT_SETTINGS: readonly CountSetting[] = [
   { group: 'bond', range: 10, mode: 'split', name: '가르기', icon: '✂️', art: 'count-split', desc: '5는 2와 얼마?' },
   // 숫자를 읽고 순서를 아는 단계.
   // 그림글자(2️⃣ 5️⃣)로는 스물·쉰이 보이지 않는다. 숫자를 그대로 크게 띄운다.
-  { group: 'read', range: 20, mode: 'read', name: '스물까지 읽기', icon: '20', art: 'count-read-20', desc: '1부터 20까지' },
-  { group: 'read', range: 50, mode: 'read', name: '쉰까지 읽기', icon: '50', art: 'count-read-50', desc: '1부터 50까지' },
-  { group: 'read', range: 100, mode: 'read', name: '백까지 읽기', icon: '100', art: 'count-read-100', desc: '1부터 100까지' },
+  { group: 'read', range: 20, mode: 'read', name: '20까지 읽기', icon: '20', art: 'count-read-20', desc: '1부터 20까지' },
+  { group: 'read', range: 50, mode: 'read', name: '50까지 읽기', icon: '50', art: 'count-read-50', desc: '1부터 50까지' },
+  { group: 'read', range: 100, mode: 'read', name: '100까지 읽기', icon: '100', art: 'count-read-100', desc: '1부터 100까지' },
   // 뛰어 세기. 하나씩 세는 것과는 다른 공부라 교재에서도 따로 다룬다.
   // 다섯씩이 열씩보다 촘촘해 먼저 온다.
   { group: 'skip', range: 100, mode: 'skip5', name: '다섯씩 뛰어 세기', icon: '5', art: 'count-skip5', desc: '5 10 15 … 100' },

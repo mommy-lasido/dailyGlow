@@ -283,7 +283,7 @@ describe('CountPlayActivity — 숫자 읽기', () => {
   it('그림 대신 스피커가 나오고, 스피커는 하나뿐이다', () => {
     // 큰 스피커 옆에 작은 스피커가 또 있으면 아이가 어느 것을 눌러야 할지 헷갈린다.
     renderActivity();
-    start(/스물까지 읽기/, /숫자 읽기/);
+    start(/20까지 읽기/, /숫자 읽기/);
     // 듣고 찾기 문제가 나올 때까지 넘긴다 (빠진 수 채우기와 번갈아 나온다).
     let guard = 0;
     while (!screen.queryByTestId('say-number') && guard < 5) {
@@ -299,7 +299,7 @@ describe('CountPlayActivity — 숫자 읽기', () => {
 
   it('빠진 수 채우기에는 수 줄이 나온다', () => {
     renderActivity();
-    start(/백까지 읽기/, /숫자 읽기/);
+    start(/100까지 읽기/, /숫자 읽기/);
     let guard = 0;
     while (!screen.queryByTestId('sequence') && guard < 5) {
       fireEvent.click(screen.getAllByTestId('choice')[0]!);
