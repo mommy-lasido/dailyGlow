@@ -167,9 +167,11 @@ function LessonView({ lesson, thisWeek }: { lesson: ScienceLesson; thisWeek?: bo
   return (
     <>
       <Card className="flex flex-col gap-5">
+        {/* 주제 이름(자석)보다 한 단계 작게. 둘이 비슷하면 무엇이 이번 주의
+            주제이고 무엇이 오늘 배울 것인지 눈으로 갈라지지 않는다. */}
         <h2
           data-testid="science-title"
-          className="text-center text-2xl font-bold text-slate-700"
+          className="text-center text-xl font-bold text-slate-700"
         >
           {section.heading}
         </h2>
