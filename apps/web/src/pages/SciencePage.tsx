@@ -59,7 +59,7 @@ export function SciencePage() {
         <h1 className="text-center text-2xl font-bold text-glow-600">{picked.topic.title}</h1>
         <div className="flex justify-center">
           <Button variant="ghost" onClick={() => setPicked(null)}>
-            ← 목록으로
+            ← 돌아가기
           </Button>
         </div>
         <LessonView lesson={picked} />
@@ -71,10 +71,10 @@ export function SciencePage() {
   if (listOpen) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-center text-2xl font-bold text-glow-600">지난 것 고르기</h1>
+        <h1 className="text-center text-2xl font-bold text-glow-600">지난 목록 보기</h1>
         <div className="flex justify-center">
           <Button variant="ghost" onClick={() => setListOpen(false)}>
-            ← 이번 주 것으로
+            ← 돌아가기
           </Button>
         </div>
 

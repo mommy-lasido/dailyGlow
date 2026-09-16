@@ -154,9 +154,15 @@ export function earlierByGrade(from: ScienceGrade): { grade: ScienceGrade; topic
   }));
 }
 
-/** 학년을 아이가 읽을 말로. */
+/**
+ * 학년 이름. **미국식으로 적는다** — 킨더가든, G1, G2…
+ *
+ * 라윤이가 국제학교에서 미국 과정으로 배우므로 학교에서 쓰는 말이 이것이다.
+ * 차례도 미국 과학 기준을 따르고 있으니, 이름만 우리 식으로 적으면 오히려
+ * 학교에서 배우는 것과 짝이 안 맞는다.
+ */
 export function gradeName(grade: ScienceGrade): string {
-  return grade === 0 ? '유치원' : `${grade}학년`;
+  return grade === 0 ? '킨더가든' : `G${grade}`;
 }
 
 /**
