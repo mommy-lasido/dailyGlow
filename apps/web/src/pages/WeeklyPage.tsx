@@ -346,7 +346,7 @@ function SpotGame({ focus, letter }: { focus: WeeklyFocus; letter: string }) {
   return (
     <Card className="flex flex-col items-center gap-5 text-center">
       <p className="text-2xl font-bold text-glow-700">
-        <span className="text-4xl">{letter}</span> 를 찾아보세요
+        <span className="text-5xl">{letter}</span> 를 찾아보세요
       </p>
       <p data-testid="spot-progress" className="text-slate-400">
         {at + 1} / {problems.length}
@@ -361,7 +361,8 @@ function SpotGame({ focus, letter }: { focus: WeeklyFocus; letter: string }) {
             data-letter={c}
             onClick={() => pick(c, i)}
             aria-label={c}
-            className={`flex aspect-square items-center justify-center rounded-2xl text-5xl font-bold transition-transform active:scale-95 ${
+            // 글자를 크게 — 닮은 글자를 가려내는 놀이라 획 하나 차이가 보여야 한다.
+            className={`flex aspect-square items-center justify-center rounded-2xl text-6xl font-bold transition-transform active:scale-95 sm:text-7xl ${
               wrongAt === i ? 'bg-rose-100 text-rose-400' : 'bg-glow-50 text-slate-700'
             }`}
           >
