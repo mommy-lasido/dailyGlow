@@ -174,15 +174,32 @@ function weekStart(today: Date): Date {
  * 이 아이는 몇 학년 것부터 보나.
  *
  * 창고에 적힌 학년은 `g3`(초등 3학년)이나 `preschool` 같은 말이다.
- * 유치원생이면 **킨더가든부터**, 초등학생이면 **1학년부터** 시작한다.
+ * **자기 학년 것부터** 시작한다 — 라윤이는 3학년, 시윤이와 도윤이는 킨더가든이다.
  *
- * 라윤이가 3학년이라고 3학년 것부터 시작하지 않는다. 영숙님이 1학년 것부터
- * 쭉 보여주자고 했다. 과학은 한글·수학과 달라서 **앞의 것을 건너뛰면 손해**다 —
- * 빛과 소리, 물질, 땅을 모르고 에너지로 넘어가면 얹을 자리가 없다. 학교 진도를
- * 따라가는 것이 아니라 배경지식을 쌓는 것이므로, 아는 것이 나와도 잃을 것이 없다.
+ * 라윤이는 국제학교에서 미국 과정으로 배우므로, 3학년 것이 곧 학교에서 지금
+ * 하는 것이다. 1·2학년 것은 이미 지났으니 이번 주의 주제로 내지 않고, 아래
+ * `earlierTopics` 로 **골라 볼 수 있게만** 둔다.
  */
 export function startGrade(grade: string | null | undefined): ScienceGrade {
-  return grade && /^g[1-9]/.test(grade) ? 1 : 0;
+  const n = grade?.match(/^g([1-9])/)?.[1];
+  if (!n) return 0;
+  return Math.min(Number(n), 5) as ScienceGrade;
+}
+
+/**
+ * 이 아이가 이미 지나온 학년의 주제들.
+ *
+ * 이번 주의 주제로는 나오지 않지만, 아이가 목록에서 골라 볼 수 있다. 학교에서
+ * 한 것이라도 영어 영상으로 다시 보면 남는 것이 있고, 놓친 것이 있으면 여기서
+ * 메운다.
+ */
+export function earlierTopics(from: ScienceGrade): ScienceTopic[] {
+  return SCIENCE_TOPICS.filter((t) => t.grade < from);
+}
+
+/** 학년을 아이가 읽을 말로. */
+export function gradeName(grade: ScienceGrade): string {
+  return grade === 0 ? '유치원' : `${grade}학년`;
 }
 
 /**

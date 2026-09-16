@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { SCIENCE_TOPICS, startGrade, videoLength, weeklyScience } from './science';
+import {
+  earlierTopics,
+  SCIENCE_TOPICS,
+  startGrade,
+  videoLength,
+  weeklyScience,
+} from './science';
 
 describe('weeklyScience', () => {
   it('같은 주에는 며칠에 걸쳐 열어도 같은 주제가 나온다', () => {
@@ -33,13 +39,21 @@ describe('weeklyScience', () => {
 });
 
 describe('startGrade', () => {
-  it('유치원생은 킨더가든부터, 초등학생은 1학년부터 시작한다', () => {
-    // 라윤이가 3학년이라고 3학년 것부터 시작하지 않는다. 앞의 것을 건너뛰면
-    // 얹을 자리가 없다.
-    expect(startGrade('g3')).toBe(1);
+  it('자기 학년 것부터 시작한다', () => {
+    // 라윤이는 국제학교에서 미국 과정으로 배우므로 3학년 것이 곧 학교에서
+    // 지금 하는 것이다.
+    expect(startGrade('g3')).toBe(3);
     expect(startGrade('g1')).toBe(1);
     expect(startGrade('preschool')).toBe(0);
     expect(startGrade(null)).toBe(0);
+  });
+});
+
+describe('earlierTopics', () => {
+  it('지나온 학년 것만 모은다', () => {
+    // 이번 주의 주제로는 나오지 않고, 목록에서 골라야 볼 수 있다.
+    for (const t of earlierTopics(3)) expect(t.grade).toBeLessThan(3);
+    expect(earlierTopics(0)).toHaveLength(0);
   });
 });
 
