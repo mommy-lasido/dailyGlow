@@ -9,6 +9,7 @@ import { SettingsPage } from '@/pages/SettingsPage';
 import { ParentGate } from '@/components/ParentGate';
 import { ActivityPage } from '@/pages/ActivityPage';
 import { WeeklyPage } from '@/pages/WeeklyPage';
+import { SciencePage } from '@/pages/SciencePage';
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,9 @@ export const router = createBrowserRouter([
               },
               { path: 'activity/:lessonId', element: <ActivityPage /> },
               { path: 'weekly', element: <WeeklyPage /> },
+              // 이번 주의 과학. 아직 홈 화면에 내걸지 않았다 — 영숙님이 보고
+              // 이대로 갈지 정한 뒤에 내건다.
+              { path: 'science', element: <SciencePage /> },
             ],
           },
         ],
