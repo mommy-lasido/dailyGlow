@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  lessonVideos,
   topicsByGrade,
   lessonsFrom,
   SCIENCE_TOPICS,
@@ -96,5 +97,23 @@ describe('videoLength', () => {
     expect(videoLength(129)).toBe('2분 9초');
     expect(videoLength(120)).toBe('2분');
     expect(videoLength(45)).toBe('45초');
+  });
+});
+
+describe('lessonVideos', () => {
+  it('덩어리에 따로 붙은 영상이 있으면 그것을 본다', () => {
+    // 주제 하나가 대여섯 주짜리라 영상 하나로는 다 덮이지 않는 자리가 있다.
+    const withOwn = lessonsFrom(0).find((l) => l.section.video || l.section.videoEn);
+    expect(withOwn).toBeDefined();
+    const v = lessonVideos(withOwn!);
+    if (withOwn!.section.video) expect(v.ko.id).toBe(withOwn!.section.video.id);
+    if (withOwn!.section.videoEn) expect(v.en?.id).toBe(withOwn!.section.videoEn.id);
+  });
+
+  it('따로 붙은 것이 없으면 주제의 영상을 본다', () => {
+    const plain = lessonsFrom(0).find((l) => !l.section.video && !l.section.videoEn)!;
+    const v = lessonVideos(plain);
+    expect(v.ko.id).toBe(plain.topic.video.id);
+    expect(v.en?.id).toBe(plain.topic.videoEn?.id);
   });
 });

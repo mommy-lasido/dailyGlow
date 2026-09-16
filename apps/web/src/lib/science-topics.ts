@@ -45,10 +45,15 @@ export const TOPICS: ScienceTopic[] = [
         body: '가벼운 것은 살짝만 밀어도 움직여요. 무거운 것은 세게 밀어야 움직이고요. 인형은 손가락으로도 밀리지만, 소파는 두 손으로 밀어야 하는 까닭이 여기 있어요.',
       },
     ],
-    // 대발이TV 『과학동화 - 밀고 당기고』
-    video: { id: 'xg9JeMa-DRk', seconds: 335 },
-    // SciShow Kids 『Swings, Slides, and Science』
-    videoEn: { id: 'JvSClZ3vHOI', seconds: 218 },
+    // 비상교육 『초등 과학 3-1 · 힘과 관련된 현상 알아보기』
+    //
+    // 처음에 넣었던 대발이TV 『밀고 당기고』 는 제목만 맞고 알맹이는 **자석**
+    // 이야기였다(부제가 "물리 - 자기"). 영숙님이 시윤이와 보다가 찾아냈다.
+    // SciShow Kids 『Swings, Slides, and Science』 도 밀고 당기기가 아니라
+    // **중력** 이야기였다. 둘 다 바꾼다.
+    video: { id: 'iBcbNi2tTys', seconds: 124 },
+    // GenerationGenius 『The Pushes & Pulls SONG』 (K~2학년용)
+    videoEn: { id: '94zy9gF40pE', seconds: 71 },
   },
   {
     grade: 0,
@@ -66,6 +71,8 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '사는 곳에 맞는 몸의 생김새',
         body: '물고기는 물속에서 헤엄치기 좋게 지느러미가 있어요. 북극곰은 추운 곳에 살아서 털이 아주 두껍고요. 낙타는 사막에서 물을 오래 안 마셔도 되게 몸에 양분을 저장해 두어요. 사는 곳이 다르면 몸도 다르게 생겼어요.',
+        // SciShow Kids 『Amazing Ways to Live in the Desert!』
+        videoEn: { id: 'gaZKEc59g1w', seconds: 279 },
       },
       {
         heading: '식물이 사는 곳과 생김새',
@@ -134,6 +141,10 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '빛이 나아가는 길과 그림자',
         body: '빛은 휘어지지 않고 똑바로 나아가요. 그래서 물체가 빛을 가로막으면 그 뒤에 그림자가 생겨요. 그림자가 물체와 닮은 모양인 까닭도 빛이 곧게 가기 때문이에요.',
+        // 밀크티타임 『그림자와 거울 — 빛의 직진』
+        video: { id: 'nHOjYlklMxU', seconds: 83 },
+        // Peekaboo Kidz 『Shadow』
+        videoEn: { id: 'lOIGOT88Aqc', seconds: 169 },
       },
       {
         heading: '물체가 눈에 보이는 까닭',
@@ -153,10 +164,18 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '뿌리의 생김새와 하는 일',
         body: '뿌리는 땅속으로 뻗어 물과 양분을 빨아들여요. 또 하나 중요한 일이 있어요. 식물이 바람에 넘어지지 않게 땅을 꽉 붙잡아 주는 일이에요. 큰 나무일수록 뿌리가 깊고 넓게 퍼져 있어요.',
+        // 참쌤스쿨 『식물의 뿌리와 줄기가 하는 일』
+        video: { id: 'xYUpEgD225Q', seconds: 180 },
+        // Peekaboo Kidz 『Parts Of A Plant』
+        videoEn: { id: 'p3St51F4kE8', seconds: 194 },
       },
       {
         heading: '줄기의 생김새와 하는 일',
         body: '줄기는 뿌리가 빨아들인 물을 잎까지 날라요. 물이 지나가는 가느다란 길이 줄기 속에 있어요. 그리고 잎과 꽃이 햇빛을 잘 받도록 몸을 위로 세워 주는 일도 해요.',
+        // 참쌤스쿨 『식물의 뿌리와 줄기가 하는 일』
+        video: { id: 'xYUpEgD225Q', seconds: 180 },
+        // Peekaboo Kidz 『Parts Of A Plant』
+        videoEn: { id: 'p3St51F4kE8', seconds: 194 },
       },
       {
         heading: '잎의 생김새와 하는 일',
@@ -524,6 +543,8 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '소화 기관이 하는 일',
         body: '음식은 입에서 잘게 씹혀 식도를 지나 위로 가요. 위에서 죽처럼 걸쭉해진 다음 작은창자로 넘어가요. 몸이 쓸 양분은 대부분 작은창자에서 빨아들이고, 큰창자에서 물을 마저 빨아들인 뒤 남은 것이 똥이 돼요.',
+        // Peekaboo Kidz 『Digestive System』
+        videoEn: { id: 'ZBZWgrfZFbU', seconds: 227 },
       },
       {
         heading: '호흡 기관과 순환 기관',
@@ -547,10 +568,18 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '지층이 만들어지는 과정',
         body: '절벽을 보면 가로로 줄무늬가 있는 곳이 있어요. 흙과 모래와 자갈이 오랜 세월 켜켜이 쌓여 굳은 것인데, 이것을 지층이라고 해요. 아래에 있는 층일수록 먼저 쌓인 것이니 더 오래된 거예요.',
+        // 밀크티타임 『지층과 화석』
+        video: { id: 'LM5tey-Px8M', seconds: 72 },
+        // GenerationGenius 『Rock Layers & Fossils』
+        videoEn: { id: '2iYBrhg4op8', seconds: 104 },
       },
       {
         heading: '화석으로 읽는 옛 환경',
         body: '지층 속에 옛날 생물의 뼈나 잎, 발자국이 남아 있는 것을 화석이라고 해요. 화석을 보면 그때 어떤 생물이 살았는지 알 수 있어요. 산꼭대기에서 조개 화석이 나오면, 그곳이 아주 옛날에는 바다였다는 뜻이에요.',
+        // 밀크티타임 『지층과 화석』
+        video: { id: 'LM5tey-Px8M', seconds: 72 },
+        // GenerationGenius 『Rock Layers & Fossils』
+        videoEn: { id: '2iYBrhg4op8', seconds: 104 },
       },
       {
         heading: '화산이 생기는 까닭',
@@ -559,6 +588,10 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '지진이 생기는 까닭',
         body: '땅의 겉껍질은 여러 조각으로 갈라져 있고, 그 조각들이 아주 천천히 움직이고 있어요. 조각끼리 서로 밀거나 어긋날 때 힘이 쌓이다가 갑자기 툭 미끄러지는데, 그 순간 땅이 흔들려요. 이것이 지진이에요.',
+        // 클래스로그 『지진이 발생하는 까닭은 무엇일까요』
+        video: { id: '_GbQPMakVaY', seconds: 148 },
+        // SciShow Kids 『What Causes Earthquakes?』
+        videoEn: { id: 'AArne-wh_Uc', seconds: 226 },
       },
       {
         heading: '땅덩이의 움직임과 지형 변화',
@@ -685,6 +718,8 @@ export const TOPICS: ScienceTopic[] = [
       {
         heading: '암석 행성과 가스 행성의 차이',
         body: '안쪽 네 개(수성, 금성, 지구, 화성)는 돌로 된 단단한 땅이 있어요. 바깥쪽 네 개(목성, 토성, 천왕성, 해왕성)는 대부분 가스로 되어 있어서 발을 디딜 땅이 없고, 대신 훨씬 커요. 목성 안에는 지구가 천 개도 넘게 들어가요.',
+        // SciShow Kids 『Explore the Solar System: The Gas Giants』
+        videoEn: { id: 'SeC22-94PMw', seconds: 250 },
       },
       {
         heading: '별과 행성의 차이',

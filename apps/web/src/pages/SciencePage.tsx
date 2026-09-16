@@ -8,10 +8,10 @@ import {
   topicsByGrade,
   gradeName,
   startGrade,
+  lessonVideos,
   videoLength,
   weeklyScience,
   type ScienceLesson,
-  type ScienceTopic,
 } from '@/lib/science';
 import { useProfile } from '@/stores/profile';
 
@@ -162,7 +162,7 @@ export function SciencePage() {
  * 주제 이름은 이 상자 밖(화면 맨 위)에 있고, 상자 안에는 **오늘 배울 것**만 둔다.
  */
 function LessonView({ lesson, thisWeek }: { lesson: ScienceLesson; thisWeek?: boolean }) {
-  const { topic, section } = lesson;
+  const { section } = lesson;
 
   return (
     <>
@@ -200,7 +200,7 @@ function LessonView({ lesson, thisWeek }: { lesson: ScienceLesson; thisWeek?: bo
         ) : null}
       </Card>
 
-      <TopicVideos topic={topic} />
+      <LessonVideos lesson={lesson} />
 
       {thisWeek ? <DoneButton lesson={lesson} /> : null}
     </>
@@ -260,25 +260,29 @@ function DoneButton({ lesson }: { lesson: ScienceLesson }) {
   );
 }
 
-/** 주제에 붙은 영상. 그 주제를 하는 몇 주 동안 같은 영상을 다시 본다. */
-function TopicVideos({ topic }: { topic: ScienceTopic }) {
+/**
+ * 이 주에 볼 영상.
+ *
+ * 덩어리에 따로 붙은 영상이 있으면 그것을 보고, 없으면 주제에 붙은 것을 본다.
+ * 주제 하나가 대여섯 주짜리라 영상 하나로는 다 덮이지 않는 자리가 있다.
+ */
+function LessonVideos({ lesson }: { lesson: ScienceLesson }) {
+  const { ko, en } = lessonVideos(lesson);
+
   return (
     <>
       <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="ko">
         <h3 className="text-center text-xl font-bold text-glow-600">영상으로 보기</h3>
-        <SafeVideo
-          videoId={topic.video.id}
-          label={`영상 보기 · ${videoLength(topic.video.seconds)}`}
-        />
+        <SafeVideo videoId={ko.id} label={`영상 보기 · ${videoLength(ko.seconds)}`} />
       </Card>
 
-      {topic.videoEn ? (
+      {en ? (
         <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="en">
           <h3 className="text-center text-xl font-bold text-glow-600">영어로 한 번 더</h3>
           <p className="text-center text-slate-500">같은 이야기예요. 아는 이야기라 들려요.</p>
           <SafeVideo
-            videoId={topic.videoEn.id}
-            label={`영어 영상 보기 · ${videoLength(topic.videoEn.seconds)}`}
+            videoId={en.id}
+            label={`영어 영상 보기 · ${videoLength(en.seconds)}`}
           />
         </Card>
       ) : null}

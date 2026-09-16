@@ -80,6 +80,15 @@ export interface ScienceLesson {
 export interface ScienceSection {
   heading: string;
   body: string;
+  /**
+   * 이 덩어리에만 붙는 영상. 없으면 주제에 붙은 영상을 본다.
+   *
+   * 주제 하나가 대여섯 주짜리인데 영상이 하나뿐이면, 그 영상이 다루지 않는 주에는
+   * 볼 것이 없다. 실제로 "지층과 화산과 지진" 은 영상 둘이 다 화산 이야기라
+   * 지층·화석·지진 주에는 영상이 비어 있었다. 그런 자리에 맞는 영상을 따로 붙인다.
+   */
+  video?: ScienceVideo;
+  videoEn?: ScienceVideo;
 }
 
 export interface ScienceTopic {
@@ -205,6 +214,16 @@ export function weeklyScience(from: ScienceGrade, today = new Date()): ScienceLe
   const weeks = Math.round((weekStart(today).getTime() - ANCHOR.getTime()) / week);
   const index = ((weeks % pool.length) + pool.length) % pool.length;
   return pool[index]!;
+}
+
+/** 이 주에 볼 영상. 덩어리에 따로 붙은 것이 있으면 그것을, 없으면 주제의 것을. */
+export function lessonVideos(lesson: ScienceLesson): {
+  ko: ScienceVideo;
+  en?: ScienceVideo;
+} {
+  const { topic, section } = lesson;
+  // 한쪽만 따로 붙는 일이 있으므로 각각 따로 고른다.
+  return { ko: section.video ?? topic.video, en: section.videoEn ?? topic.videoEn };
 }
 
 /** "2분 9초" 처럼 읽어 준다. 아이가 얼마나 걸리는지 미리 알 수 있게. */
