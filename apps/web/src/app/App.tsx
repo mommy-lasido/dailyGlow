@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Button } from '@dailyglow/ui';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
@@ -12,33 +12,13 @@ import { flushAttemptQueue, flushSessionQueue } from '@/lib/sync';
  * 활동마다 "홈으로" 를 따로 달아 두었더니, 활동 중간 화면(자음모음 배우기의 카드
  * 넘기기 같은 곳)에는 빠져 있어 아이가 갇혔다. 활동이 늘 때마다 빠뜨릴 자리라,
  * 활동이 아니라 **앱 껍데기**가 들고 있게 한다.
- */
-/**
- * 한 걸음 뒤로.
  *
- * 홈 단추만 있으면 활동 안에서 길을 잘못 들었을 때 **처음부터 다시** 해야 한다.
- * 한 걸음만 물러서고 싶은 자리가 훨씬 많다 — 과학 목록에서 주제를 잘못 눌렀을
- * 때처럼.
- *
- * 앱에 들어와 처음 연 화면에서는 보이지 않는다. 그 자리에서 뒤로 가면 앱 밖으로
- * 나가 버리기 때문이다. 리액트 라우터가 남기는 번호(idx)로 알 수 있다.
+ * 한 걸음 뒤로 가는 단추를 여기에 하나 더 달았다가 걷어냈다. 화면마다 이미
+ * 자기 자리로 돌아가는 단추가 있고(활동의 "다시 고르기", 과학의 "돌아가기",
+ * 낱말·문장의 "앞으로"), 그것들은 **활동 안에서** 한 칸 물러선다. 껍데기에서
+ * 뒤로 가면 활동을 통째로 빠져나가 결국 이 홈 단추와 같은 일이 된다.
+ * 같은 일을 하는 단추가 둘이면 아이만 헷갈린다.
  */
-function BackLink() {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-  const hidden = ['/', '/login', '/onboarding'];
-  if (hidden.includes(pathname)) return null;
-
-  const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
-  if (idx <= 0) return null;
-
-  return (
-    <Button variant="ghost" onClick={() => navigate(-1)}>
-      ← 이전
-    </Button>
-  );
-}
-
 function HomeLink() {
   const { pathname } = useLocation();
   // 홈·로그인·처음 설정에는 돌아갈 곳이 없거나 돌아가면 안 된다.
@@ -47,7 +27,7 @@ function HomeLink() {
   if (hidden.includes(pathname)) return null;
 
   return (
-    <Link to="/">
+    <Link to="/" className="mb-3 self-start print:hidden">
       <Button variant="ghost">🏠 홈으로</Button>
     </Link>
   );
@@ -81,12 +61,7 @@ export function App() {
       {/* 인쇄할 때는 앱 껍데기를 감춘다 — 종이에는 표만 나와야 한다. */}
       <div className="flex flex-col print:hidden">
         <OfflineBadge />
-        {/* 한 걸음 뒤로와 홈으로. 활동마다 따로 달면 새 활동에서 빠뜨리게 되므로
-            앱 껍데기가 들고 있는다. */}
-        <div className="mb-3 flex gap-2 self-start">
-          <BackLink />
-          <HomeLink />
-        </div>
+        <HomeLink />
       </div>
       {status === 'loading' ? (
         <div className="flex flex-1 items-center justify-center text-2xl text-glow-600">
