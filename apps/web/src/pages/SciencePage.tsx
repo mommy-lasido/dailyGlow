@@ -132,11 +132,17 @@ export function SciencePage() {
   return (
     <div className="flex flex-col gap-4">
       {/* 이번 주의 주제. 활동 이름("과학 놀이터")은 홈 화면의 카드가 들고 있으므로
-          여기서는 되풀이하지 않는다. "이번 주 주제는" 은 주제 이름보다 작게 —
-          아이 눈에 먼저 들어와야 하는 것은 '자석' 이다. */}
-      <h1 data-testid="science-topic" className="text-center">
-        <span className="text-lg font-bold text-glow-400">이번 주 주제는 </span>
-        <span className="text-3xl font-bold text-glow-600">{thisWeek.topic.title}</span>
+          여기서는 되풀이하지 않는다.
+
+          두 글씨의 크기 차이를 크게 벌려 놓았더니 한 줄에 억지로 붙여 놓은 것처럼
+          보였다. 크기는 조금만 벌리고 **밑줄을 맞춰** 나란히 놓는다. 앞말은
+          흐리게, 주제 이름만 진하게 — 눈에 먼저 들어와야 하는 것은 '자석' 이다. */}
+      <h1
+        data-testid="science-topic"
+        className="flex items-baseline justify-center gap-2"
+      >
+        <span className="text-base font-medium text-slate-400">이번 주 주제는</span>
+        <span className="text-2xl font-bold text-glow-600">{thisWeek.topic.title}</span>
       </h1>
 
       <LessonView lesson={thisWeek} thisWeek />
@@ -162,14 +168,19 @@ function LessonView({ lesson, thisWeek }: { lesson: ScienceLesson; thisWeek?: bo
 
   return (
     <>
-      <Card className="flex flex-col items-center gap-4 text-center">
-        <h2 data-testid="science-title" className="text-2xl font-bold text-slate-700">
+      <Card className="flex flex-col gap-5">
+        <h2
+          data-testid="science-title"
+          className="text-center text-2xl font-bold text-slate-700"
+        >
           {section.heading}
         </h2>
 
+        {/* 글이 화면 끝까지 늘어나면 눈이 다음 줄을 찾기 어렵다. 한 줄의 길이를
+            읽기 좋은 만큼으로 묶고 가운데에 놓는다. */}
         <p
           data-testid="science-section"
-          className="text-left text-lg leading-relaxed text-slate-600"
+          className="mx-auto max-w-prose text-lg leading-8 text-slate-600"
         >
           {section.body}
         </p>
@@ -177,13 +188,15 @@ function LessonView({ lesson, thisWeek }: { lesson: ScienceLesson; thisWeek?: bo
         {/* 스피커는 글에서 떼어 둔다. 눌러야 읽어준다 — 라윤이는 스스로 읽어야
             읽기 연습이 되고, 시윤이는 눌러서 들으면 된다. */}
         {canSpeak() ? (
-          <Button
-            variant="ghost"
-            data-testid="science-speak"
-            onClick={() => speak(`${section.heading}. ${section.body}`)}
-          >
-            🔊 읽어주기
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              data-testid="science-speak"
+              onClick={() => speak(`${section.heading}. ${section.body}`)}
+            >
+              🔊 읽어주기
+            </Button>
+          </div>
         ) : null}
       </Card>
 
