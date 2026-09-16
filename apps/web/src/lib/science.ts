@@ -44,13 +44,12 @@ export interface ScienceVideo {
 }
 
 /**
- * 어느 과정의 주제인가.
+ * 이 주제가 몇 학년 것인가. **0 은 킨더가든**, 1~5 는 학년이다.
  *
- * 한 화면에 아무거나 내면 시윤이에게는 어렵고 라윤이에게는 시시하다. 한글과
- * 수학에서 단계로 갈라 온 것처럼, 과학도 갈라야 한다. 시윤이와 도윤이는
- * **킨더가든 과정부터**, 라윤이는 3학년 과정이다(미국 과학 기준 NGSS).
+ * 미국 과학 기준(NGSS)이 학년마다 주제를 서넛씩 정해 두었다.
+ * `docs/과학-차례.md` 에 스물한 덩어리를 옮겨 적어 두었다.
  */
-export type ScienceTrack = 'kinder' | 'g3';
+export type ScienceGrade = 0 | 1 | 2 | 3 | 4 | 5;
 
 /**
  * 개념 설명 한 덩어리.
@@ -64,7 +63,7 @@ export interface ScienceSection {
 }
 
 export interface ScienceTopic {
-  track: ScienceTrack;
+  grade: ScienceGrade;
   slug: string;
   /** 이번 주의 주제 — 아이에게 보이는 이름 */
   title: string;
@@ -94,7 +93,7 @@ export const SCIENCE_TOPICS: ScienceTopic[] = [
   {
     // 킨더가든 — 밀기와 당기기(K-PS2). 미국 기준에서 킨더가든이 처음 만나는
     // 물리다. 그네와 문처럼 아이가 날마다 만지는 것으로 이야기한다.
-    track: 'kinder',
+    grade: 0,
     slug: 'push-pull',
     title: '밀기와 당기기',
     emoji: '🛒',
@@ -127,7 +126,7 @@ export const SCIENCE_TOPICS: ScienceTopic[] = [
   },
   {
     // 3학년 — 자석(3-PS2-3, 전기와 자석의 힘).
-    track: 'g3',
+    grade: 3,
     slug: 'magnet',
     title: '자석',
     emoji: '🧲',
@@ -172,24 +171,40 @@ function weekStart(today: Date): Date {
 }
 
 /**
- * 아이의 학년이 어느 과정인가.
+ * 이 아이는 몇 학년 것부터 보나.
  *
  * 창고에 적힌 학년은 `g3`(초등 3학년)이나 `preschool` 같은 말이다.
- * 초등학생이 아니면 모두 킨더가든 과정으로 본다 — 시윤이와 도윤이가 여기다.
+ * 유치원생이면 **킨더가든부터**, 초등학생이면 **1학년부터** 시작한다.
+ *
+ * 라윤이가 3학년이라고 3학년 것부터 시작하지 않는다. 영숙님이 1학년 것부터
+ * 쭉 보여주자고 했다. 과학은 한글·수학과 달라서 **앞의 것을 건너뛰면 손해**다 —
+ * 빛과 소리, 물질, 땅을 모르고 에너지로 넘어가면 얹을 자리가 없다. 학교 진도를
+ * 따라가는 것이 아니라 배경지식을 쌓는 것이므로, 아는 것이 나와도 잃을 것이 없다.
  */
-export function trackForGrade(grade: string | null | undefined): ScienceTrack {
-  return grade && /^g[1-9]/.test(grade) ? 'g3' : 'kinder';
+export function startGrade(grade: string | null | undefined): ScienceGrade {
+  return grade && /^g[1-9]/.test(grade) ? 1 : 0;
 }
+
+/**
+ * 주를 세는 기준 날. 이 주에 시작 학년의 첫 주제가 나온다.
+ *
+ * 2026년 9월 14일 월요일 — 과학을 처음 만든 주다.
+ */
+const ANCHOR = new Date(2026, 8, 14);
 
 /**
  * 이번 주의 주제.
  *
- * 주가 바뀌면 다음 주제로 넘어가고, 다 돌면 처음으로 돌아온다. 같은 주 안에서는
- * 며칠에 걸쳐 열어도 늘 같은 것이 나온다 — 한 주 내내 같은 것을 만나야 남는다.
+ * 시작 학년부터 **차례대로** 한 주에 하나씩 나아간다. 끝까지 가면 처음으로
+ * 돌아온다 — 어린아이는 되풀이가 손해가 아니라 이득이다.
+ *
+ * 같은 주 안에서는 며칠에 걸쳐 열어도 늘 같은 것이 나온다. 한 주 내내 같은 것을
+ * 만나야 남는다.
  */
-export function weeklyScience(track: ScienceTrack, today = new Date()): ScienceTopic {
-  const pool = SCIENCE_TOPICS.filter((t) => t.track === track);
-  const weeks = Math.floor(weekStart(today).getTime() / (7 * 24 * 60 * 60 * 1000));
+export function weeklyScience(from: ScienceGrade, today = new Date()): ScienceTopic {
+  const pool = SCIENCE_TOPICS.filter((t) => t.grade >= from);
+  const week = 7 * 24 * 60 * 60 * 1000;
+  const weeks = Math.round((weekStart(today).getTime() - ANCHOR.getTime()) / week);
   const index = ((weeks % pool.length) + pool.length) % pool.length;
   return pool[index]!;
 }

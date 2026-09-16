@@ -1,7 +1,7 @@
 import { Button, Card } from '@dailyglow/ui';
 import { SafeVideo } from '@/components/SafeVideo';
 import { canSpeak, speak } from '@/lib/speak';
-import { trackForGrade, videoLength, weeklyScience } from '@/lib/science';
+import { startGrade, videoLength, weeklyScience } from '@/lib/science';
 import { useProfile } from '@/stores/profile';
 
 /**
@@ -13,9 +13,8 @@ import { useProfile } from '@/stores/profile';
  * 글이 먼저 오는 까닭은 영상부터 틀면 글은 아무도 안 읽기 때문이다. 라윤이는
  * 스스로 읽고, 시윤이는 스피커를 눌러 듣는다.
  *
- * 주제는 **아이의 학년에 따라 갈린다.** 시윤이와 도윤이는 킨더가든 과정,
- * 라윤이는 3학년 과정이다. 한 화면에 아무거나 내면 한쪽에는 어렵고 한쪽에는
- * 시시하다.
+ * 주제는 **아이가 시작할 학년부터 차례대로** 한 주에 하나씩 나아간다. 유치원생은
+ * 킨더가든부터, 초등학생은 1학년부터다. 앞의 것을 건너뛰면 얹을 자리가 없다.
  *
  * 영어 영상은 **한국어 영상 뒤에** 온다. 라윤이는 자막 없이 알아듣지만, 시윤이와
  * 도윤이에게는 아직 모르는 말이라 내용을 아는 채로 들어야 장면에 가서 붙는다.
@@ -25,7 +24,7 @@ import { useProfile } from '@/stores/profile';
  */
 export function SciencePage() {
   const grade = useProfile((s) => s.profile?.grade ?? null);
-  const topic = weeklyScience(trackForGrade(grade));
+  const topic = weeklyScience(startGrade(grade));
 
   return (
     <div className="flex flex-col gap-4">

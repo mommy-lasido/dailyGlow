@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { SciencePage } from './SciencePage';
 import { weeklyScience } from '@/lib/science';
 
-// 로그인한 아이가 없는 화면은 킨더가든 과정으로 본다 — 시윤이와 도윤이 자리다.
-const topic = weeklyScience('kinder');
+// 로그인한 아이가 없는 화면은 킨더가든부터 본다 — 시윤이와 도윤이 자리다.
+const topic = weeklyScience(0);
 
 describe('SciencePage', () => {
   it('이번 주의 주제와 개념 설명을 보여준다', () => {
