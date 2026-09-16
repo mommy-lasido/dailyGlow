@@ -78,21 +78,22 @@ export function SafeVideo({
   /** 누르기 전에 단추에 적을 말 — "영상 보기 · 2분 9초" */
   label: string;
   /**
-   * 고를 수 있는 자막의 말. 주면 자막 단추가 생긴다.
+   * 고를 수 있는 자막의 말들. 비어 있으면 자막 단추를 두지 않는다.
    *
    * **켜고 시작하지는 않는다.** 늘 켜 두면 글자만 읽고 귀로 듣지 않게 된다.
    * 놓친 데가 있을 때 아이가 켜서 확인하고 다시 끄면 된다.
    */
-  captions?: string;
+  captions?: readonly string[];
   onEnded?: () => void;
 }) {
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
-  const [showCaptions, setShowCaptions] = useState(false);
+  /** 지금 켜 둔 자막의 말. 꺼져 있으면 null. */
+  const [captionLang, setCaptionLang] = useState<string | null>(null);
   // 재생이 시작될 때마다 자막을 꺼야 하는데, 그 자리에서는 위의 값이 처음 값으로
   // 굳어 보인다. 지금 값을 따로 들고 있는다.
-  const wantCaptions = useRef(false);
+  const wantCaptions = useRef<string | null>(null);
   const holder = useRef<HTMLDivElement>(null);
   const player = useRef<YouTubePlayer | null>(null);
 
@@ -149,17 +150,36 @@ export function SafeVideo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, videoId]);
 
-  function toggleCaptions() {
-    const next = !showCaptions;
-    setShowCaptions(next);
+  /**
+   * 자막을 이 말로 켠다. 이미 그 말이 켜져 있으면 끈다.
+   *
+   * 유튜브가 들고 있는 자막은 영어 하나뿐이고, 한국어는 그것을 기계가 옮긴 것이다.
+   * 옮길 말을 따로 지정하는 길(`translationLanguage` 를 따로 넘기는 것)도 있는데
+   * **그 길로는 먹지 않는다** — 실제 브라우저에서 해보니 영어 자막이 그대로
+   * 나왔다. 옮길 말을 **자막 지정 안에 같이 넣어야** 한국어로 바뀐다.
+   */
+  function chooseCaptions(lang: string) {
+    const next = captionLang === lang ? null : lang;
+    setCaptionLang(next);
     wantCaptions.current = next;
-    if (!player.current) return;
-    if (next) {
-      player.current.loadModule('captions');
-      player.current.setOption('captions', 'track', { languageCode: captions });
-    } else {
-      player.current.unloadModule('captions');
+
+    const p = player.current;
+    if (!p) return;
+    if (!next) {
+      p.unloadModule('captions');
+      return;
     }
+
+    p.loadModule('captions');
+    const track =
+      next === 'en'
+        ? { languageCode: 'en' }
+        : { languageCode: 'en', translationLanguage: { languageCode: next } };
+    // 자막이 올라오는 데 잠깐 걸린다. 바로 지정하면 먹지 않을 때가 있다.
+    window.setTimeout(() => {
+      if (wantCaptions.current !== next) return;
+      p.setOption('captions', 'track', track);
+    }, 300);
   }
 
   if (!started) {
@@ -215,11 +235,17 @@ export function SafeVideo({
             {playing ? '⏸ 잠깐 멈추기' : '▶ 이어 보기'}
           </Button>
 
-          {captions ? (
-            <Button variant="ghost" data-testid="captions-toggle" onClick={toggleCaptions}>
-              {showCaptions ? '💬 자막 끄기' : '💬 자막 켜기'}
+          {captions?.map((lang) => (
+            <Button
+              key={lang}
+              variant="ghost"
+              data-testid="captions-toggle"
+              data-lang={lang}
+              onClick={() => chooseCaptions(lang)}
+            >
+              💬 {lang === 'ko' ? '한국어' : '영어'} 자막{captionLang === lang ? ' 끄기' : ''}
             </Button>
-          ) : null}
+          ))}
         </div>
       )}
     </div>
