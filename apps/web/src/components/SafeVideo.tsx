@@ -16,9 +16,12 @@ import { Button } from '@dailyglow/ui';
  *    영상들을 바둑판처럼 띄우는데, 그것이 뜨기 전에 가린다.
  * 4. 누르기 전에는 영상을 아예 불러오지 않는다. 안 볼 수도 있는 영상 때문에
  *    유튜브가 아이 기기를 들여다보게 둘 까닭이 없다(`youtube-nocookie`).
- * 5. **자막을 강제로 끈다.** 유튜브는 자기가 기계로 만든 자막을 제멋대로 켜서
- *    시작하는 때가 있다(`cc_load_policy: 0` 은 "끈다" 가 아니라 "보던 대로
- *    한다" 는 뜻이라 막지 못한다). 재생이 시작될 때마다 자막을 내려서 끈다.
+ * 5. **자막을 끈다.** 우리말 영상에서 자막은 글자만 좇게 만들고, 영어 영상에서
+ *    자막은 귀 대신 눈을 쓰게 만든다. 못 알아듣는 채로 듣는 시간이 쌓여야 귀가
+ *    열린다고 영숙님이 정했다 — "영어는 이해하든 못하든 그냥 듣게."
+ *    유튜브는 자기가 기계로 만든 자막을 제멋대로 켜서 시작하는 때가 있으므로
+ *    (`cc_load_policy: 0` 은 "끈다" 가 아니라 "보던 대로 한다" 는 뜻이라 막지
+ *    못한다) 재생이 시작될 때마다 내린다.
  *
  * **다만 완전히 막지는 못한다.** 화면을 꾹 누르면 브라우저 메뉴가 뜰 수 있다.
  * 일부러 찾아서 눌러야 나가는 수준이라고 보면 된다.
@@ -29,9 +32,7 @@ interface YouTubePlayer {
   playVideo(): void;
   pauseVideo(): void;
   seekTo(seconds: number, allowSeekAhead: boolean): void;
-  loadModule(name: string): void;
   unloadModule(name: string): void;
-  setOption(module: string, option: string, value: unknown): void;
 }
 
 declare global {
@@ -71,29 +72,16 @@ function loadPlayerApi(): Promise<NonNullable<Window['YT']>> {
 export function SafeVideo({
   videoId,
   label,
-  captions,
   onEnded,
 }: {
   videoId: string;
   /** 누르기 전에 단추에 적을 말 — "영상 보기 · 2분 9초" */
   label: string;
-  /**
-   * 고를 수 있는 자막의 말들. 비어 있으면 자막 단추를 두지 않는다.
-   *
-   * **켜고 시작하지는 않는다.** 늘 켜 두면 글자만 읽고 귀로 듣지 않게 된다.
-   * 놓친 데가 있을 때 아이가 켜서 확인하고 다시 끄면 된다.
-   */
-  captions?: readonly string[];
   onEnded?: () => void;
 }) {
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
-  /** 지금 켜 둔 자막의 말. 꺼져 있으면 null. */
-  const [captionLang, setCaptionLang] = useState<string | null>(null);
-  // 재생이 시작될 때마다 자막을 꺼야 하는데, 그 자리에서는 위의 값이 처음 값으로
-  // 굳어 보인다. 지금 값을 따로 들고 있는다.
-  const wantCaptions = useRef<string | null>(null);
   const holder = useRef<HTMLDivElement>(null);
   const player = useRef<YouTubePlayer | null>(null);
 
@@ -124,12 +112,12 @@ export function SafeVideo({
         events: {
           onReady: (e: { target: YouTubePlayer }) => {
             // 유튜브가 켜 둔 기계 자막을 내린다.
-            if (!wantCaptions.current) e.target.unloadModule('captions');
+            e.target.unloadModule('captions');
             setPlaying(true);
           },
           onStateChange: (e: { data: number; target: YouTubePlayer }) => {
             // 자막은 재생이 시작될 때 다시 올라오기도 한다. 그때마다 내린다.
-            if (!wantCaptions.current) e.target.unloadModule('captions');
+            e.target.unloadModule('captions');
             if (e.data !== YT.PlayerState.ENDED) return;
             // 바둑판이 뜨기 전에 덮는다.
             setEnded(true);
@@ -149,38 +137,6 @@ export function SafeVideo({
     // 넣으면 영상이 처음부터 다시 시작된다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, videoId]);
-
-  /**
-   * 자막을 이 말로 켠다. 이미 그 말이 켜져 있으면 끈다.
-   *
-   * 유튜브가 들고 있는 자막은 영어 하나뿐이고, 한국어는 그것을 기계가 옮긴 것이다.
-   * 옮길 말을 따로 지정하는 길(`translationLanguage` 를 따로 넘기는 것)도 있는데
-   * **그 길로는 먹지 않는다** — 실제 브라우저에서 해보니 영어 자막이 그대로
-   * 나왔다. 옮길 말을 **자막 지정 안에 같이 넣어야** 한국어로 바뀐다.
-   */
-  function chooseCaptions(lang: string) {
-    const next = captionLang === lang ? null : lang;
-    setCaptionLang(next);
-    wantCaptions.current = next;
-
-    const p = player.current;
-    if (!p) return;
-    if (!next) {
-      p.unloadModule('captions');
-      return;
-    }
-
-    p.loadModule('captions');
-    const track =
-      next === 'en'
-        ? { languageCode: 'en' }
-        : { languageCode: 'en', translationLanguage: { languageCode: next } };
-    // 자막이 올라오는 데 잠깐 걸린다. 바로 지정하면 먹지 않을 때가 있다.
-    window.setTimeout(() => {
-      if (wantCaptions.current !== next) return;
-      p.setOption('captions', 'track', track);
-    }, 300);
-  }
 
   if (!started) {
     return (
@@ -223,7 +179,7 @@ export function SafeVideo({
       </div>
 
       {ended ? null : (
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex justify-center">
           <Button
             variant="ghost"
             onClick={() => {
@@ -234,18 +190,6 @@ export function SafeVideo({
           >
             {playing ? '⏸ 잠깐 멈추기' : '▶ 이어 보기'}
           </Button>
-
-          {captions?.map((lang) => (
-            <Button
-              key={lang}
-              variant="ghost"
-              data-testid="captions-toggle"
-              data-lang={lang}
-              onClick={() => chooseCaptions(lang)}
-            >
-              💬 {lang === 'ko' ? '한국어' : '영어'} 자막{captionLang === lang ? ' 끄기' : ''}
-            </Button>
-          ))}
         </div>
       )}
     </div>

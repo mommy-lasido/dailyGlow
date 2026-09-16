@@ -1,7 +1,7 @@
 import { Button, Card } from '@dailyglow/ui';
 import { SafeVideo } from '@/components/SafeVideo';
 import { canSpeak, speak } from '@/lib/speak';
-import { CAPTION_LANGS, trackForGrade, videoLength, weeklyScience } from '@/lib/science';
+import { trackForGrade, videoLength, weeklyScience } from '@/lib/science';
 import { useProfile } from '@/stores/profile';
 
 /**
@@ -65,7 +65,6 @@ export function SciencePage() {
 
       <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="ko">
         <h3 className="text-center text-xl font-bold text-glow-600">영상으로 보기</h3>
-        {/* 한국어 영상에는 자막 단추를 두지 않는다. */}
         <SafeVideo
           videoId={topic.video.id}
           label={`영상 보기 · ${videoLength(topic.video.seconds)}`}
@@ -79,8 +78,7 @@ export function SciencePage() {
           <SafeVideo
             videoId={topic.videoEn.id}
             label={`영어 영상 보기 · ${videoLength(topic.videoEn.seconds)}`}
-              captions={CAPTION_LANGS}
-          />
+            />
         </Card>
       ) : null}
     </div>

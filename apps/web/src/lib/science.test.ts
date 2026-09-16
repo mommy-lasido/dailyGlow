@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  CAPTION_LANGS,
-  SCIENCE_TOPICS,
-  trackForGrade,
-  videoLength,
-  weeklyScience,
-} from './science';
+import { SCIENCE_TOPICS, trackForGrade, videoLength, weeklyScience } from './science';
 
 describe('weeklyScience', () => {
   it('같은 주에는 며칠에 걸쳐 열어도 같은 주제가 나온다', () => {
@@ -59,13 +53,5 @@ describe('videoLength', () => {
     expect(videoLength(129)).toBe('2분 9초');
     expect(videoLength(120)).toBe('2분');
     expect(videoLength(45)).toBe('45초');
-  });
-});
-
-describe('자막', () => {
-  it('영어 영상에서는 한국어와 영어를 고를 수 있다', () => {
-    // 아이마다 따로 맞춰 두면 아이가 늘 때마다 손이 간다. 둘 다 두고,
-    // 필요 없는 아이는 안 켜면 그만이다.
-    expect([...CAPTION_LANGS]).toEqual(['ko', 'en']);
   });
 });
