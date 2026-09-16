@@ -162,7 +162,7 @@ export function earlierByGrade(from: ScienceGrade): { grade: ScienceGrade; topic
  * 학교에서 배우는 것과 짝이 안 맞는다.
  */
 export function gradeName(grade: ScienceGrade): string {
-  return grade === 0 ? '킨더가든' : `G${grade}`;
+  return grade === 0 ? 'Kindergarten' : `G${grade}`;
 }
 
 /**
