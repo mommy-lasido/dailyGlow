@@ -198,8 +198,9 @@ describe('HomePage', () => {
     catalog.response = { data: [lessonRow({ config: { hint: '3 + 2 = ?' } })], error: null };
     const { container } = renderHome();
     expect(await screen.findByText('3 + 2 = ?')).toBeInTheDocument();
-    // 카드 안 <p> 는 예시 한 줄뿐.
-    expect(container.querySelectorAll('a p')).toHaveLength(1);
+    // 카드 안 <p> 는 예시 한 줄뿐. 과학 놀이터 카드는 창고를 거치지 않고 늘
+    // 붙어 있으므로 셈에서 뺀다.
+    expect(container.querySelectorAll('a:not([data-testid="science-card"]) p')).toHaveLength(1);
   });
 
   it('config.hint 가 없으면 예시 줄 없이 제목만 보여준다', async () => {
@@ -207,6 +208,13 @@ describe('HomePage', () => {
     const { container } = renderHome();
     expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
     // 카드에는 제목만 남는다 — 예시 자리에 빈 요소가 남지 않는다.
-    expect(container.querySelectorAll('a p')).toHaveLength(0);
+    expect(container.querySelectorAll('a:not([data-testid="science-card"]) p')).toHaveLength(0);
+  });
+
+  it('과학 놀이터 카드는 창고와 상관없이 늘 있다', async () => {
+    // 과학은 내용이 앱 안에 들어 있어 창고의 활동 목록을 거치지 않는다.
+    catalog.response = { data: [], error: null };
+    renderHome();
+    expect(await screen.findByText('과학 놀이터')).toBeInTheDocument();
   });
 });

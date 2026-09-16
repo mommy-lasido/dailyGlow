@@ -154,6 +154,8 @@ export function HomePage() {
       ) : null}
 
       <section className="flex flex-col gap-3">
+        <ScienceCard isPreReader={isPreReader} />
+
         {lessonsPending ? (
           <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
         ) : lessonsError ? (
@@ -191,6 +193,36 @@ export function HomePage() {
         )}
       </section>
     </div>
+  );
+}
+
+/**
+ * 과학 놀이터 카드.
+ *
+ * 다른 활동 카드는 창고에 적힌 목록에서 나오지만, 과학은 내용이 앱 안에 들어
+ * 있어 창고를 거치지 않는다. 그래서 이 카드만 따로 그린다.
+ *
+ * 활동 목록 맨 위에 둔다 — 한글과 수학은 날마다 하는 것이고 과학은 한 주에
+ * 하나라, 아래에 묻히면 한 주가 그냥 지나간다.
+ */
+function ScienceCard({ isPreReader }: { isPreReader: boolean }) {
+  return (
+    <Link to="/science" data-testid="science-card">
+      <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
+        <ActivityIcon
+          id="science"
+          className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
+        />
+        <div className="min-w-0">
+          <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+            과학 놀이터
+          </h2>
+          <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
+            이번 주에 배울 것이 하나 있어요
+          </p>
+        </div>
+      </Card>
+    </Link>
   );
 }
 
