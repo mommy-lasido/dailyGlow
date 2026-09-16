@@ -154,8 +154,6 @@ export function HomePage() {
       ) : null}
 
       <section className="flex flex-col gap-3">
-        <ScienceCard isPreReader={isPreReader} />
-
         {lessonsPending ? (
           <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
         ) : lessonsError ? (
@@ -191,6 +189,8 @@ export function HomePage() {
             </Link>
           ))
         )}
+
+        <ScienceCard isPreReader={isPreReader} />
       </section>
     </div>
   );
@@ -202,8 +202,8 @@ export function HomePage() {
  * 다른 활동 카드는 창고에 적힌 목록에서 나오지만, 과학은 내용이 앱 안에 들어
  * 있어 창고를 거치지 않는다. 그래서 이 카드만 따로 그린다.
  *
- * 활동 목록 맨 위에 둔다 — 한글과 수학은 날마다 하는 것이고 과학은 한 주에
- * 하나라, 아래에 묻히면 한 주가 그냥 지나간다.
+ * 활동 목록 **맨 아래**에 둔다. 날마다 하는 한글과 수학이 먼저고, 과학은 한
+ * 주에 하나이므로 그 뒤에 온다.
  */
 function ScienceCard({ isPreReader }: { isPreReader: boolean }) {
   return (
