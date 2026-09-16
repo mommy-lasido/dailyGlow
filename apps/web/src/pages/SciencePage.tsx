@@ -134,15 +134,12 @@ export function SciencePage() {
       {/* 이번 주의 주제. 활동 이름("과학 놀이터")은 홈 화면의 카드가 들고 있으므로
           여기서는 되풀이하지 않는다.
 
-          두 글씨의 크기 차이를 크게 벌려 놓았더니 한 줄에 억지로 붙여 놓은 것처럼
-          보였다. 크기는 조금만 벌리고 **밑줄을 맞춰** 나란히 놓는다. 앞말은
-          흐리게, 주제 이름만 진하게 — 눈에 먼저 들어와야 하는 것은 '자석' 이다. */}
-      <h1
-        data-testid="science-topic"
-        className="flex items-baseline justify-center gap-2"
-      >
+          한 줄에 나란히 놓으면 주제 이름이 가운데에 오지 않는다. **두 줄로 나눠**
+          작은 앞말을 위에 두고 주제 이름을 그 아래 가운데에 크게 놓는다.
+          주제 이름만 덜렁 놓으면 그것이 무엇인지 알 수 없으므로 앞말은 남긴다. */}
+      <h1 data-testid="science-topic" className="flex flex-col items-center gap-1">
         <span className="text-base font-medium text-slate-400">이번 주 주제는</span>
-        <span className="text-2xl font-bold text-glow-600">{thisWeek.topic.title}</span>
+        <span className="text-3xl font-bold text-glow-600">{thisWeek.topic.title}</span>
       </h1>
 
       <LessonView lesson={thisWeek} thisWeek />
