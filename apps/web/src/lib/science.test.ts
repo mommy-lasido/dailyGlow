@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  earlierByGrade,
+  topicsByGrade,
   lessonsFrom,
   SCIENCE_TOPICS,
   startGrade,
@@ -50,14 +50,15 @@ describe('startGrade', () => {
   });
 });
 
-describe('earlierByGrade', () => {
-  it('지나온 학년 것만 학년별로 묶는다', () => {
-    // 이번 주의 것으로는 나오지 않고, 목록에서 골라야 볼 수 있다.
-    for (const group of earlierByGrade(3)) {
-      expect(group.grade).toBeLessThan(3);
+describe('topicsByGrade', () => {
+  it('Kindergarten 부터 G5 까지 학년별로 묶어 모두 보여준다', () => {
+    // 과학은 배경지식이라 앞질러 본다고 잃을 것이 없다. 앞에 것만 보여주면
+    // 금방 볼 것이 떨어진다.
+    const groups = topicsByGrade();
+    expect(groups.map((g) => g.grade)).toEqual([0, 1, 2, 3, 4, 5]);
+    for (const group of groups) {
       for (const t of group.topics) expect(t.grade).toBe(group.grade);
     }
-    expect(earlierByGrade(0)).toHaveLength(0);
   });
 });
 

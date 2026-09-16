@@ -139,15 +139,21 @@ export function startGrade(grade: string | null | undefined): ScienceGrade {
 }
 
 /**
- * 아이가 골라 볼 수 있는 것들을 **학년별로 묶어** 돌려준다.
+ * 모든 주제를 **학년별로 묶어** 돌려준다. Kindergarten 부터 G5 까지 다.
  *
  * 백 개가 넘는 덩어리를 한 줄로 늘어놓으면 아무도 못 찾는다. 학년을 펴면 주제가
  * 나오고, 주제를 펴면 그 안의 덩어리가 나오는 세 겹으로 접어 둔다.
  *
- * 이미 지나온 학년만 담는다. 앞질러 가는 것은 이번 주의 차례가 데려간다.
+ * **지나온 것만 보여주지 않고 전부 보여준다.** 처음에는 지나온 학년만 담았는데,
+ * 영숙님이 "앞에 걸 다 보면 할 게 없어지네" 라며 전체를 열자고 했다.
+ *
+ * 한글과 수학에서는 앞질러 내주지 않는 것이 규칙이다. 아직 못 배운 자음이 나오면
+ * 읽을 방법이 없기 때문이다. **과학은 다르다.** 배경지식이라 순서가 느슨하고,
+ * 먼저 본다고 잃을 것이 없다. 아이가 궁금해서 앞의 것을 여는 것은 오히려 좋은
+ * 일이다. 그래도 **이번 주에 할 것은 아이의 학년에서 차례대로** 나온다.
  */
-export function earlierByGrade(from: ScienceGrade): { grade: ScienceGrade; topics: ScienceTopic[] }[] {
-  const grades = [...new Set(SCIENCE_TOPICS.filter((t) => t.grade < from).map((t) => t.grade))];
+export function topicsByGrade(): { grade: ScienceGrade; topics: ScienceTopic[] }[] {
+  const grades = [...new Set(SCIENCE_TOPICS.map((t) => t.grade))];
   return grades.map((grade) => ({
     grade,
     topics: SCIENCE_TOPICS.filter((t) => t.grade === grade),

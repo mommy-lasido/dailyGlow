@@ -3,7 +3,7 @@ import { Button, Card } from '@dailyglow/ui';
 import { SafeVideo } from '@/components/SafeVideo';
 import { canSpeak, speak } from '@/lib/speak';
 import {
-  earlierByGrade,
+  topicsByGrade,
   gradeName,
   startGrade,
   videoLength,
@@ -31,9 +31,12 @@ import { useProfile } from '@/stores/profile';
  * 과정으로 배우므로 3학년 것이 곧 학교에서 지금 하는 것이고, 시윤이와 도윤이는
  * 킨더가든부터다.
  *
- * **지나온 학년 것은 단추 뒤 다른 화면에 둔다.** 이번 주 화면에 같이 깔아 두면
- * 아이가 이것저것 눌러 집중이 흐트러진다. 백 개가 넘으므로 학년 → 주제 →
- * 덩어리의 세 겹으로 접어 둔다.
+ * **목록은 단추 뒤 다른 화면에 둔다.** 이번 주 화면에 같이 깔아 두면 아이가
+ * 이것저것 눌러 집중이 흐트러진다. 백 개가 넘으므로 학년 → 주제 → 덩어리의
+ * 세 겹으로 접어 둔다.
+ *
+ * 목록에는 **Kindergarten 부터 G5 까지 전부** 있다. 과학은 배경지식이라 앞질러
+ * 본다고 잃을 것이 없다. 그래도 이번 주에 할 것은 아이의 학년에서 차례대로 나온다.
  *
  * 영어 영상은 **한국어 영상 뒤에** 온다. 라윤이는 자막 없이 알아듣지만, 시윤이와
  * 도윤이에게는 아직 모르는 말이라 내용을 아는 채로 들어야 장면에 가서 붙는다.
@@ -45,7 +48,7 @@ export function SciencePage() {
   const grade = useProfile((s) => s.profile?.grade ?? null);
   const from = startGrade(grade);
   const thisWeek = weeklyScience(from);
-  const groups = earlierByGrade(from);
+  const groups = topicsByGrade();
 
   /** 지난 목록을 펼쳤는가. */
   const [listOpen, setListOpen] = useState(false);
@@ -71,7 +74,7 @@ export function SciencePage() {
   if (listOpen) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-center text-2xl font-bold text-glow-600">지난 목록 보기</h1>
+        <h1 className="text-center text-2xl font-bold text-glow-600">목록 보기</h1>
         <div className="flex justify-center">
           <Button variant="ghost" onClick={() => setListOpen(false)}>
             ← 돌아가기
@@ -135,7 +138,7 @@ export function SciencePage() {
       {groups.length > 0 ? (
         <div className="flex justify-center">
           <Button variant="ghost" data-testid="open-earlier" onClick={() => setListOpen(true)}>
-            📚 지난 목록 보기
+            📚 목록 보기
           </Button>
         </div>
       ) : null}
