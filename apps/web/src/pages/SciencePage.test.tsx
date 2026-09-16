@@ -4,13 +4,15 @@ import { SciencePage } from './SciencePage';
 import { weeklyScience } from '@/lib/science';
 
 // 로그인한 아이가 없는 화면은 킨더가든부터 본다 — 시윤이와 도윤이 자리다.
-const topic = weeklyScience(0);
+const lesson = weeklyScience(0);
 
 describe('SciencePage', () => {
-  it('이번 주의 주제와 개념 설명을 보여준다', () => {
+  it('이번 주에 배울 덩어리 하나만 보여준다', () => {
+    // 주제를 통째로 쏟아 놓으면 한 학년이 서너 주 만에 지나가 버린다.
     render(<SciencePage />);
-    expect(screen.getByTestId('science-title')).toHaveTextContent(topic.title);
-    expect(screen.getAllByTestId('science-section')).toHaveLength(topic.sections.length);
+    expect(screen.getByTestId('science-title')).toHaveTextContent(lesson.section.heading);
+    expect(screen.getByTestId('science-topic')).toHaveTextContent(lesson.topic.title);
+    expect(screen.getAllByTestId('science-section')).toHaveLength(1);
   });
 
   it('집에서 하는 실험을 시키지 않는다', () => {

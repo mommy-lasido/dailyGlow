@@ -36,6 +36,8 @@
  * `SafeVideo` 가 재생될 때마다 자막을 내린다.
  */
 
+import { TOPICS } from './science-topics';
+
 export interface ScienceVideo {
   /** 유튜브 영상 번호 */
   id: string;
@@ -50,6 +52,24 @@ export interface ScienceVideo {
  * `docs/과학-차례.md` 에 스물한 덩어리를 옮겨 적어 두었다.
  */
 export type ScienceGrade = 0 | 1 | 2 | 3 | 4 | 5;
+
+/**
+ * 한 주에 배우는 것 — **주제 하나가 아니라 그 안의 덩어리 하나**다.
+ *
+ * 주제 하나(자석)를 한 주에 끝내면 한 학년이 서너 주 만에 지나가 버린다.
+ * 교재가 한 주제를 여러 주에 걸쳐 가르치는 데는 까닭이 있다. 그래서 개념 글의
+ * 덩어리 하나하나가 곧 한 주 치가 된다 — 자석이면 붙는 물질, 끌어당기는 까닭,
+ * 두 극, 자기장, 나침반으로 다섯 주다.
+ *
+ * 영상은 주제에 하나씩 붙어 있으므로 그 주제를 하는 동안 같은 영상을 다시 본다.
+ * 어린아이에게 되풀이는 손해가 아니라 이득이다.
+ */
+export interface ScienceLesson {
+  topic: ScienceTopic;
+  section: ScienceSection;
+  /** 이 주제 안에서 몇 번째 덩어리인가(0부터). */
+  index: number;
+}
 
 /**
  * 개념 설명 한 덩어리.
@@ -88,81 +108,11 @@ export interface ScienceTopic {
 }
 
 /**
- * 주제 목록.
+ * 주제 스물한 덩어리. 내용은 `science-topics.ts` 에 있다.
  *
- * 지금은 한 주 치만 있다. 영숙님이 보고 이대로 갈지 정한 뒤에 늘린다.
- * 늘릴 때의 차례는 미국 과학 기준(NGSS)을 따른다 — `docs/나중에-할-것.md` 참고.
+ * 학년 차례대로 놓여 있고, 그 차례가 곧 배우는 차례다.
  */
-export const SCIENCE_TOPICS: ScienceTopic[] = [
-  {
-    // 킨더가든 — 밀기와 당기기(K-PS2). 미국 기준에서 킨더가든이 처음 만나는
-    // 물리다. 그네와 문처럼 아이가 날마다 만지는 것으로 이야기한다.
-    grade: 0,
-    slug: 'push-pull',
-    title: '밀기와 당기기',
-    sections: [
-      {
-        heading: '힘이란 무엇일까',
-        body: '물건을 움직이게 하는 것을 힘이라고 해요. 힘은 눈에 보이지 않아요. 그런데 손으로 밀어 보면 느낄 수 있고, 물건이 움직이는 것을 보면 힘이 있었다는 것을 알 수 있어요.',
-      },
-      {
-        heading: '미는 힘과 당기는 힘',
-        body: '힘에는 두 가지 방향이 있어요. 미는 힘은 물건을 나에게서 멀어지게 해요. 그네를 밀면 그네가 나에게서 멀어지지요. 당기는 힘은 물건을 나에게 가까워지게 해요. 서랍을 당기면 서랍이 나에게 가까워져요.',
-      },
-      {
-        heading: '힘은 네 가지 일을 해요',
-        body: '첫째, 멈춰 있던 것을 움직이게 해요. 둘째, 움직이던 것을 멈추게 해요. 셋째, 가던 방향을 바꿔요. 굴러오는 공을 옆에서 치면 공이 다른 쪽으로 가지요. 넷째, 모양을 바꿔요. 찰흙을 누르면 납작해져요.',
-      },
-      {
-        heading: '세게 줄수록 많이 움직여요',
-        body: '같은 물건이라도 힘을 세게 주면 더 빨리, 더 멀리 가요. 살살 밀면 조금만 가고요. 그래서 그네를 세게 밀면 높이 올라가고, 살살 밀면 조금만 흔들려요.',
-      },
-      {
-        heading: '무거우면 힘이 더 들어요',
-        body: '가벼운 것은 살짝만 밀어도 움직여요. 무거운 것은 세게 밀어야 움직이고요. 인형은 손가락으로도 밀리지만, 소파는 두 손으로 밀어야 하는 까닭이 여기 있어요.',
-      },
-    ],
-    // 대발이TV 『과학동화 - 밀고 당기고』
-    video: { id: 'xg9JeMa-DRk', seconds: 335 },
-    // SciShow Kids 『Swings, Slides, and Science』 — 놀이터에서 밀고 당기는 이야기.
-    videoEn: { id: 'JvSClZ3vHOI', seconds: 218 },
-  },
-  {
-    // 3학년 — 자석(3-PS2-3, 전기와 자석의 힘).
-    grade: 3,
-    slug: 'magnet',
-    title: '자석',
-    sections: [
-      {
-        heading: '무엇이 붙고 무엇이 안 붙을까',
-        body: '자석에는 철로 만든 것만 붙어요. 못, 클립, 가위, 냉장고 문이 그렇지요. 같은 금속이라도 구리, 알루미늄, 금, 은은 붙지 않아요. 종이, 나무, 플라스틱, 유리도 붙지 않고요. 그래서 "쇠붙이는 다 붙는다" 고 하면 틀린 말이에요. 철이어야 붙어요.',
-      },
-      {
-        heading: '왜 붙을까',
-        body: '철 안에는 눈에 보이지 않는 아주 작은 자석들이 잔뜩 들어 있어요. 평소에는 제각각 다른 쪽을 보고 흩어져 있어서 서로 힘을 없애 버려요. 그래서 그냥 철은 자석이 아니에요. 그런데 자석을 가까이 가져가면 이 작은 자석들이 한 방향으로 줄을 서요. 줄을 서면 힘이 모여서 철도 잠깐 자석이 되고, 그래서 자석에 붙어요.',
-      },
-      {
-        heading: 'N극과 S극',
-        body: '자석에는 양 끝에 N극과 S극이 있어요. 자석의 힘은 가운데보다 이 두 끝이 훨씬 세요. 클립을 막대자석에 뿌려 보면 양 끝에만 잔뜩 붙는 까닭이 이것이에요. 같은 극끼리는 서로 밀어내고, 다른 극끼리는 서로 끌어당겨요.',
-      },
-      {
-        heading: '닿지 않아도 힘이 있어요',
-        body: '자석은 손을 대지 않아도 클립을 움직여요. 종이 한 장이나 책받침을 사이에 두어도 붙고요. 자석 둘레에는 눈에 보이지 않는 힘의 자리가 퍼져 있는데, 이것을 자기장이라고 해요. 자석에서 멀어질수록 이 힘은 약해져요.',
-      },
-      {
-        heading: '자석을 자르면 어떻게 될까',
-        body: '막대자석을 반으로 자르면 N극 조각과 S극 조각으로 나뉠 것 같지요. 그런데 그렇지 않아요. 잘린 조각마다 다시 N극과 S극이 새로 생겨요. 아무리 작게 잘라도 마찬가지예요. N극만 있는 자석은 세상에 없어요.',
-      },
-      {
-        heading: '지구도 커다란 자석이에요',
-        body: '나침반 바늘이 늘 북쪽을 가리키는 까닭이 여기 있어요. 지구 자체가 커다란 자석이라서, 나침반 안의 작은 자석을 끌어당기는 거예요. 옛날 뱃사람들이 바다 한가운데서 길을 찾을 수 있었던 것도 이 덕분이에요.',
-      },
-    ],
-    video: { id: 'jenhkrBuGH0', seconds: 129 },
-    // SciShow Kids 『Fun with Magnets!』 — 영숙님이 고른 것.
-    videoEn: { id: 's236Q1nuWXg', seconds: 301 },
-  },
-];
+export const SCIENCE_TOPICS: ScienceTopic[] = TOPICS;
 
 /** 한 주는 월요일에 시작한다. 그 주의 월요일 자정을 돌려준다. */
 function weekStart(today: Date): Date {
@@ -189,14 +139,19 @@ export function startGrade(grade: string | null | undefined): ScienceGrade {
 }
 
 /**
- * 이 아이가 이미 지나온 학년의 주제들.
+ * 아이가 골라 볼 수 있는 것들을 **학년별로 묶어** 돌려준다.
  *
- * 이번 주의 주제로는 나오지 않지만, 아이가 목록에서 골라 볼 수 있다. 학교에서
- * 한 것이라도 영어 영상으로 다시 보면 남는 것이 있고, 놓친 것이 있으면 여기서
- * 메운다.
+ * 백 개가 넘는 덩어리를 한 줄로 늘어놓으면 아무도 못 찾는다. 학년을 펴면 주제가
+ * 나오고, 주제를 펴면 그 안의 덩어리가 나오는 세 겹으로 접어 둔다.
+ *
+ * 이미 지나온 학년만 담는다. 앞질러 가는 것은 이번 주의 차례가 데려간다.
  */
-export function earlierTopics(from: ScienceGrade): ScienceTopic[] {
-  return SCIENCE_TOPICS.filter((t) => t.grade < from);
+export function earlierByGrade(from: ScienceGrade): { grade: ScienceGrade; topics: ScienceTopic[] }[] {
+  const grades = [...new Set(SCIENCE_TOPICS.filter((t) => t.grade < from).map((t) => t.grade))];
+  return grades.map((grade) => ({
+    grade,
+    topics: SCIENCE_TOPICS.filter((t) => t.grade === grade),
+  }));
 }
 
 /** 학년을 아이가 읽을 말로. */
@@ -212,7 +167,19 @@ export function gradeName(grade: ScienceGrade): string {
 const ANCHOR = new Date(2026, 8, 14);
 
 /**
- * 이번 주의 주제.
+ * 이 아이가 앞으로 배울 것들을 한 줄로 펼친다.
+ *
+ * 학년 차례대로, 주제 차례대로, 그 안의 덩어리 차례대로다. 이 줄의 차례가 곧
+ * 주마다 나아가는 차례가 된다.
+ */
+export function lessonsFrom(from: ScienceGrade): ScienceLesson[] {
+  return SCIENCE_TOPICS.filter((t) => t.grade >= from).flatMap((topic) =>
+    topic.sections.map((section, index) => ({ topic, section, index })),
+  );
+}
+
+/**
+ * 이번 주에 배울 것.
  *
  * 시작 학년부터 **차례대로** 한 주에 하나씩 나아간다. 끝까지 가면 처음으로
  * 돌아온다 — 어린아이는 되풀이가 손해가 아니라 이득이다.
@@ -220,8 +187,8 @@ const ANCHOR = new Date(2026, 8, 14);
  * 같은 주 안에서는 며칠에 걸쳐 열어도 늘 같은 것이 나온다. 한 주 내내 같은 것을
  * 만나야 남는다.
  */
-export function weeklyScience(from: ScienceGrade, today = new Date()): ScienceTopic {
-  const pool = SCIENCE_TOPICS.filter((t) => t.grade >= from);
+export function weeklyScience(from: ScienceGrade, today = new Date()): ScienceLesson {
+  const pool = lessonsFrom(from);
   const week = 7 * 24 * 60 * 60 * 1000;
   const weeks = Math.round((weekStart(today).getTime() - ANCHOR.getTime()) / week);
   const index = ((weeks % pool.length) + pool.length) % pool.length;

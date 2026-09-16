@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  earlierTopics,
+  earlierByGrade,
+  lessonsFrom,
   SCIENCE_TOPICS,
   startGrade,
   videoLength,
@@ -13,8 +14,8 @@ describe('weeklyScience', () => {
     const 월 = weeklyScience(0, new Date(2026, 8, 14));
     const 목 = weeklyScience(0, new Date(2026, 8, 17));
     const 일 = weeklyScience(0, new Date(2026, 8, 20));
-    expect(월.slug).toBe(목.slug);
-    expect(목.slug).toBe(일.slug);
+    expect(월.section.heading).toBe(목.section.heading);
+    expect(목.section.heading).toBe(일.section.heading);
   });
 
   it('주제마다 개념 설명과 영상이 있다', () => {
@@ -49,11 +50,29 @@ describe('startGrade', () => {
   });
 });
 
-describe('earlierTopics', () => {
-  it('지나온 학년 것만 모은다', () => {
-    // 이번 주의 주제로는 나오지 않고, 목록에서 골라야 볼 수 있다.
-    for (const t of earlierTopics(3)) expect(t.grade).toBeLessThan(3);
-    expect(earlierTopics(0)).toHaveLength(0);
+describe('earlierByGrade', () => {
+  it('지나온 학년 것만 학년별로 묶는다', () => {
+    // 이번 주의 것으로는 나오지 않고, 목록에서 골라야 볼 수 있다.
+    for (const group of earlierByGrade(3)) {
+      expect(group.grade).toBeLessThan(3);
+      for (const t of group.topics) expect(t.grade).toBe(group.grade);
+    }
+    expect(earlierByGrade(0)).toHaveLength(0);
+  });
+});
+
+describe('lessonsFrom', () => {
+  it('한 주에 배우는 것은 주제가 아니라 그 안의 덩어리 하나다', () => {
+    // 주제를 한 주에 통째로 끝내면 한 학년이 서너 주 만에 지나가 버린다.
+    const lessons = lessonsFrom(0);
+    const sections = SCIENCE_TOPICS.reduce((n, t) => n + t.sections.length, 0);
+    expect(lessons).toHaveLength(sections);
+    expect(lessons.length).toBeGreaterThan(SCIENCE_TOPICS.length);
+  });
+
+  it('학년 차례대로, 주제 차례대로 펼친다', () => {
+    const grades = lessonsFrom(0).map((l) => l.topic.grade);
+    expect([...grades].sort((a, b) => a - b)).toEqual(grades);
   });
 });
 
@@ -67,7 +86,7 @@ describe('주제 차례', () => {
   it('주가 바뀌면 다음 주제로 넘어간다', () => {
     const 이번주 = weeklyScience(0, new Date(2026, 8, 14));
     const 다음주 = weeklyScience(0, new Date(2026, 8, 21));
-    expect(다음주.slug).not.toBe(이번주.slug);
+    expect(다음주.section.heading).not.toBe(이번주.section.heading);
   });
 });
 
