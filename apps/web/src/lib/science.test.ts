@@ -55,3 +55,18 @@ describe('videoLength', () => {
     expect(videoLength(45)).toBe('45초');
   });
 });
+
+describe('자막', () => {
+  it('한국어 영상에는 자막 단추를 두지 않는다', () => {
+    // 우리말은 듣고 아는 것이지 읽고 아는 것이 아니다.
+    for (const topic of SCIENCE_TOPICS) {
+      expect(topic.video.captions).toBeUndefined();
+    }
+  });
+
+  it('영어 영상에서만 자막을 고를 수 있다', () => {
+    for (const topic of SCIENCE_TOPICS) {
+      if (topic.videoEn) expect(topic.videoEn.captions).toBe('en');
+    }
+  });
+});
