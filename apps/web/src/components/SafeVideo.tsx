@@ -26,6 +26,9 @@ interface YouTubePlayer {
   playVideo(): void;
   pauseVideo(): void;
   seekTo(seconds: number, allowSeekAhead: boolean): void;
+  loadModule(name: string): void;
+  unloadModule(name: string): void;
+  setOption(module: string, option: string, value: unknown): void;
 }
 
 declare global {
@@ -65,16 +68,25 @@ function loadPlayerApi(): Promise<NonNullable<Window['YT']>> {
 export function SafeVideo({
   videoId,
   label,
+  captions,
   onEnded,
 }: {
   videoId: string;
   /** 누르기 전에 단추에 적을 말 — "영상 보기 · 2분 9초" */
   label: string;
+  /**
+   * 고를 수 있는 자막의 말. 주면 자막 단추가 생긴다.
+   *
+   * **켜고 시작하지는 않는다.** 늘 켜 두면 글자만 읽고 귀로 듣지 않게 된다.
+   * 놓친 데가 있을 때 아이가 켜서 확인하고 다시 끄면 된다.
+   */
+  captions?: string;
   onEnded?: () => void;
 }) {
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(false);
   const holder = useRef<HTMLDivElement>(null);
   const player = useRef<YouTubePlayer | null>(null);
 
@@ -99,6 +111,8 @@ export function SafeVideo({
           playsinline: 1,
           // 중간에 뭔가 뜨더라도 같은 곳의 영상만 나오게 묶어 둔다.
           rel: 0,
+          // 자막은 꺼진 채로 시작한다. 켜는 것은 아이가 단추로 한다.
+          cc_load_policy: 0,
         },
         events: {
           onReady: () => setPlaying(true),
@@ -122,6 +136,18 @@ export function SafeVideo({
     // 넣으면 영상이 처음부터 다시 시작된다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started, videoId]);
+
+  function toggleCaptions() {
+    const next = !showCaptions;
+    setShowCaptions(next);
+    if (!player.current) return;
+    if (next) {
+      player.current.loadModule('captions');
+      player.current.setOption('captions', 'track', { languageCode: captions });
+    } else {
+      player.current.unloadModule('captions');
+    }
+  }
 
   if (!started) {
     return (
@@ -164,7 +190,7 @@ export function SafeVideo({
       </div>
 
       {ended ? null : (
-        <div className="flex justify-center">
+        <div className="flex flex-wrap justify-center gap-2">
           <Button
             variant="ghost"
             onClick={() => {
@@ -175,6 +201,12 @@ export function SafeVideo({
           >
             {playing ? '⏸ 잠깐 멈추기' : '▶ 이어 보기'}
           </Button>
+
+          {captions ? (
+            <Button variant="ghost" data-testid="captions-toggle" onClick={toggleCaptions}>
+              {showCaptions ? '💬 자막 끄기' : '💬 자막 켜기'}
+            </Button>
+          ) : null}
         </div>
       )}
     </div>

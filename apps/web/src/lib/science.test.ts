@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { SCIENCE_TOPICS, videoLength, weeklyScience } from './science';
+import { SCIENCE_TOPICS, trackForGrade, videoLength, weeklyScience } from './science';
 
 describe('weeklyScience', () => {
   it('같은 주에는 며칠에 걸쳐 열어도 같은 주제가 나온다', () => {
     // 한 주 내내 같은 것을 만나야 남는다. 날마다 바뀌면 스쳐 지나갈 뿐이다.
-    const 월 = weeklyScience(new Date(2026, 8, 14));
-    const 목 = weeklyScience(new Date(2026, 8, 17));
-    const 일 = weeklyScience(new Date(2026, 8, 20));
+    const 월 = weeklyScience('kinder', new Date(2026, 8, 14));
+    const 목 = weeklyScience('kinder', new Date(2026, 8, 17));
+    const 일 = weeklyScience('kinder', new Date(2026, 8, 20));
     expect(월.slug).toBe(목.slug);
     expect(목.slug).toBe(일.slug);
   });
@@ -18,6 +18,22 @@ describe('weeklyScience', () => {
       expect(topic.video.id).not.toBe('');
       expect(topic.video.seconds).toBeGreaterThan(0);
       expect(topic.doThis).not.toBe('');
+    }
+  });
+});
+
+describe('trackForGrade', () => {
+  it('초등학생만 3학년 과정으로 본다', () => {
+    // 시윤이와 도윤이는 preschool 이라 킨더가든 과정부터 나와야 한다.
+    expect(trackForGrade('g3')).toBe('g3');
+    expect(trackForGrade('preschool')).toBe('kinder');
+    expect(trackForGrade(null)).toBe('kinder');
+  });
+
+  it('과정마다 주제가 하나 이상 있다', () => {
+    // 한쪽이 비면 그 아이는 빈 화면을 본다.
+    for (const track of ['kinder', 'g3'] as const) {
+      expect(SCIENCE_TOPICS.filter((t) => t.track === track).length).toBeGreaterThan(0);
     }
   });
 });
