@@ -225,9 +225,13 @@ function ScienceCard({ isPreReader, done }: { isPreReader: boolean; done: boolea
           <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
             과학 놀이터
           </h2>
-          <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-            {done ? '이번 주 것은 다 봤어요' : '이번 주에 배울 것이 하나 있어요'}
-          </p>
+          {/* 다 보고 나면 줄을 아예 없앤다. "다 봤어요" 라고 적어 두면 할 일이
+              남은 카드와 같은 모양이라, 아이가 또 눌러 볼 것이 있는 줄 안다. */}
+          {done ? null : (
+            <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
+              이번 주에 배울 것이 하나 있어요
+            </p>
+          )}
         </div>
       </Card>
     </Link>
