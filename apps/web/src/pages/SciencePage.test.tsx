@@ -7,11 +7,16 @@ import { weeklyScience } from '@/lib/science';
 const topic = weeklyScience('kinder');
 
 describe('SciencePage', () => {
-  it('이번 주의 주제와 글과 해볼 것을 보여준다', () => {
+  it('이번 주의 주제와 개념 설명을 보여준다', () => {
     render(<SciencePage />);
     expect(screen.getByTestId('science-title')).toHaveTextContent(topic.title);
-    expect(screen.getAllByTestId('science-line')).toHaveLength(topic.lines.length);
-    expect(screen.getByTestId('science-do')).toHaveTextContent(topic.doThis);
+    expect(screen.getAllByTestId('science-section')).toHaveLength(topic.sections.length);
+  });
+
+  it('집에서 하는 실험을 시키지 않는다', () => {
+    // 준비물은 결국 부모의 일이 되고, 아이가 혼자 시작하면 집이 어지러워진다.
+    render(<SciencePage />);
+    expect(screen.queryByText(/해볼 것|만들어보세요|찾아보세요/)).toBeNull();
   });
 
   it('맞히는 자리가 없다', () => {

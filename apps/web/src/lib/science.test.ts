@@ -11,13 +11,23 @@ describe('weeklyScience', () => {
     expect(목.slug).toBe(일.slug);
   });
 
-  it('주제마다 글과 영상과 해볼 것이 모두 있다', () => {
-    // 셋 중 하나라도 비면 화면이 반쪽이 된다.
+  it('주제마다 개념 설명과 영상이 있다', () => {
+    // 둘 중 하나라도 비면 화면이 반쪽이 된다.
     for (const topic of SCIENCE_TOPICS) {
-      expect(topic.lines.length).toBeGreaterThan(0);
+      expect(topic.sections.length).toBeGreaterThan(0);
       expect(topic.video.id).not.toBe('');
       expect(topic.video.seconds).toBeGreaterThan(0);
-      expect(topic.doThis).not.toBe('');
+    }
+  });
+
+  it('설명은 겉핥기로 한 줄만 적지 않는다', () => {
+    // "밀면 저쪽으로 가요" 같은 한 줄짜리는 없느니만 못하다. 아이도 아는 것을
+    // 문장으로 바꿔 놓은 것은 가르치는 것이 아니다.
+    for (const topic of SCIENCE_TOPICS) {
+      for (const section of topic.sections) {
+        expect(section.heading).not.toBe('');
+        expect(section.body.length).toBeGreaterThan(50);
+      }
     }
   });
 });
