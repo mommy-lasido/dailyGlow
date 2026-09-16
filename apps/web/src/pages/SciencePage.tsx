@@ -14,7 +14,11 @@ import {
 import { useProfile } from '@/stores/profile';
 
 /**
- * 과학 배우기.
+ * 과학 놀이터.
+ *
+ * 화면 맨 위에는 **이번 주의 주제**(자석)를 크게 걸고, 그 아래 상자 안에 이번
+ * 주에 배울 덩어리(자석에 붙는 물질 알아보기)를 둔다. 주제가 먼저 보여야 아이가
+ * 몇 주째 무엇을 붙잡고 있는지 알고, 상자 안의 제목이 오늘 할 일이 된다.
  *
  * 두 걸음으로 끝난다 — **읽고, 본다.** 맞히는 자리는 없다. 과학은 사지선다로
  * 배워지는 것이 아니라 보고 들은 것이 쌓여서 배워진다.
@@ -52,6 +56,7 @@ export function SciencePage() {
   if (picked) {
     return (
       <div className="flex flex-col gap-4">
+        <h1 className="text-center text-2xl font-bold text-glow-600">{picked.topic.title}</h1>
         <div className="flex justify-center">
           <Button variant="ghost" onClick={() => setPicked(null)}>
             ← 목록으로
@@ -119,7 +124,11 @@ export function SciencePage() {
   // ── 이번 주 ──────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-center text-2xl font-bold text-glow-600">과학 배우기</h1>
+      {/* 이번 주의 주제. 활동 이름("과학 놀이터")은 홈 화면의 카드가 들고 있으므로
+          여기서는 되풀이하지 않는다. */}
+      <h1 data-testid="science-topic" className="text-center text-2xl font-bold text-glow-600">
+        {thisWeek.topic.title}
+      </h1>
 
       <LessonView lesson={thisWeek} />
 
@@ -137,8 +146,7 @@ export function SciencePage() {
 /**
  * 한 주 치를 펼쳐 보여준다 — 이번에 배울 덩어리 하나, 그리고 그 주제의 영상.
  *
- * 주제 이름은 작게 위에 두고 **배울 것을 크게** 둔다. 이번 주에 무엇을 배우는지가
- * 제목이어야 아이가 무엇을 하는 중인지 안다.
+ * 주제 이름은 이 상자 밖(화면 맨 위)에 있고, 상자 안에는 **오늘 배울 것**만 둔다.
  */
 function LessonView({ lesson }: { lesson: ScienceLesson }) {
   const { topic, section } = lesson;
@@ -146,9 +154,6 @@ function LessonView({ lesson }: { lesson: ScienceLesson }) {
   return (
     <>
       <Card className="flex flex-col items-center gap-4 text-center">
-        <p data-testid="science-topic" className="text-lg font-bold text-glow-400">
-          {topic.title}
-        </p>
         <h2 data-testid="science-title" className="text-3xl font-bold text-slate-700">
           {section.heading}
         </h2>
