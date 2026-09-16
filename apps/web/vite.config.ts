@@ -23,7 +23,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // 등록은 우리가 직접 한다(`lib/appUpdate.ts`). 새것을 받은 뒤 언제 화면을
+      // 다시 부를지 우리가 정해야 하기 때문이다 — 아이가 문제를 푸는 중에
+      // 다시 부르면 풀던 것이 날아간다.
+      injectRegister: null,
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: 'index.html',
