@@ -21,8 +21,20 @@ export function canSpeak(): boolean {
  * 앞에 적힌 것일수록 먼저 고른다. Google 목소리가 가장 사람에 가깝고, 그다음이
  * 요즘 윈도의 Natural 목소리다. 이름으로 고르는 것이 투박해 보이지만, 브라우저가
  * "이 목소리가 얼마나 자연스러운가" 를 알려주지 않으므로 다른 방법이 없다.
+ *
+ * **아이패드에서는 Google 목소리가 없다.** 애플 기기의 웹은 애플 목소리만 쓸 수
+ * 있어서, 맥에서 듣던 것과 아이패드에서 듣는 것이 다르다. 애플의 한국어 목소리
+ * (유나)는 기본으로 깔린 것이 가장 가벼운 판이라 기계 같다. 기기에서 **고급·프리미엄
+ * 판을 내려받으면** 목록에 따로 나타나므로, 있으면 그것을 먼저 고른다.
+ * (아이패드: 설정 → 손쉬운 사용 → 콘텐츠 말하기 → 음성 → 한국어)
  */
-const VOICE_RANK = [/google/i, /natural/i, /neural/i, /yuna|sunhi|injoon|heami/i];
+const VOICE_RANK = [
+  /google/i,
+  /premium|enhanced|고급|프리미엄/i,
+  /natural/i,
+  /neural/i,
+  /yuna|sunhi|injoon|heami|유나/i,
+];
 
 export function pickKoreanVoice(
   voices: SpeechSynthesisVoice[],
