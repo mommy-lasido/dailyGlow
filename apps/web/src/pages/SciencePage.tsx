@@ -86,7 +86,6 @@ export function SciencePage() {
                 onClick={() => setPicked(t)}
                 className="min-h-touch rounded-3xl bg-glow-100 px-5 py-4 text-left text-lg font-bold text-slate-700 transition-transform active:scale-95"
               >
-                <span className="mr-3 text-2xl">{t.emoji}</span>
                 {t.title}
                 <span className="ml-2 text-sm font-normal text-slate-400">
                   {gradeName(t.grade)}
@@ -122,7 +121,6 @@ function TopicView({ topic }: { topic: ScienceTopic }) {
   return (
     <>
       <Card className="flex flex-col items-center gap-4 text-center">
-        <span className="text-6xl">{topic.emoji}</span>
         <h2 data-testid="science-title" className="text-3xl font-bold text-slate-700">
           {topic.title}
         </h2>

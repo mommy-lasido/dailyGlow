@@ -65,9 +65,13 @@ export interface ScienceSection {
 export interface ScienceTopic {
   grade: ScienceGrade;
   slug: string;
-  /** 이번 주의 주제 — 아이에게 보이는 이름 */
+  /**
+   * 이번 주의 주제 — 아이에게 보이는 이름.
+   *
+   * 그림글자(이모지)는 달지 않는다. 영숙님이 낱말 읽기·문장 읽기에서 그랬듯이
+   * 여기서도 지우라고 했다 — 글자 옆에 그림이 붙으면 아이가 글자 대신 그림을 본다.
+   */
   title: string;
-  emoji: string;
   /** 개념 설명. 제목 달린 덩어리 서넛. */
   sections: ScienceSection[];
   video: ScienceVideo;
@@ -96,7 +100,6 @@ export const SCIENCE_TOPICS: ScienceTopic[] = [
     grade: 0,
     slug: 'push-pull',
     title: '밀기와 당기기',
-    emoji: '🛒',
     sections: [
       {
         heading: '힘이란 무엇일까',
@@ -129,7 +132,6 @@ export const SCIENCE_TOPICS: ScienceTopic[] = [
     grade: 3,
     slug: 'magnet',
     title: '자석',
-    emoji: '🧲',
     sections: [
       {
         heading: '무엇이 붙고 무엇이 안 붙을까',
