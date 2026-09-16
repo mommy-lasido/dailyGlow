@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
 import { SafeVideo } from '@/components/SafeVideo';
+import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
+import { queueSession } from '@/lib/sync';
 import {
   topicsByGrade,
   gradeName,
@@ -45,7 +47,8 @@ import { useProfile } from '@/stores/profile';
  * 혼자 시작하면 집이 어지러워진다.
  */
 export function SciencePage() {
-  const grade = useProfile((s) => s.profile?.grade ?? null);
+  const profile = useProfile((s) => s.profile);
+  const grade = profile?.grade ?? null;
   const from = startGrade(grade);
   const thisWeek = weeklyScience(from);
   const groups = topicsByGrade();
@@ -65,6 +68,7 @@ export function SciencePage() {
             ← 돌아가기
           </Button>
         </div>
+        {/* 목록에서 고른 것은 이번 주 것이 아니므로 다 봤다고 적지 않는다. */}
         <LessonView lesson={picked} />
       </div>
     );
@@ -128,12 +132,14 @@ export function SciencePage() {
   return (
     <div className="flex flex-col gap-4">
       {/* 이번 주의 주제. 활동 이름("과학 놀이터")은 홈 화면의 카드가 들고 있으므로
-          여기서는 되풀이하지 않는다. */}
-      <h1 data-testid="science-topic" className="text-center text-2xl font-bold text-glow-600">
-        {thisWeek.topic.title}
+          여기서는 되풀이하지 않는다. "이번 주 주제는" 은 주제 이름보다 작게 —
+          아이 눈에 먼저 들어와야 하는 것은 '자석' 이다. */}
+      <h1 data-testid="science-topic" className="text-center">
+        <span className="text-lg font-bold text-glow-400">이번 주 주제는 </span>
+        <span className="text-3xl font-bold text-glow-600">{thisWeek.topic.title}</span>
       </h1>
 
-      <LessonView lesson={thisWeek} />
+      <LessonView lesson={thisWeek} thisWeek />
 
       {groups.length > 0 ? (
         <div className="flex justify-center">
@@ -151,13 +157,13 @@ export function SciencePage() {
  *
  * 주제 이름은 이 상자 밖(화면 맨 위)에 있고, 상자 안에는 **오늘 배울 것**만 둔다.
  */
-function LessonView({ lesson }: { lesson: ScienceLesson }) {
+function LessonView({ lesson, thisWeek }: { lesson: ScienceLesson; thisWeek?: boolean }) {
   const { topic, section } = lesson;
 
   return (
     <>
       <Card className="flex flex-col items-center gap-4 text-center">
-        <h2 data-testid="science-title" className="text-3xl font-bold text-slate-700">
+        <h2 data-testid="science-title" className="text-2xl font-bold text-slate-700">
           {section.heading}
         </h2>
 
@@ -182,7 +188,62 @@ function LessonView({ lesson }: { lesson: ScienceLesson }) {
       </Card>
 
       <TopicVideos topic={topic} />
+
+      {thisWeek ? <DoneButton lesson={lesson} /> : null}
     </>
+  );
+}
+
+/**
+ * 다 봤다고 알리는 단추.
+ *
+ * 맞히는 문제가 없으니 저절로 끝나는 자리가 없다. 아이가 스스로 눌러 끝낸다.
+ *
+ * 누르면 **공부한 시간과 출석에 들어간다.** 이것이 없으면 아이가 과학을 십 분
+ * 보고도 홈 화면에 "오늘 0분" 이 뜬다. 그리고 홈 화면의 과학 카드가 "이번 주
+ * 것은 다 봤어요" 로 바뀐다 — 다 본 뒤에도 배울 것이 남았다고 말하면 거짓말이다.
+ */
+function DoneButton({ lesson }: { lesson: ScienceLesson }) {
+  const profile = useProfile((s) => s.profile);
+  const [openedAt] = useState(() => Date.now());
+  const [done, setDone] = useState(false);
+
+  if (done) {
+    return (
+      <Card className="flex flex-col items-center gap-2 bg-glow-50 text-center">
+        <span className="text-4xl">🎉</span>
+        <p className="text-xl font-bold text-glow-700">이번 주 것을 다 봤어요!</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="flex justify-center">
+      <Button
+        size="lg"
+        data-testid="science-done"
+        onClick={() => {
+          setDone(true);
+          spawnConfetti();
+          if (!profile) return;
+          void queueSession({
+            profileId: profile.id,
+            // 과학은 창고의 레슨 목록에 없으므로 레슨을 가리키지 않는다.
+            lessonId: null,
+            activityKind: 'science',
+            mode: 'screen',
+            durationSec: Math.max(1, Math.round((Date.now() - openedAt) / 1000)),
+            // 맞히는 문제가 없으니 센 것도 맞힌 것도 하나로 둔다.
+            totalCount: 1,
+            correctCount: 1,
+            meta: { slug: lesson.topic.slug, index: lesson.index },
+            createdAt: new Date().toISOString(),
+          });
+        }}
+      >
+        다 봤어요
+      </Button>
+    </div>
   );
 }
 

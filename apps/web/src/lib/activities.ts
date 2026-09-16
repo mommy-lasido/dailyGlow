@@ -209,6 +209,27 @@ export async function fetchWeek(profileId: string, today = new Date()): Promise<
 }
 
 /**
+ * 이번 주의 과학을 이미 봤는가.
+ *
+ * 과학은 한 주에 하나라, 다 본 뒤에도 홈 화면이 "이번 주에 배울 것이 하나
+ * 있어요" 라고 말하면 거짓말이 된다. 아이가 다 보고 나면 문구가 바뀌어야 한다.
+ */
+export async function scienceDoneThisWeek(
+  profileId: string,
+  today = new Date(),
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('id')
+    .eq('profile_id', profileId)
+    .eq('activity_kind', 'science')
+    .gte('created_at', weekStart(today).toISOString())
+    .limit(1);
+
+  return !error && (data?.length ?? 0) > 0;
+}
+
+/**
  * 지금까지 공부한 시간(분), 처음부터 모두 더한 것.
  *
  * 오늘 얼마나 했는지는 매일 0 으로 돌아가지만, 이 숫자는 줄지 않는다.

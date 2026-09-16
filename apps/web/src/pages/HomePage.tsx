@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import {
   fetchTodayMinutes,
   fetchWeek,
+  scienceDoneThisWeek,
   selectActivities,
   streakOf,
   weekComplete,
@@ -78,6 +79,13 @@ export function HomePage() {
     queryKey: ['week', profile?.id],
     enabled: Boolean(profile),
     queryFn: () => fetchWeek(profile!.id),
+  });
+
+  /** 이번 주의 과학을 이미 봤는가. 봤으면 카드 문구가 바뀐다. */
+  const { data: scienceDone = false } = useQuery({
+    queryKey: ['science-done', profile?.id],
+    enabled: Boolean(profile),
+    queryFn: () => scienceDoneThisWeek(profile!.id),
   });
 
   // 단계를 올릴 때가 됐는지 판단할 재료. 없으면 제안이 안 뜰 뿐이라 홈은 그대로 열린다.
@@ -190,7 +198,7 @@ export function HomePage() {
           ))
         )}
 
-        <ScienceCard isPreReader={isPreReader} />
+        <ScienceCard isPreReader={isPreReader} done={scienceDone} />
       </section>
     </div>
   );
@@ -205,7 +213,7 @@ export function HomePage() {
  * 활동 목록 **맨 아래**에 둔다. 날마다 하는 한글과 수학이 먼저고, 과학은 한
  * 주에 하나이므로 그 뒤에 온다.
  */
-function ScienceCard({ isPreReader }: { isPreReader: boolean }) {
+function ScienceCard({ isPreReader, done }: { isPreReader: boolean; done: boolean }) {
   return (
     <Link to="/science" data-testid="science-card">
       <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
@@ -218,7 +226,7 @@ function ScienceCard({ isPreReader }: { isPreReader: boolean }) {
             과학 놀이터
           </h2>
           <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-            이번 주에 배울 것이 하나 있어요
+            {done ? '이번 주 것은 다 봤어요' : '이번 주에 배울 것이 하나 있어요'}
           </p>
         </div>
       </Card>
