@@ -261,36 +261,50 @@ function DoneButton({ lesson }: { lesson: ScienceLesson }) {
 }
 
 /**
- * 이 주에 볼 영상.
+ * 이 주에 볼 영상들. 있는 것을 다 건다.
  *
- * 덩어리에 따로 붙은 영상이 있으면 그것을 보고, 없으면 주제에 붙은 것을 본다.
- * 주제 하나가 대여섯 주짜리라 영상 하나로는 다 덮이지 않는 자리가 있다.
+ * 그 주에만 붙은 영상을 앞에 둔다 — 그 주에 배우는 것에 가장 가까운 영상이다.
+ * 한국어를 먼저, 영어를 뒤에 놓는 차례는 그대로다.
  */
 function LessonVideos({ lesson }: { lesson: ScienceLesson }) {
-  const { ko, en, swapped } = lessonVideos(lesson);
-  // 수요일부터 바뀐 영상에만 알림을 붙인다.
-  const koIsNew = swapped && Boolean(lesson.section.video);
-  const enIsNew = swapped && Boolean(lesson.section.videoEn);
+  const videos = lessonVideos(lesson);
+  // 같은 말의 영상이 둘이면 뒤엣것은 "하나 더" 로 적는다.
+  const seen = { ko: 0, en: 0 };
 
   return (
     <>
-      <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="ko">
-        <h3 className="text-center text-xl font-bold text-glow-600">영상으로 보기</h3>
-        {koIsNew ? <NewVideoLine /> : null}
-        <SafeVideo videoId={ko.id} label={`영상 보기 · ${videoLength(ko.seconds)}`} />
-      </Card>
+      {videos.map(({ video, lang, special }) => {
+        const nth = seen[lang]++;
+        const title =
+          lang === 'ko'
+            ? nth === 0
+              ? '영상으로 보기'
+              : '영상 하나 더'
+            : nth === 0
+              ? '영어로 한 번 더'
+              : '영어 영상 하나 더';
 
-      {en ? (
-        <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="en">
-          <h3 className="text-center text-xl font-bold text-glow-600">영어로 한 번 더</h3>
-          {enIsNew ? <NewVideoLine /> : null}
-          <p className="text-center text-slate-500">같은 이야기예요. 아는 이야기라 들려요.</p>
-          <SafeVideo
-            videoId={en.id}
-            label={`영어 영상 보기 · ${videoLength(en.seconds)}`}
-          />
-        </Card>
-      ) : null}
+        return (
+          <Card
+            key={video.id}
+            className="flex flex-col gap-4"
+            data-testid="science-video"
+            data-lang={lang}
+          >
+            <h3 className="text-center text-xl font-bold text-glow-600">{title}</h3>
+            {special ? <NewVideoLine /> : null}
+            {lang === 'en' && nth === 0 ? (
+              <p className="text-center text-slate-500">
+                같은 이야기예요. 아는 이야기라 들려요.
+              </p>
+            ) : null}
+            <SafeVideo
+              videoId={video.id}
+              label={`${lang === 'en' ? '영어 ' : ''}영상 보기 · ${videoLength(video.seconds)}`}
+            />
+          </Card>
+        );
+      })}
     </>
   );
 }
@@ -298,8 +312,8 @@ function LessonVideos({ lesson }: { lesson: ScienceLesson }) {
 /**
  * 이번 주에만 나오는 영상이라고 알린다.
  *
- * 주 앞쪽(월·화)에는 그 주제의 기본 영상이 나오다가 **수요일부터** 그 주에 맞는
- * 영상으로 바뀐다. 말해 주지 않으면 아이는 늘 보던 것인 줄 알고 지나친다.
+ * 주제 내내 나오는 영상과 이 주에만 붙은 영상이 나란히 걸린다. 말해 주지 않으면
+ * 아이는 둘이 어떻게 다른지 모르고 위엣것만 보고 만다.
  */
 function NewVideoLine() {
   return (
@@ -307,7 +321,7 @@ function NewVideoLine() {
       data-testid="new-video"
       className="rounded-2xl bg-glow-50 px-4 py-2 text-center font-bold text-glow-700"
     >
-      ✨ 이번 주는 새로운 영상이 있어요!
+      ✨ 이번 주에만 보는 영상이에요
     </p>
   );
 }

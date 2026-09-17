@@ -101,34 +101,37 @@ describe('videoLength', () => {
 });
 
 describe('lessonVideos', () => {
-  const 월 = new Date(2026, 8, 14);
-  const 수 = new Date(2026, 8, 16);
-  const 일 = new Date(2026, 8, 20);
-
-  it('월·화에는 주제의 기본 영상을 본다', () => {
+  it('그 주에 있는 영상을 다 보여준다', () => {
+    // 한쪽이 다른 쪽을 밀어내면 아이가 하나를 못 보게 된다.
     const withOwn = lessonsFrom(0).find((l) => l.section.video)!;
-    const v = lessonVideos(withOwn, 월);
-    expect(v.ko.id).toBe(withOwn.topic.video.id);
-    expect(v.swapped).toBe(false);
+    const list = lessonVideos(withOwn);
+    const ids = list.map((v) => v.video.id);
+    expect(ids).toContain(withOwn.section.video!.id);
+    expect(ids).toContain(withOwn.topic.video.id);
   });
 
-  it('수요일부터 그 주에 붙은 영상으로 바뀐다', () => {
-    // 한 주 내내 같은 것만 나오면 사나흘째부터는 열어 보지도 않는다.
+  it('그 주에만 붙은 영상을 앞에 둔다', () => {
+    // 그 주에 배우는 것에 가장 가까운 영상이다.
     const withOwn = lessonsFrom(0).find((l) => l.section.video)!;
-    for (const day of [수, 일]) {
-      const v = lessonVideos(withOwn, day);
-      expect(v.ko.id).toBe(withOwn.section.video!.id);
-      expect(v.swapped).toBe(true);
+    const list = lessonVideos(withOwn);
+    expect(list[0]!.video.id).toBe(withOwn.section.video!.id);
+    expect(list[0]!.special).toBe(true);
+  });
+
+  it('한국어를 먼저, 영어를 뒤에 놓는다', () => {
+    // 내용을 아는 채로 들어야 영어가 장면에 가서 붙는다.
+    for (const lesson of lessonsFrom(0)) {
+      const langs = lessonVideos(lesson).map((v) => v.lang);
+      expect(langs.indexOf('en') === -1 || langs.lastIndexOf('ko') < langs.indexOf('en')).toBe(
+        true,
+      );
     }
   });
 
-  it('따로 붙은 것이 없는 주에는 바뀌지 않는다', () => {
-    // 억지로 바꿀 것을 지어내지 않는다.
+  it('따로 붙은 것이 없는 주에는 주제의 영상만 나온다', () => {
     const plain = lessonsFrom(0).find((l) => !l.section.video && !l.section.videoEn)!;
-    for (const day of [월, 수]) {
-      const v = lessonVideos(plain, day);
-      expect(v.ko.id).toBe(plain.topic.video.id);
-      expect(v.swapped).toBe(false);
-    }
+    const list = lessonVideos(plain);
+    expect(list.every((v) => !v.special)).toBe(true);
+    expect(list[0]!.video.id).toBe(plain.topic.video.id);
   });
 });

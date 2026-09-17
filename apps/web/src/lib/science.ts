@@ -216,30 +216,34 @@ export function weeklyScience(from: ScienceGrade, today = new Date()): ScienceLe
   return pool[index]!;
 }
 
+/** 화면에 걸 영상 한 편. */
+export interface LessonVideo {
+  video: ScienceVideo;
+  lang: 'ko' | 'en';
+  /** 이 주에만 붙은 영상인가. 주제 내내 나오는 것과 갈라 보여준다. */
+  special: boolean;
+}
+
 /**
- * 이 주에 볼 영상. **주중에 한 번 바뀐다.**
+ * 이 주에 볼 영상들. **있는 것을 다 보여준다.**
  *
- * 월·화에는 그 주제의 기본 영상을 보고, **수요일부터** 그 주에 따로 붙은 영상으로
- * 바뀐다. 한 주 내내 같은 것만 나오면 사나흘째부터는 아이가 열어 보지도 않는다.
- * 주 한가운데에 새것이 하나 기다리고 있으면 다시 열어 볼 까닭이 생긴다.
+ * 처음에는 그 주에 붙은 영상이 주제의 기본 영상을 밀어내게 했다가, 주중에
+ * 바꿔치기도 해 보았다. 둘 다 같은 문제가 있었다 — **한쪽을 못 보게 된다.**
+ * 영숙님이 정했다: "영상이 두 개인 주는 그냥 두 개 다 보여주자."
  *
- * 따로 붙은 영상이 없는 주에는 바뀌지 않는다. 억지로 바꿀 것을 지어내지 않는다.
+ * 그 주에만 붙은 영상을 앞에 둔다. 그 주에 배우는 것에 가장 가까운 영상이기
+ * 때문이다. 한국어를 먼저 놓고 영어를 뒤에 놓는 차례는 그대로다.
  */
-export function lessonVideos(
-  lesson: ScienceLesson,
-  today = new Date(),
-): { ko: ScienceVideo; en?: ScienceVideo; swapped: boolean } {
+export function lessonVideos(lesson: ScienceLesson): LessonVideo[] {
   const { topic, section } = lesson;
-  // getDay(): 일요일이 0. 수(3)부터 토(6)까지와 일요일이 주의 뒤쪽이다.
-  const day = today.getDay();
-  const later = day === 0 || day >= 3;
+  const out: LessonVideo[] = [];
 
-  const ko = later ? (section.video ?? topic.video) : topic.video;
-  const en = later ? (section.videoEn ?? topic.videoEn) : topic.videoEn;
-  // 실제로 바뀌었을 때만 알린다.
-  const swapped = later && Boolean(section.video || section.videoEn);
+  if (section.video) out.push({ video: section.video, lang: 'ko', special: true });
+  out.push({ video: topic.video, lang: 'ko', special: false });
+  if (section.videoEn) out.push({ video: section.videoEn, lang: 'en', special: true });
+  if (topic.videoEn) out.push({ video: topic.videoEn, lang: 'en', special: false });
 
-  return { ko, en, swapped };
+  return out;
 }
 
 /** "2분 9초" 처럼 읽어 준다. 아이가 얼마나 걸리는지 미리 알 수 있게. */
