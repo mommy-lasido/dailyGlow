@@ -165,6 +165,15 @@ function MeetStep({
         🔊
       </button>
 
+      {/* 무엇을 하라는 것인지 글자보다 먼저 온다. 글자를 먼저 보여주면 아이는
+          누르고 나서야 무엇을 묻는지 알게 된다. */}
+      {kind === 'find' ? (
+        <p className="text-lg text-slate-500">
+          여기 어디에 <span className="text-2xl font-bold text-glow-600">{letter}</span> 가
+          있을까요?
+        </p>
+      ) : null}
+
       {kind === 'find' ? (
         <FindInWord key={word} word={word} letter={letter} />
       ) : (
