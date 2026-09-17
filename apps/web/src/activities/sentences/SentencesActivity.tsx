@@ -3,6 +3,8 @@ import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
+import { useProfile } from '@/stores/profile';
+import { rememberWrong } from '@/lib/review';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
@@ -44,6 +46,7 @@ const ROUND_TITLE: Record<number, string> = {
  * 문장을 오답으로 붙여, 첫 낱말만 듣고 찍지 못하게 한다.
  */
 export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
+  const profileId = useProfile((s) => s.profile?.id ?? null);
   const pool = poolForStage(lesson.childLevel);
   // 오늘 볼 것만 뽑는다. 다 넘겨 본 뒤에 풀게 하면 아이가 못 견딘다.
   const round = useMemo(() => pickRound(pool), [pool]);
@@ -81,12 +84,14 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
   }
 
   function finish(state: QuizState) {
+    const wrongLabels = state.firstMissed.map((i) => problems[i]!.answer);
+    rememberWrong(profileId, 'sentences', wrongLabels);
     spawnConfetti();
     onFinish({
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { stage: lesson.childLevel, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer) },
+      meta: { stage: lesson.childLevel, roundScores: state.roundScores, wrong: wrongLabels },
     });
   }
 

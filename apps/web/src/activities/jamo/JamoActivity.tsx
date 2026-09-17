@@ -4,6 +4,8 @@ import { hasMenuArt, MenuIcon } from '@/components/MenuIcon';
 import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
+import { useProfile } from '@/stores/profile';
+import { rememberWrong } from '@/lib/review';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
@@ -44,6 +46,7 @@ const ROUND_TITLE: Record<number, string> = {
  * 문제로 내면 아이는 찍을 수밖에 없다. 카드의 이름이 "배우기" 인 이유다.
  */
 export function JamoActivity({ lesson, onFinish }: ActivityProps) {
+  const profileId = useProfile((s) => s.profile?.id ?? null);
   // 아이가 배운 데까지. 14단계를 넘긴 아이는 자음·모음을 이미 다 뗐으므로 거기서 멈춘다.
   const stage = Math.min(Math.max(lesson.childLevel, 1), JAMO_MAX_STAGE);
   const leads = learnedLeads(stage);
@@ -189,12 +192,14 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
   }
 
   function finish(state: QuizState) {
+    const wrongLabels = state.firstMissed.map((i) => problems[i]!.answer.letter);
+    rememberWrong(profileId, `jamo:${mode}`, wrongLabels);
     spawnConfetti();
     onFinish({
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { stage, mode, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer.letter) },
+      meta: { stage, mode, roundScores: state.roundScores, wrong: wrongLabels },
     });
   }
 

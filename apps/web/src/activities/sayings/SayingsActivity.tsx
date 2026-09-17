@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import type { ActivityProps } from '@/activities/types';
+import { useProfile } from '@/stores/profile';
+import { mixReview, recentWrong, rememberWrong } from '@/lib/review';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
@@ -19,6 +21,7 @@ import {
   makeSayingSet,
   pickRound,
   SAYING_PROBLEM_COUNT,
+  SAYINGS_PER_ROUND,
   poolFor,
   sayingHint,
   sayingQuestion,
@@ -57,7 +60,18 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
    * 뽑는 것은 **날짜로 정해진다** — 하루에 열 개다. 오늘 두 번 열어도 같은 열
    * 개가 나오고, 아이는 "오늘 건 다 봤다" 를 알 수 있다.
    */
-  const pool = useMemo(() => pickRound(poolFor(kind), kind), [kind]);
+  const profileId = useProfile((s) => s.profile?.id ?? null);
+  // 오늘 볼 열 개 중 절반쯤은 **지난번에 틀린 것**으로 채운다.
+  const pool = useMemo(
+    () =>
+      mixReview(
+        pickRound(poolFor(kind), kind, new Date(), SAYINGS_PER_ROUND * 2),
+        (s) => s.text,
+        recentWrong(profileId, `sayings:${kind}`),
+        SAYINGS_PER_ROUND,
+      ),
+    [kind, profileId],
+  );
 
   /** 먼저 모아 보고, 그다음에 푼다. 배경지식이 없으면 찍는 것밖에 못 한다. */
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
@@ -82,12 +96,14 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
   }
 
   function finish(state: QuizState) {
+    const wrongLabels = state.firstMissed.map((i) => problems[i]!.answer.text);
+    rememberWrong(profileId, `sayings:${kind}`, wrongLabels);
     spawnConfetti();
     onFinish({
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { kind, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer.text) },
+      meta: { kind, roundScores: state.roundScores, wrong: wrongLabels },
     });
   }
 

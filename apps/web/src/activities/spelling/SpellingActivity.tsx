@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import type { ActivityProps } from '@/activities/types';
+import { useProfile } from '@/stores/profile';
+import { mixReview, recentWrong, rememberWrong } from '@/lib/review';
+import { SPELLING_ITEMS } from './content';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
@@ -78,6 +81,7 @@ function Review({ problems }: { problems: SpellingProblem[] }) {
 }
 
 export function SpellingActivity({ onFinish }: ActivityProps) {
+  const profileId = useProfile((s) => s.profile?.id ?? null);
   const [problems, setProblems] = useState<SpellingProblem[]>([]);
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [startedAt, setStartedAt] = useState(0);
@@ -85,7 +89,17 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
 
   function begin() {
     // 한 판 분량을 한꺼번에 만든다 — 하나씩 뽑으면 같은 낱말쌍이 겹쳐 나온다.
-    const set = makeSpellingSet();
+    //
+    // 그중 절반쯤은 **지난번에 틀린 것**으로 채운다. 맞춤법은 한 번 헷갈린 것을
+    // 계속 헷갈리므로, 다시 만나야 고쳐진다.
+    const set = makeSpellingSet(
+      mixReview(
+        SPELLING_ITEMS,
+        (item) => item.options.find((o) => o.correct)?.text ?? '',
+        recentWrong(profileId, 'spelling'),
+        SPELLING_PROBLEM_COUNT,
+      ),
+    );
     setProblems(set);
     setQuiz(createQuiz(set.length));
     setStartedAt(Date.now());
@@ -93,12 +107,14 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
   }
 
   function finish(state: QuizState) {
+    const wrongLabels = state.firstMissed.map((i) => problems[i]!.answer.text);
+    rememberWrong(profileId, 'spelling', wrongLabels);
     spawnConfetti();
     onFinish({
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer.text) },
+      meta: { roundScores: state.roundScores, wrong: wrongLabels },
     });
   }
 

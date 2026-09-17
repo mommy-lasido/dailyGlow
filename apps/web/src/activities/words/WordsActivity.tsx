@@ -3,6 +3,8 @@ import { Button, Card } from '@dailyglow/ui';
 import { spawnConfetti } from '@/lib/confetti';
 import { canSpeak, speak } from '@/lib/speak';
 import type { ActivityProps } from '@/activities/types';
+import { useProfile } from '@/stores/profile';
+import { mixReview, recentWrong, rememberWrong } from '@/lib/review';
 import { Finished } from '@/activities/Finished';
 import { Grading } from '@/activities/Grading';
 import { Progress } from '@/activities/Progress';
@@ -16,8 +18,8 @@ import {
 import {
   makeWordSet,
   MIN_POOL,
-  pickRound,
   poolForStage,
+  WORDS_PER_ROUND,
   wordQuestion,
   type WordProblem,
 } from './generate';
@@ -41,10 +43,21 @@ const ROUND_TITLE: Record<number, string> = {
  * 글자를 보지 않고 소리만 기다리게 된다.
  */
 export function WordsActivity({ lesson, onFinish }: ActivityProps) {
+  const profileId = useProfile((s) => s.profile?.id ?? null);
   const pool = poolForStage(lesson.childLevel);
   // 읽을 수 있는 낱말이 백 개가 넘는다. 다 넘겨 본 뒤에 풀게 하면 아이가 못 견디니
   // 오늘 볼 것만 뽑는다. 다음에 열면 또 다른 열 장이 나온다.
-  const round = useMemo(() => pickRound(pool), [pool]);
+  //
+  // 그중 절반쯤은 **지난번에 틀린 낱말**로 채운다. 틀린 것이 다시 나오지 않으면
+  // 아이가 그 낱말을 만날 까닭이 없다.
+  const round = useMemo(
+    () =>
+      mixReview(pool, (w) => w, recentWrong(profileId, 'words'), WORDS_PER_ROUND).slice(
+        0,
+        WORDS_PER_ROUND,
+      ),
+    [pool, profileId],
+  );
 
   const [phase, setPhase] = useState<'learn' | 'quiz'>('learn');
   const [card, setCard] = useState(0);
@@ -79,12 +92,19 @@ export function WordsActivity({ lesson, onFinish }: ActivityProps) {
   }
 
   function finish(state: QuizState) {
+    const wrongLabels = state.firstMissed.map((i) => problems[i]!.answer);
+    // 다음 판에 다시 만나도록 이 기기에 적어 둔다.
+    rememberWrong(profileId, 'words', wrongLabels);
     spawnConfetti();
     onFinish({
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { stage: lesson.childLevel, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer) },
+      meta: {
+        stage: lesson.childLevel,
+        roundScores: state.roundScores,
+        wrong: wrongLabels,
+      },
     });
   }
 
