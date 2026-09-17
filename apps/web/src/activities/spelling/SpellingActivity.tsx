@@ -98,7 +98,7 @@ export function SpellingActivity({ onFinish }: ActivityProps) {
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { roundScores: state.roundScores },
+      meta: { roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer.text) },
     });
   }
 

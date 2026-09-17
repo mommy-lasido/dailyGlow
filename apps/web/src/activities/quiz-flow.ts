@@ -27,6 +27,14 @@ export interface QuizState {
   firstTryCorrect: number;
   /** 라운드별 정답 개수. "7개 → 9개 → 10개" 를 보여주는 데 쓴다. */
   roundScores: number[];
+  /**
+   * **1차에 틀린 문제의 번호.** 라운드가 넘어가도 지워지지 않는다.
+   *
+   * `missed` 는 이번 라운드 것이라 판이 끝나면 비어 있다. 그런데 나중에
+   * "무엇을 자주 틀리는가" 를 보려면 **처음에 틀린 것**이 필요하다. 2·3차에
+   * 맞힌 것은 "결국 이해했다" 는 뜻이지 못 하는 것이 아니기 때문이다.
+   */
+  firstMissed: number[];
 }
 
 export function createQuiz(total: number): QuizState {
@@ -39,6 +47,7 @@ export function createQuiz(total: number): QuizState {
     missed: [],
     firstTryCorrect: 0,
     roundScores: [],
+    firstMissed: [],
   };
 }
 
@@ -60,10 +69,14 @@ export function submit(s: QuizState, isCorrect: boolean): QuizState {
   const cursor = s.cursor + 1;
   const firstTryCorrect =
     s.round === 1 && isCorrect ? s.firstTryCorrect + 1 : s.firstTryCorrect;
+  // 1차에 틀린 것만 따로 챙겨 둔다. 2·3차에 틀린 것은 세지 않는다 —
+  // 이미 한 번 틀린 것을 다시 푸는 자리라 세면 두 번 세는 셈이 된다.
+  const firstMissed =
+    s.round === 1 && !isCorrect ? [...s.firstMissed, index] : s.firstMissed;
 
   // 아직 남았으면 다음 문제로.
   if (cursor < s.queue.length) {
-    return { ...s, cursor, missed, firstTryCorrect };
+    return { ...s, cursor, missed, firstTryCorrect, firstMissed };
   }
 
   const scored = s.queue.length - missed.length;
@@ -71,10 +84,10 @@ export function submit(s: QuizState, isCorrect: boolean): QuizState {
 
   // 3차는 전부 맞혀야만 여기 도달하므로 곧바로 끝난다.
   if (s.round === 3) {
-    return { ...s, cursor, missed, firstTryCorrect, roundScores, phase: 'done' };
+    return { ...s, cursor, missed, firstTryCorrect, firstMissed, roundScores, phase: 'done' };
   }
 
-  return { ...s, cursor, missed, firstTryCorrect, roundScores, phase: 'grading' };
+  return { ...s, cursor, missed, firstTryCorrect, firstMissed, roundScores, phase: 'grading' };
 }
 
 /** 채점 화면에서 "계속" 을 눌렀을 때. 틀린 게 없으면 끝난다. */

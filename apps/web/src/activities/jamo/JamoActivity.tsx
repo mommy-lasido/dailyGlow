@@ -194,7 +194,7 @@ export function JamoActivity({ lesson, onFinish }: ActivityProps) {
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { stage, mode, roundScores: state.roundScores },
+      meta: { stage, mode, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer.letter) },
     });
   }
 

@@ -119,3 +119,31 @@ describe('currentIndex', () => {
     expect(currentIndex(s)).toBeNull();
   });
 });
+
+describe('firstMissed — 1차에 틀린 문제', () => {
+  it('1차에 틀린 번호만 모으고, 라운드가 넘어가도 지워지지 않는다', () => {
+    // "무엇을 자주 틀리는가" 를 보려면 처음에 틀린 것이 필요하다.
+    let q = createQuiz(3);
+    q = submit(q, true); // 0번 맞음
+    q = submit(q, false); // 1번 틀림
+    q = submit(q, false); // 2번 틀림
+    expect(q.firstMissed).toEqual([1, 2]);
+
+    q = nextRound(q);
+    expect(q.firstMissed).toEqual([1, 2]);
+    q = submit(q, true);
+    q = submit(q, true);
+    // 2차에 다 맞혀도 1차 기록은 그대로 남는다.
+    expect(q.firstMissed).toEqual([1, 2]);
+  });
+
+  it('2·3차에 틀린 것은 세지 않는다', () => {
+    // 이미 한 번 틀린 것을 다시 푸는 자리라, 세면 두 번 세는 셈이 된다.
+    let q = createQuiz(2);
+    q = submit(q, true);
+    q = submit(q, false);
+    q = nextRound(q);
+    q = submit(q, false);
+    expect(q.firstMissed).toEqual([1]);
+  });
+});

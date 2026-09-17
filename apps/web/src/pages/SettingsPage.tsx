@@ -22,6 +22,7 @@ import {
 } from '@dailyglow/utils';
 import { HangulStagePicker } from '@/components/HangulStagePicker';
 import { useProfile } from '@/stores/profile';
+import { ReportView } from '@/components/ReportView';
 import { supabase } from '@/lib/supabase';
 
 interface SubjectRow {
@@ -148,6 +149,24 @@ export function SettingsPage() {
           {totalMinutes}분
         </span>
       </Card>
+
+      {/*
+        학습 리포트도 부모가 보는 자리다. 아이에게는 "무엇을 몇 %로 맞혔나" 가
+        쓸모가 없고, 자칫 점수로 스스로를 재게 만든다.
+      */}
+      {profile ? (
+        <Card className="flex flex-col gap-3">
+          <h2 className="text-xl font-bold text-glow-700">학습 리포트</h2>
+          <p className="text-sm text-slate-500">
+            {splitName(profile.display_name, profile.given_name).givenName}이가 앱에서 한 것만
+            들어 있어요. 종이 문제집이나 다른 학습기는 앱이 볼 수 없습니다.
+          </p>
+          <ReportView
+            profileId={profile.id}
+            name={splitName(profile.display_name, profile.given_name).givenName}
+          />
+        </Card>
+      ) : null}
 
       <Card className="flex flex-col gap-4">
         <h2 className="text-xl font-bold text-glow-700">프로필</h2>

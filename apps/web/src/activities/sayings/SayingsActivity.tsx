@@ -87,7 +87,7 @@ export function SayingsActivity({ lesson, onFinish }: ActivityProps) {
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { kind, roundScores: state.roundScores },
+      meta: { kind, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer.text) },
     });
   }
 

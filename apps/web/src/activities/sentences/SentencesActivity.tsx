@@ -86,7 +86,7 @@ export function SentencesActivity({ lesson, onFinish }: ActivityProps) {
       totalCount: state.total,
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
-      meta: { stage: lesson.childLevel, roundScores: state.roundScores },
+      meta: { stage: lesson.childLevel, roundScores: state.roundScores , wrong: state.firstMissed.map((i) => problems[i]!.answer) },
     });
   }
 

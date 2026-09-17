@@ -125,7 +125,15 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
       correctCount: state.firstTryCorrect,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
       // range 는 단계 승급 판정에 쓴다 — 가장 어려운 단계에서 잘해야 다음 과목으로 넘어간다.
-      meta: { range: setting?.range ?? null, mode: setting?.mode ?? null, roundScores: state.roundScores },
+      meta: {
+        range: setting?.range ?? null,
+        mode: setting?.mode ?? null,
+        roundScores: state.roundScores,
+        // 1차에 틀린 수. 나중에 "어떤 수에서 자꾸 막히는가" 를 보는 재료가 된다.
+        wrong: state.firstMissed.map((i) =>
+          String((problems[i] ?? numbers[i] ?? bonds[i])?.answer ?? ''),
+        ),
+      },
     });
   }
 
