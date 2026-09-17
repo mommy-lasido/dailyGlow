@@ -25,6 +25,26 @@ import { Button } from '@dailyglow/ui';
  *
  * **다만 완전히 막지는 못한다.** 화면을 꾹 누르면 브라우저 메뉴가 뜰 수 있다.
  * 일부러 찾아서 눌러야 나가는 수준이라고 보면 된다.
+ *
+ * ## 아이패드에서 한 번에 재생되지 않던 문제
+ *
+ * 아이들이 재생 단추를 눌러도 영상이 시작되지 않고, 아래 단추를 "멈추기 →
+ * 이어 보기" 로 한 번 더 눌러야 재생됐다고 영숙님이 알려주었다.
+ *
+ * 애플 기기는 **사람이 누른 그 순간에 시작하는 소리만** 허락한다. 우리는 아이가
+ * 누르면 유튜브 조종 장치를 내려받고 그다음에 재생기를 만들었는데, 내려받는
+ * 동안 "사람이 누른 순간" 이 지나가 버려 애플이 재생을 막았다. 게다가 우리는
+ * 재생기가 준비되면 **재생 중이라고 넘겨짚어** 단추를 "⏸ 잠깐 멈추기" 로 바꿔
+ * 놓았다. 실제로는 멈춰 있었으니 아이는 그것을 누르고(아무 일도 안 일어나고)
+ * 다시 "이어 보기" 를 눌러야 했다.
+ *
+ * 세 가지를 고쳤다.
+ * 1. 조종 장치를 **미리 내려받는다.** 화면에 영상 칸이 보이는 순간부터 받아 두어,
+ *    아이가 누를 때는 곧바로 재생기를 만들 수 있게 한다.
+ * 2. 재생 중인지 **넘겨짚지 않고 유튜브가 알려준 대로만** 적는다.
+ * 3. **영상을 누르면 재생된다.** 자동 재생은 애플이 막으므로 결국 사람이 한 번은
+ *    눌러야 한다. 그렇다면 아이가 누를 곳은 영상 한가운데여야 한다 — 멈춰 있을
+ *    때 큰 ▶ 를 얹어 두면 아이는 배우지 않아도 그것을 누른다.
  */
 
 interface YouTubePlayer {
@@ -85,6 +105,12 @@ export function SafeVideo({
   const holder = useRef<HTMLDivElement>(null);
   const player = useRef<YouTubePlayer | null>(null);
 
+  // 아이가 누르기 전에 미리 받아 둔다. 누른 뒤에 받기 시작하면 그사이에
+  // "사람이 누른 순간" 이 지나가 애플 기기가 재생을 막는다.
+  useEffect(() => {
+    void loadPlayerApi();
+  }, []);
+
   useEffect(() => {
     if (!started || !holder.current) return;
     let dropped = false;
@@ -113,15 +139,18 @@ export function SafeVideo({
           onReady: (e: { target: YouTubePlayer }) => {
             // 유튜브가 켜 둔 기계 자막을 내린다.
             e.target.unloadModule('captions');
-            setPlaying(true);
+            // 한 번 더 부탁해 본다. 막히면 아래 단추로 아이가 시작한다.
+            e.target.playVideo();
           },
           onStateChange: (e: { data: number; target: YouTubePlayer }) => {
             // 자막은 재생이 시작될 때 다시 올라오기도 한다. 그때마다 내린다.
             e.target.unloadModule('captions');
+            // 재생 중인지는 **넘겨짚지 않고** 유튜브가 알려준 대로만 적는다.
+            // 1 이 재생 중이다. 그래야 단추의 말과 실제가 어긋나지 않는다.
+            setPlaying(e.data === 1);
             if (e.data !== YT.PlayerState.ENDED) return;
             // 바둑판이 뜨기 전에 덮는다.
             setEnded(true);
-            setPlaying(false);
             onEnded?.();
           },
         },
@@ -153,8 +182,24 @@ export function SafeVideo({
       <div className="relative aspect-video w-full overflow-hidden rounded-3xl bg-slate-800">
         <div ref={holder} className="h-full w-full" />
 
-        {/* 손가락이 유튜브 화면에 닿지 않게 하는 투명한 덮개. */}
-        <div className="absolute inset-0" aria-hidden />
+        {/* 손가락이 유튜브 화면에 닿지 않게 하는 덮개. 겸해서 재생·멈춤 단추다.
+            멈춰 있을 때만 ▶ 를 보여준다 — 재생 중에 큰 그림이 얹혀 있으면 가린다. */}
+        <button
+          type="button"
+          data-testid="video-tap"
+          aria-label={playing ? '잠깐 멈추기' : '재생하기'}
+          onClick={() => {
+            if (playing) player.current?.pauseVideo();
+            else player.current?.playVideo();
+          }}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          {playing ? null : (
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-white/85 text-4xl text-glow-700 shadow-lg">
+              ▶
+            </span>
+          )}
+        </button>
 
         {ended ? (
           <div
@@ -178,20 +223,7 @@ export function SafeVideo({
         ) : null}
       </div>
 
-      {ended ? null : (
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              if (playing) player.current?.pauseVideo();
-              else player.current?.playVideo();
-              setPlaying(!playing);
-            }}
-          >
-            {playing ? '⏸ 잠깐 멈추기' : '▶ 이어 보기'}
-          </Button>
-        </div>
-      )}
+
     </div>
   );
 }
