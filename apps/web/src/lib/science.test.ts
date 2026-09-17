@@ -101,19 +101,34 @@ describe('videoLength', () => {
 });
 
 describe('lessonVideos', () => {
-  it('덩어리에 따로 붙은 영상이 있으면 그것을 본다', () => {
-    // 주제 하나가 대여섯 주짜리라 영상 하나로는 다 덮이지 않는 자리가 있다.
-    const withOwn = lessonsFrom(0).find((l) => l.section.video || l.section.videoEn);
-    expect(withOwn).toBeDefined();
-    const v = lessonVideos(withOwn!);
-    if (withOwn!.section.video) expect(v.ko.id).toBe(withOwn!.section.video.id);
-    if (withOwn!.section.videoEn) expect(v.en?.id).toBe(withOwn!.section.videoEn.id);
+  const 월 = new Date(2026, 8, 14);
+  const 수 = new Date(2026, 8, 16);
+  const 일 = new Date(2026, 8, 20);
+
+  it('월·화에는 주제의 기본 영상을 본다', () => {
+    const withOwn = lessonsFrom(0).find((l) => l.section.video)!;
+    const v = lessonVideos(withOwn, 월);
+    expect(v.ko.id).toBe(withOwn.topic.video.id);
+    expect(v.swapped).toBe(false);
   });
 
-  it('따로 붙은 것이 없으면 주제의 영상을 본다', () => {
+  it('수요일부터 그 주에 붙은 영상으로 바뀐다', () => {
+    // 한 주 내내 같은 것만 나오면 사나흘째부터는 열어 보지도 않는다.
+    const withOwn = lessonsFrom(0).find((l) => l.section.video)!;
+    for (const day of [수, 일]) {
+      const v = lessonVideos(withOwn, day);
+      expect(v.ko.id).toBe(withOwn.section.video!.id);
+      expect(v.swapped).toBe(true);
+    }
+  });
+
+  it('따로 붙은 것이 없는 주에는 바뀌지 않는다', () => {
+    // 억지로 바꿀 것을 지어내지 않는다.
     const plain = lessonsFrom(0).find((l) => !l.section.video && !l.section.videoEn)!;
-    const v = lessonVideos(plain);
-    expect(v.ko.id).toBe(plain.topic.video.id);
-    expect(v.en?.id).toBe(plain.topic.videoEn?.id);
+    for (const day of [월, 수]) {
+      const v = lessonVideos(plain, day);
+      expect(v.ko.id).toBe(plain.topic.video.id);
+      expect(v.swapped).toBe(false);
+    }
   });
 });

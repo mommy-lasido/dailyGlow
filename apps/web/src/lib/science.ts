@@ -216,14 +216,30 @@ export function weeklyScience(from: ScienceGrade, today = new Date()): ScienceLe
   return pool[index]!;
 }
 
-/** 이 주에 볼 영상. 덩어리에 따로 붙은 것이 있으면 그것을, 없으면 주제의 것을. */
-export function lessonVideos(lesson: ScienceLesson): {
-  ko: ScienceVideo;
-  en?: ScienceVideo;
-} {
+/**
+ * 이 주에 볼 영상. **주중에 한 번 바뀐다.**
+ *
+ * 월·화에는 그 주제의 기본 영상을 보고, **수요일부터** 그 주에 따로 붙은 영상으로
+ * 바뀐다. 한 주 내내 같은 것만 나오면 사나흘째부터는 아이가 열어 보지도 않는다.
+ * 주 한가운데에 새것이 하나 기다리고 있으면 다시 열어 볼 까닭이 생긴다.
+ *
+ * 따로 붙은 영상이 없는 주에는 바뀌지 않는다. 억지로 바꿀 것을 지어내지 않는다.
+ */
+export function lessonVideos(
+  lesson: ScienceLesson,
+  today = new Date(),
+): { ko: ScienceVideo; en?: ScienceVideo; swapped: boolean } {
   const { topic, section } = lesson;
-  // 한쪽만 따로 붙는 일이 있으므로 각각 따로 고른다.
-  return { ko: section.video ?? topic.video, en: section.videoEn ?? topic.videoEn };
+  // getDay(): 일요일이 0. 수(3)부터 토(6)까지와 일요일이 주의 뒤쪽이다.
+  const day = today.getDay();
+  const later = day === 0 || day >= 3;
+
+  const ko = later ? (section.video ?? topic.video) : topic.video;
+  const en = later ? (section.videoEn ?? topic.videoEn) : topic.videoEn;
+  // 실제로 바뀌었을 때만 알린다.
+  const swapped = later && Boolean(section.video || section.videoEn);
+
+  return { ko, en, swapped };
 }
 
 /** "2분 9초" 처럼 읽어 준다. 아이가 얼마나 걸리는지 미리 알 수 있게. */

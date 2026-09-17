@@ -267,18 +267,23 @@ function DoneButton({ lesson }: { lesson: ScienceLesson }) {
  * 주제 하나가 대여섯 주짜리라 영상 하나로는 다 덮이지 않는 자리가 있다.
  */
 function LessonVideos({ lesson }: { lesson: ScienceLesson }) {
-  const { ko, en } = lessonVideos(lesson);
+  const { ko, en, swapped } = lessonVideos(lesson);
+  // 수요일부터 바뀐 영상에만 알림을 붙인다.
+  const koIsNew = swapped && Boolean(lesson.section.video);
+  const enIsNew = swapped && Boolean(lesson.section.videoEn);
 
   return (
     <>
       <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="ko">
         <h3 className="text-center text-xl font-bold text-glow-600">영상으로 보기</h3>
+        {koIsNew ? <NewVideoLine /> : null}
         <SafeVideo videoId={ko.id} label={`영상 보기 · ${videoLength(ko.seconds)}`} />
       </Card>
 
       {en ? (
         <Card className="flex flex-col gap-4" data-testid="science-video" data-lang="en">
           <h3 className="text-center text-xl font-bold text-glow-600">영어로 한 번 더</h3>
+          {enIsNew ? <NewVideoLine /> : null}
           <p className="text-center text-slate-500">같은 이야기예요. 아는 이야기라 들려요.</p>
           <SafeVideo
             videoId={en.id}
@@ -287,5 +292,22 @@ function LessonVideos({ lesson }: { lesson: ScienceLesson }) {
         </Card>
       ) : null}
     </>
+  );
+}
+
+/**
+ * 이번 주에만 나오는 영상이라고 알린다.
+ *
+ * 주 앞쪽(월·화)에는 그 주제의 기본 영상이 나오다가 **수요일부터** 그 주에 맞는
+ * 영상으로 바뀐다. 말해 주지 않으면 아이는 늘 보던 것인 줄 알고 지나친다.
+ */
+function NewVideoLine() {
+  return (
+    <p
+      data-testid="new-video"
+      className="rounded-2xl bg-glow-50 px-4 py-2 text-center font-bold text-glow-700"
+    >
+      ✨ 이번 주는 새로운 영상이 있어요!
+    </p>
   );
 }
