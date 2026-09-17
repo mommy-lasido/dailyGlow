@@ -11,6 +11,7 @@ import {
   spotProblems,
   stepForDay,
   weeklyFocus,
+  wordHasLetter,
   type SpotProblem,
   type WeeklyFocus,
 } from '@/lib/weekly';
@@ -164,16 +165,16 @@ function MeetStep({
         🔊
       </button>
 
-      <span
-        data-testid="weekly-word"
-        className="rounded-3xl bg-glow-50 px-8 py-5 text-6xl font-bold text-slate-700"
-      >
-        {word}
-      </span>
-
-      <p className="text-slate-500">
-        여기 어디에 <span className="font-bold text-glow-600">{letter}</span> 가 있을까요?
-      </p>
+      {kind === 'find' ? (
+        <FindInWord key={word} word={word} letter={letter} />
+      ) : (
+        <span
+          data-testid="weekly-word"
+          className="rounded-3xl bg-glow-50 px-8 py-5 text-6xl font-bold text-slate-700"
+        >
+          {word}
+        </span>
+      )}
 
       <div className="flex w-full items-center justify-between gap-3">
         <Button variant="ghost" disabled={card === 0} onClick={() => setCard((c) => c - 1)}>
@@ -375,5 +376,64 @@ function SpotGame({ focus, letter }: { focus: WeeklyFocus; letter: string }) {
         {wrongAt !== null ? '다시 잘 봐요 🤔' : ''}
       </p>
     </Card>
+  );
+}
+
+/**
+ * 낱말에서 글자 찾기.
+ *
+ * 전에는 낱말을 크게 보여주고 "여기 어디에 ㅐ 가 있을까요?" 라고 **묻기만** 했다.
+ * 고를 데가 없으니 아이는 잠깐 보고 다음으로 넘겼고, 맞게 찾았는지 아무도 몰랐다.
+ * 영숙님이 짚어 주었다 — "이건 찾은 걸 어떻게 알려줘?"
+ *
+ * 이제 낱말을 **글자 하나하나 누를 수 있게** 나눈다. 아이가 그 글자가 든 칸을
+ * 누르면 그 칸이 초록으로 바뀐다. 틀린 칸을 누르면 잠깐 붉어졌다가 돌아온다 —
+ * 틀렸다고 막지 않는다. 다시 보고 누르면 된다.
+ */
+function FindInWord({ word, letter }: { word: string; letter: string }) {
+  const [found, setFound] = useState<number | null>(null);
+  const [missed, setMissed] = useState<number | null>(null);
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex gap-2">
+        {[...word].map((ch, i) => {
+          const isFound = found === i;
+          const isMissed = missed === i;
+          return (
+            <button
+              key={i}
+              type="button"
+              data-testid="find-letter"
+              data-char={ch}
+              aria-label={ch}
+              onClick={() => {
+                if (wordHasLetter(ch, letter)) {
+                  setFound(i);
+                  setMissed(null);
+                  spawnConfetti(6);
+                } else {
+                  setMissed(i);
+                  window.setTimeout(() => setMissed(null), 600);
+                }
+              }}
+              className={`rounded-3xl px-6 py-5 text-6xl font-bold transition-transform active:scale-95 ${
+                isFound
+                  ? 'bg-glow-200 text-glow-700'
+                  : isMissed
+                    ? 'bg-rose-100 text-rose-400'
+                    : 'bg-glow-50 text-slate-700'
+              }`}
+            >
+              {ch}
+            </button>
+          );
+        })}
+      </div>
+
+      <p data-testid="find-result" className="min-h-[1.75rem] font-bold text-glow-600">
+        {found !== null ? '찾았어요! 🎉' : missed !== null ? '여기는 아니에요. 다시 볼까요?' : ''}
+      </p>
+    </div>
   );
 }
