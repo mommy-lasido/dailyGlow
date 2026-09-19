@@ -31,8 +31,12 @@ describe('SciencePage', () => {
     // 내용을 이미 아는 채로 들어야 영어가 장면에 가서 붙는다. 순서가 뒤바뀌면
     // 못 알아듣는 소리일 뿐이다.
     render(<SciencePage />);
-    const videos = screen.getAllByTestId('science-video');
-    expect(videos.map((v) => v.getAttribute('data-lang'))).toEqual(['ko', 'en']);
+    const langs = screen
+      .getAllByTestId('science-video')
+      .map((v) => v.getAttribute('data-lang'));
+    // 한 주에 한국어 영상이 둘 이상인 주도 있으므로 개수가 아니라 차례만 본다.
+    expect(langs).toContain('ko');
+    expect(langs.lastIndexOf('ko')).toBeLessThan(langs.indexOf('en') === -1 ? Infinity : langs.indexOf('en'));
   });
 
   it('누르기 전에는 영상을 불러오지 않는다', () => {
