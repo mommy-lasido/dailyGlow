@@ -198,9 +198,41 @@ export function HomePage() {
           ))
         )}
 
+        <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
         <ScienceCard isPreReader={isPreReader} done={scienceDone} />
       </section>
     </div>
+  );
+}
+
+/**
+ * Spell It 카드 — 영어 철자 맞추기.
+ *
+ * **초등학생에게만 보인다.** 낱말이 Wordly Wise 2·3권 것이라 아직 영어를 읽지
+ * 못하는 아이에게는 낼 것이 없다. 시윤이와 도윤이의 영어는 따로 정한다.
+ *
+ * 카드 글씨도 영어로 적는다. 영어 활동에는 한국어를 섞지 않기로 했다 —
+ * 한국어로 거들면 아이가 영어를 알아서 한 것인지 알 수 없다.
+ */
+function SpellCard({ isPreReader, grade }: { isPreReader: boolean; grade: string | null }) {
+  if (!grade || !/^g[1-9]/.test(grade)) return null;
+
+  return (
+    <Link to="/spell" data-testid="spell-card">
+      <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-sky-50 text-4xl font-bold text-sky-600">
+          Aa
+        </span>
+        <div className="min-w-0">
+          <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+            Spell It
+          </h2>
+          <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
+            Read the meaning, then build the word
+          </p>
+        </div>
+      </Card>
+    </Link>
   );
 }
 

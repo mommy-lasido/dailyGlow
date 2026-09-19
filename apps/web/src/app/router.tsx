@@ -10,6 +10,7 @@ import { ParentGate } from '@/components/ParentGate';
 import { ActivityPage } from '@/pages/ActivityPage';
 import { WeeklyPage } from '@/pages/WeeklyPage';
 import { SciencePage } from '@/pages/SciencePage';
+import { SpellPage } from '@/pages/SpellPage';
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,8 @@ export const router = createBrowserRouter([
               // 이번 주의 과학. 아직 홈 화면에 내걸지 않았다 — 영숙님이 보고
               // 이대로 갈지 정한 뒤에 내건다.
               { path: 'science', element: <SciencePage /> },
+              // 영어 철자 맞추기. 낱말이 앱 안에 들어 있어 창고를 거치지 않는다.
+              { path: 'spell', element: <SpellPage /> },
             ],
           },
         ],
