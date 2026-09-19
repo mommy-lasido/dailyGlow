@@ -10,6 +10,7 @@ import {
   isNext,
   makeSpellSet,
   SPELL_PROBLEM_COUNT,
+  todayWords,
   type SpellProblem,
 } from './generate';
 
@@ -32,8 +33,13 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
   const book = bookOf(lesson.config);
   const lessons = useMemo(() => lessonsOf(book), [book]);
 
+  /** 과를 직접 고르는 화면을 펼쳤는가. 평소에는 오늘 것이 바로 나온다. */
+  const [picking, setPicking] = useState(false);
+  /** 고른 과. 오늘 것을 하는 중이면 null. */
   const [chosen, setChosen] = useState<number | null>(null);
-  const [problems, setProblems] = useState<SpellProblem[]>([]);
+  const [problems, setProblems] = useState<SpellProblem[]>(() =>
+    makeSpellSet(todayWords(wordsOf(book), profileId)),
+  );
   const [at, setAt] = useState(0);
   const [typed, setTyped] = useState('');
   /** 방금 잘못 누른 글자의 자리. 잠깐 붉었다가 돌아온다. */
@@ -41,7 +47,8 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
   /** 이 낱말에서 한 번이라도 잘못 눌렀는가. */
   const [missed, setMissed] = useState(false);
   const [wrongWords, setWrongWords] = useState<string[]>([]);
-  const [startedAt, setStartedAt] = useState(0);
+  // 들어오자마자 오늘 것이 시작되므로 그 순간부터 시간을 센다.
+  const [startedAt, setStartedAt] = useState(() => Date.now());
   const [done, setDone] = useState(false);
 
   function begin(which: number) {
@@ -53,6 +60,7 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
     );
     setProblems(makeSpellSet(pool));
     setChosen(which);
+    setPicking(false);
     setAt(0);
     setTyped('');
     setMissed(false);
@@ -104,15 +112,12 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
     }, 1100);
   }
 
-  // ── 과 고르기 ────────────────────────────────────────
-  if (chosen === null) {
+  // ── 과 고르기 (평소에는 지나간다) ────────────────────
+  if (picking) {
     return (
       <Card className="flex flex-col items-center gap-5 text-center">
-        <h1 className="text-3xl font-bold text-glow-600">Spell It</h1>
-        <p className="text-lg text-slate-500">
-          Read the meaning. Tap the letters in the right order.
-        </p>
-        <p className="text-sm text-slate-400">Book {book} · pick a lesson</p>
+        <h1 className="text-3xl font-bold text-glow-600">Pick a lesson</h1>
+        <p className="text-sm text-slate-400">Book {book}</p>
 
         <div className="grid w-full grid-cols-5 gap-2 sm:grid-cols-8">
           {lessons.map((n) => (
@@ -127,6 +132,10 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
             </button>
           ))}
         </div>
+
+        <Button variant="ghost" onClick={() => setPicking(false)}>
+          ← Back
+        </Button>
       </Card>
     );
   }
@@ -145,6 +154,16 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
             Words to watch: <b>{wrongWords.join(', ')}</b>
           </p>
         ) : null}
+
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setPicking(true);
+            setDone(false);
+          }}
+        >
+          Pick a lesson
+        </Button>
       </Card>
     );
   }
@@ -155,13 +174,24 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-center text-slate-400">
-        {at + 1} / {problems.length}
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-bold text-glow-600">
+          {chosen === null ? "Today's words" : `Lesson ${chosen}`}
+        </p>
+        <p className="text-slate-400">
+          {at + 1} / {problems.length}
+        </p>
+      </div>
 
       <Card className="flex flex-col items-center gap-6 text-center">
-        {/* 뜻. 영어로만 쓴다. */}
-        <p data-testid="spell-clue" className="text-xl leading-relaxed text-slate-600">
+        {/* 무엇을 하라는 것인지. 글자보다 먼저 온다. */}
+        <p className="text-slate-500">Read the meaning and build the word.</p>
+
+        {/* 뜻. 영어로만 쓰고, 화면에서 가장 크게 둔다 — 아이가 읽어야 할 것이다. */}
+        <p
+          data-testid="spell-clue"
+          className="max-w-prose text-2xl font-bold leading-relaxed text-slate-700 sm:text-3xl"
+        >
           {problem.clue}
         </p>
 
@@ -227,13 +257,17 @@ export function SpellActivity({ lesson, onFinish }: ActivityProps) {
         </p>
       </Card>
 
-      {typed.length > 0 && !finished ? (
-        <div className="flex justify-center">
+      <div className="flex justify-center gap-2">
+        {typed.length > 0 && !finished ? (
           <Button variant="ghost" onClick={() => setTyped('')}>
             Start over
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+        {/* 오늘 것 말고 특정 과를 하고 싶을 때. 평소에는 쓸 일이 없다. */}
+        <Button variant="ghost" onClick={() => setPicking(true)}>
+          Pick a lesson
+        </Button>
+      </div>
     </div>
   );
 }

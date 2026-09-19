@@ -12,6 +12,7 @@
  * 한국어를 보고 맞힌 것인지 갈라낼 수 없다.
  */
 
+import { dayKey } from '@/lib/activities';
 import type { VocabWord } from './words';
 
 /** 한 판에 낼 낱말 수. */
@@ -84,4 +85,48 @@ export function isNext(answer: string, typed: string, letter: string): boolean {
 /** 다 맞췄는가. */
 export function isDone(answer: string, typed: string): boolean {
   return answer === typed;
+}
+
+/** 글자를 숫자 하나로 접는다. 같은 글은 늘 같은 숫자가 된다. */
+function seedOf(text: string): number {
+  let h = 2166136261;
+  for (const ch of text) {
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** 같은 씨앗을 주면 늘 같은 차례를 내주는 난수. */
+function seededRand(seed: number): () => number {
+  let state = seed || 1;
+  return () => {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    return state / 2147483648;
+  };
+}
+
+/**
+ * 오늘 낼 낱말들.
+ *
+ * 과 번호를 일일이 고르게 했더니 아이가 들어갈 때마다 숫자를 눌러야 했다.
+ * 아이가 할 일은 **오늘 것을 하는 것**이지 오늘 할 것을 고르는 것이 아니다.
+ *
+ * 날짜와 아이로 씨앗을 만들어 뽑으므로 **오늘 안에는 몇 번을 열어도 같은 다섯
+ * 낱말**이 나오고, 내일이면 다른 것이 나온다. 아이가 "오늘 건 다 했다" 를
+ * 알 수 있다.
+ */
+export function todayWords(
+  pool: VocabWord[],
+  profileId: string | null,
+  count = SPELL_PROBLEM_COUNT,
+  today = new Date(),
+): VocabWord[] {
+  const rand = seededRand(seedOf(`${dayKey(today)}-${profileId ?? 'x'}-spell`));
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+  }
+  return shuffled.slice(0, Math.min(count, shuffled.length));
 }

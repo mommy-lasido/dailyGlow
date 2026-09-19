@@ -5,6 +5,7 @@ import {
   makeSpellSet,
   scramble,
   SPELL_PROBLEM_COUNT,
+  todayWords,
 } from './generate';
 import { lessonsOf, VOCAB_BOOKS, wordsOf } from './words';
 
@@ -81,5 +82,29 @@ describe('낱말 목록', () => {
     for (const book of VOCAB_BOOKS) {
       for (const w of book.words) expect(w.word).toMatch(/^[a-z]+$/);
     }
+  });
+});
+
+describe('todayWords', () => {
+  const 오늘 = new Date(2026, 8, 19);
+  const 내일 = new Date(2026, 8, 20);
+
+  it('오늘 안에는 몇 번을 열어도 같은 낱말이 나온다', () => {
+    // 아이가 "오늘 건 다 했다" 를 알 수 있어야 한다.
+    const a = todayWords(wordsOf(2), '아이1', 5, 오늘);
+    const b = todayWords(wordsOf(2), '아이1', 5, 오늘);
+    expect(a.map((w) => w.word)).toEqual(b.map((w) => w.word));
+  });
+
+  it('내일이면 다른 낱말이 나온다', () => {
+    const a = todayWords(wordsOf(2), '아이1', 5, 오늘);
+    const b = todayWords(wordsOf(2), '아이1', 5, 내일);
+    expect(a.map((w) => w.word)).not.toEqual(b.map((w) => w.word));
+  });
+
+  it('아이마다 다른 낱말이 나온다', () => {
+    const a = todayWords(wordsOf(2), '아이1', 5, 오늘);
+    const b = todayWords(wordsOf(2), '아이2', 5, 오늘);
+    expect(a.map((w) => w.word)).not.toEqual(b.map((w) => w.word));
   });
 });
