@@ -190,7 +190,10 @@ export function HomePage() {
 
           return (
             <section key={key} className="flex flex-col gap-3">
-              <h2 className="text-lg font-bold text-glow-600">{title}</h2>
+              <h2 className="flex items-center gap-2 text-lg font-bold text-glow-600">
+                <PlaygroundIcon name={key} title={title} />
+                {title}
+              </h2>
 
               {mine.map((a) => (
                 <Link key={a.id} to={`/activity/${a.id}`}>
@@ -248,6 +251,30 @@ const PLAYGROUNDS: { key: string; title: string; subjects: string[] }[] = [
   { key: 'english', title: '영어 놀이터', subjects: ['english'] },
   { key: 'science', title: '과학 놀이터', subjects: ['science'] },
 ];
+
+/**
+ * 놀이터 머리글에 붙는 그림. 영숙님이 만들어 주었다(512×512, 배경 투명).
+ *
+ * 글자를 못 읽는 아이는 **그림으로 자리를 찾는다.** 넷이 색으로 갈라지도록
+ * 만들어 주어서, 시윤이와 도윤이도 "파란 거" 로 수학을 찾을 수 있다.
+ */
+function PlaygroundIcon({ name, title }: { name: string; title: string }) {
+  return (
+    <img
+      src={`/playground/${name}.png`}
+      alt=""
+      aria-hidden
+      data-testid="playground-icon"
+      data-name={name}
+      // 그림이 늦게 뜨더라도 머리글이 흔들리지 않게 크기를 미리 잡아 둔다.
+      width={512}
+      height={512}
+      loading="lazy"
+      className="h-10 w-10 shrink-0"
+      title={title}
+    />
+  );
+}
 
 /**
  * Spell It 카드 — 영어 철자 맞추기.
