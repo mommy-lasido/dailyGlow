@@ -5,6 +5,7 @@ import { RequireProfile } from '@/components/RequireProfile';
 import { LoginPage } from '@/pages/LoginPage';
 import { OnboardingPage } from '@/pages/OnboardingPage';
 import { HomePage } from '@/pages/HomePage';
+import { PlaygroundPage } from '@/pages/PlaygroundPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ParentGate } from '@/components/ParentGate';
 import { ActivityPage } from '@/pages/ActivityPage';
@@ -25,6 +26,8 @@ export const router = createBrowserRouter([
             element: <RequireProfile />,
             children: [
               { index: true, element: <HomePage /> },
+              // 놀이터 한 곳. 홈에서 그림을 누르면 여기로 온다.
+              { path: 'playground/:key', element: <PlaygroundPage /> },
               // 설정에는 아이의 단계와 학년이 들어 있다. 아이가 바꾸면 그날 나오는
               // 문제가 통째로 달라지므로 부모만 들어가게 막는다.
               {

@@ -4,21 +4,18 @@ import { Button, Card } from '@dailyglow/ui';
 import { GRADE_LABEL, vocativeParticle, type Grade } from '@dailyglow/utils';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
-import { supabase } from '@/lib/supabase';
 import {
+  fetchCatalog,
   fetchTodayMinutes,
   fetchWeek,
-  scienceDoneThisWeek,
-  selectActivities,
   streakOf,
   weekComplete,
-  type LessonGateRow,
   type WeekDay,
 } from '@/lib/activities';
 import { buildSuggestion, fetchRecentSessions } from '@/lib/promotion';
-import { stepForDay, weeklyFocus, type WeeklyFocus } from '@/lib/weekly';
 import { LevelSuggestionCard } from '@/components/LevelSuggestionCard';
-import { ActivityIcon } from '@/components/ActivityIcon';
+import { PLAYGROUNDS } from '@/lib/playgrounds';
+import { PlaygroundIcon } from '@/components/PlaygroundIcon';
 
 /** 아직 못 읽는 아이에게는 글자를 크게 보여준다. */
 function greetingClass(readingLevel: string | null): string {
@@ -30,42 +27,10 @@ export function HomePage() {
   const profile = useProfile((s) => s.profile);
   const levels = useProfile((s) => s.levels);
 
-  const {
-    data: lessons,
-    isPending: lessonsPending,
-    isError: lessonsError,
-  } = useQuery({
+  // 놀이터가 쓰는 것과 같은 목록. 여기서는 단계 제안을 셈하는 데만 쓴다.
+  const { data: lessons } = useQuery({
     queryKey: ['activity-catalog'],
-    queryFn: async (): Promise<LessonGateRow[]> => {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select(
-          'id, title, activity_kind, subject_id, subject_level, sort_order, min_grade, max_grade, config, subjects!inner(slug, title, sort_order)',
-        )
-        .order('sort_order');
-      if (error) throw error;
-      return (data ?? []).map((r) => {
-        const subject = r.subjects as unknown as {
-          slug: string;
-          title: string;
-          sort_order: number;
-        };
-        return {
-          id: r.id,
-          title: r.title,
-          activity_kind: r.activity_kind,
-          subject_id: r.subject_id,
-          subject_slug: subject.slug,
-          subject_title: subject.title,
-          subject_level: r.subject_level,
-          min_grade: r.min_grade,
-          max_grade: r.max_grade,
-          sort_order: r.sort_order,
-          subject_sort_order: subject.sort_order,
-          config: r.config,
-        };
-      });
-    },
+    queryFn: fetchCatalog,
   });
 
   const { data: todayMinutes = 0 } = useQuery({
@@ -81,13 +46,6 @@ export function HomePage() {
     queryFn: () => fetchWeek(profile!.id),
   });
 
-  /** 이번 주의 과학을 이미 봤는가. 봤으면 카드 문구가 바뀐다. */
-  const { data: scienceDone = false } = useQuery({
-    queryKey: ['science-done', profile?.id],
-    enabled: Boolean(profile),
-    queryFn: () => scienceDoneThisWeek(profile!.id),
-  });
-
   // 단계를 올릴 때가 됐는지 판단할 재료. 없으면 제안이 안 뜰 뿐이라 홈은 그대로 열린다.
   const { data: recentSessions = [], refetch: refetchSessions } = useQuery({
     queryKey: ['recent-sessions', profile?.id],
@@ -97,10 +55,6 @@ export function HomePage() {
 
   // DB 타입은 grade 를 string 으로 주므로 도메인 타입으로 좁힌다.
   const grade = (profile?.grade as Grade | null) ?? null;
-  const activities = selectActivities(lessons ?? [], grade, levels);
-  // 한글 단계가 가리키는 이번 주의 글자. 한글 과목의 레벨을 그대로 쓴다.
-  const hangulLevel = lessons?.find((l) => l.subject_slug === 'hangul')?.subject_id;
-  const weekly = hangulLevel ? weeklyFocus(levels[hangulLevel]?.level ?? 1) : null;
   const suggestion = buildSuggestion(lessons ?? [], levels, recentSessions, grade);
   const isPreReader = profile?.reading_level === 'pre_reader';
   // 부를 때는 성을 뺀 이름으로. given_name 이 비었거나(빈 문자열 포함) 없는 예전 행은 온전한 이름으로 대신한다.
@@ -150,9 +104,7 @@ export function HomePage() {
         <WeekStamps week={week} />
       </Card>
 
-      {weekly ? <WeeklyCard week={weekly} isPreReader={isPreReader} /> : null}
-
-      {/* 단계 제안은 활동 목록 위에 둔다. 아래에 두면 카드를 다 지나쳐야 보인다. */}
+      {/* 단계 제안은 놀이터 위에 둔다. 아래에 두면 지나쳐 버린다. */}
       {suggestion ? (
         <LevelSuggestionCard
           key={`${suggestion.subjectId}-${suggestion.kind}-${suggestion.toLevel}`}
@@ -161,185 +113,31 @@ export function HomePage() {
         />
       ) : null}
 
-      {lessonsPending ? (
-        <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
-      ) : lessonsError ? (
-        <Card className="text-center text-lg text-slate-500">
-          지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.
-        </Card>
-      ) : (
-        /*
-          활동을 **놀이터 넷으로 나눈다.** 활동이 늘면서 카드가 한 줄로 길게
-          이어져, 아이가 오늘 할 것을 찾으려면 한참 내려야 했다.
+      {/*
+        홈에는 **놀이터 넷만** 둔다.
 
-          카드를 접어 두지는 않는다. 시윤이와 도윤이는 글씨가 아니라 **그림을 보고**
-          고르므로, 한 겹 안으로 넣으면 그림이 보이지 않아 헤맨다. 머리글로 나누기만
-          한다.
-        */
-        PLAYGROUNDS.map(({ key, title, subjects }) => {
-          const mine = activities.filter((a) => subjects.includes(a.subjectSlug));
-          const extra =
-            key === 'english' ? (
-              <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
-            ) : key === 'science' ? (
-              <ScienceCard isPreReader={isPreReader} done={scienceDone} />
-            ) : null;
+        활동이 늘면서 홈이 한없이 길어졌고, 아이가 오늘 할 것을 찾으려면 한참
+        내려야 했다. 이제 홈은 "어디로 갈까" 만 묻고, 무엇을 할지는 놀이터 안에서
+        고른다.
 
-          // 창고에서 온 활동도 없고 따로 붙는 카드도 없으면 머리글만 남으므로 그린다.
-          if (mine.length === 0 && !extra) return null;
-
-          return (
-            <section key={key} className="flex flex-col gap-3">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-glow-600">
-                <PlaygroundIcon name={key} title={title} />
+        칸을 크게 둘로 나눈 것은 글씨를 못 읽는 아이 때문이다. 시윤이와 도윤이는
+        그림을 보고 고르므로, 그림이 작아지면 소용이 없다.
+      */}
+      <nav className="grid grid-cols-2 gap-4">
+        {PLAYGROUNDS.map(({ key, title }) => (
+          <Link key={key} to={`/playground/${key}`} data-testid="playground-tile">
+            <Card className="flex aspect-square flex-col items-center justify-center gap-3 transition-transform hover:scale-[1.03] active:scale-95">
+              <PlaygroundIcon name={key} title={title} className="h-24 w-24 shrink-0" />
+              <span
+                className={`font-bold text-glow-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}
+              >
                 {title}
-              </h2>
-
-              {mine.map((a) => (
-                <Link key={a.id} to={`/activity/${a.id}`}>
-                  <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
-                    <ActivityIcon
-                      id={a.iconId}
-                      className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
-                    />
-                    {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
-                    <div className="min-w-0">
-                      <h3
-                        className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}
-                      >
-                        {a.title}
-                      </h3>
-                      {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
-                          예를 보여준다. 없으면 아무것도 그리지 않는다. */}
-                      {a.hint ? (
-                        <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-                          {a.hint}
-                        </p>
-                      ) : null}
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-
-              {extra}
-            </section>
-          );
-        })
-      )}
-
-      {!lessonsPending && !lessonsError && activities.length === 0 ? (
-        <Card className="text-center text-lg text-slate-500">
-          아직 준비된 공부가 없어요. 설정에서 학년과 단계를 확인해 주세요.
-        </Card>
-      ) : null}
+              </span>
+            </Card>
+          </Link>
+        ))}
+      </nav>
     </div>
-  );
-}
-
-/**
- * 놀이터 넷. 홈 화면의 활동을 이 차례로 나눠 담는다.
- *
- * 이름은 영숙님이 정했다 — **"배움" 이 아니라 "놀이터"**. 아이가 "한글 배움 하자"
- * 라고는 말하지 않지만 "놀이터 가자" 는 말이 된다. 짬나는 시간에 잠깐 들르는
- * 자리라는 뜻이기도 하다.
- *
- * 차례는 날마다 하는 것(한글·수학)이 앞, 주에 몇 번 하는 것(영어·과학)이 뒤다.
- */
-const PLAYGROUNDS: { key: string; title: string; subjects: string[] }[] = [
-  { key: 'hangul', title: '한글 놀이터', subjects: ['hangul', 'korean'] },
-  { key: 'math', title: '수학 놀이터', subjects: ['math'] },
-  { key: 'english', title: '영어 놀이터', subjects: ['english'] },
-  { key: 'science', title: '과학 놀이터', subjects: ['science'] },
-];
-
-/**
- * 놀이터 머리글에 붙는 그림. 영숙님이 만들어 주었다(512×512, 배경 투명).
- *
- * 글자를 못 읽는 아이는 **그림으로 자리를 찾는다.** 넷이 색으로 갈라지도록
- * 만들어 주어서, 시윤이와 도윤이도 "파란 거" 로 수학을 찾을 수 있다.
- */
-function PlaygroundIcon({ name, title }: { name: string; title: string }) {
-  return (
-    <img
-      src={`/playground/${name}.png`}
-      alt=""
-      aria-hidden
-      data-testid="playground-icon"
-      data-name={name}
-      // 그림이 늦게 뜨더라도 머리글이 흔들리지 않게 크기를 미리 잡아 둔다.
-      width={512}
-      height={512}
-      loading="lazy"
-      className="h-10 w-10 shrink-0"
-      title={title}
-    />
-  );
-}
-
-/**
- * Spell It 카드 — 영어 철자 맞추기.
- *
- * **초등학생에게만 보인다.** 낱말이 Wordly Wise 2·3권 것이라 아직 영어를 읽지
- * 못하는 아이에게는 낼 것이 없다. 시윤이와 도윤이의 영어는 따로 정한다.
- *
- * 카드 글씨도 영어로 적는다. 영어 활동에는 한국어를 섞지 않기로 했다 —
- * 한국어로 거들면 아이가 영어를 알아서 한 것인지 알 수 없다.
- */
-function SpellCard({ isPreReader, grade }: { isPreReader: boolean; grade: string | null }) {
-  if (!grade || !/^g[1-9]/.test(grade)) return null;
-
-  return (
-    <Link to="/spell" data-testid="spell-card">
-      <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
-        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-sky-50 text-4xl font-bold text-sky-600">
-          Aa
-        </span>
-        <div className="min-w-0">
-          <h3 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
-            Spell It
-          </h3>
-          <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-            Read the meaning, then build the word
-          </p>
-        </div>
-      </Card>
-    </Link>
-  );
-}
-
-/**
- * 과학 놀이터 카드.
- *
- * 다른 활동 카드는 창고에 적힌 목록에서 나오지만, 과학은 내용이 앱 안에 들어
- * 있어 창고를 거치지 않는다. 그래서 이 카드만 따로 그린다.
- *
- * 활동 목록 **맨 아래**에 둔다. 날마다 하는 한글과 수학이 먼저고, 과학은 한
- * 주에 하나이므로 그 뒤에 온다.
- */
-function ScienceCard({ isPreReader, done }: { isPreReader: boolean; done: boolean }) {
-  return (
-    <Link to="/science" data-testid="science-card">
-      <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
-        <ActivityIcon
-          id="science"
-          className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
-        />
-        <div className="min-w-0">
-          {/* 머리글이 이미 "과학 놀이터" 이므로 카드는 그 안에서 무엇을 하는지
-              적는다. 같은 말이 두 번 나오면 아이가 두 개인 줄 안다. */}
-          <h3 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
-            이번 주의 과학
-          </h3>
-          {/* 다 보고 나면 줄을 아예 없앤다. "다 봤어요" 라고 적어 두면 할 일이
-              남은 카드와 같은 모양이라, 아이가 또 눌러 볼 것이 있는 줄 안다. */}
-          {done ? null : (
-            <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-              이번 주에 배울 것이 하나 있어요
-            </p>
-          )}
-        </div>
-      </Card>
-    </Link>
   );
 }
 
@@ -445,52 +243,5 @@ function WeekStamps({ week }: { week: WeekDay[] }) {
         </p>
       ) : null}
     </div>
-  );
-}
-
-/**
- * 이번 주의 글자.
- *
- * 한 주 내내 같은 글자를 파고든다. 아이가 목록에서 아무거나 골라 풀면 그날그날
- * 다른 것을 조금씩 건드리고 끝나는데, 교재가 한 주에 글자 하나를 붙잡는 데는
- * 까닭이 있다 — 같은 글자를 여러 날에 걸쳐 여러 방식으로 만나야 남는다.
- *
- * 획순(어떻게 긋는지)은 아직 없다. 영숙님이 옆에서 알려주기로 했다.
- */
-function WeeklyCard({ week, isPreReader }: { week: WeeklyFocus; isPreReader: boolean }) {
-  const step = stepForDay();
-
-  return (
-    <Card className="flex flex-col gap-3">
-      {/* 단계 번호는 적지 않는다. 아이가 자기가 몇 단계인지 알 까닭이 없고,
-          알면 남과 견주는 숫자가 될 뿐이다. 단계는 설정에서 부모가 본다. */}
-      <span className="text-xl font-bold text-glow-600">이번 주에 배울 글자</span>
-
-      <Link to="/weekly" className="flex items-center gap-5">
-        <span
-          data-testid="weekly-letter"
-          className="flex shrink-0 items-center justify-center rounded-3xl bg-glow-50 px-6 py-3 text-6xl font-bold text-glow-700"
-        >
-          {week.letters.join(' ')}
-        </span>
-        {/* 낱말은 여기 적지 않는다 — 들어가면 눌러서 들을 수 있고, 여기서는
-            오늘 무엇을 하는지만 크게 보이면 된다. */}
-        <div className="min-w-0">
-          <p className="text-sm text-slate-400">오늘은</p>
-          <p
-            data-testid="weekly-step"
-            className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}
-          >
-            {step.name}
-          </p>
-        </div>
-      </Link>
-
-      <Link to="/weekly">
-        <Button size="lg" className="w-full">
-          오늘의 공부 하러 가기 →
-        </Button>
-      </Link>
-    </Card>
   );
 }

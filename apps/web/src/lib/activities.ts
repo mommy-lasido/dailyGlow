@@ -21,6 +21,44 @@ export interface LessonGateRow {
   config: unknown;
 }
 
+/**
+ * 창고에 있는 레슨을 통째로 가져온다.
+ *
+ * 홈과 놀이터가 같은 목록을 쓰므로 한 곳에 둔다. 불러오는 열쇠(queryKey)도
+ * `['activity-catalog']` 로 같아서, 홈에서 이미 받아 두었으면 놀이터에 들어갈 때
+ * 다시 받지 않는다.
+ */
+export async function fetchCatalog(): Promise<LessonGateRow[]> {
+  const { data, error } = await supabase
+    .from('lessons')
+    .select(
+      'id, title, activity_kind, subject_id, subject_level, sort_order, min_grade, max_grade, config, subjects!inner(slug, title, sort_order)',
+    )
+    .order('sort_order');
+  if (error) throw error;
+  return (data ?? []).map((r) => {
+    const subject = r.subjects as unknown as {
+      slug: string;
+      title: string;
+      sort_order: number;
+    };
+    return {
+      id: r.id,
+      title: r.title,
+      activity_kind: r.activity_kind,
+      subject_id: r.subject_id,
+      subject_slug: subject.slug,
+      subject_title: subject.title,
+      subject_level: r.subject_level,
+      min_grade: r.min_grade,
+      max_grade: r.max_grade,
+      sort_order: r.sort_order,
+      subject_sort_order: subject.sort_order,
+      config: r.config,
+    };
+  });
+}
+
 export interface ActivityCard {
   id: string;
   title: string;

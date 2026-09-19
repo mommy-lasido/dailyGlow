@@ -164,65 +164,26 @@ describe('HomePage', () => {
     expect(screen.getByTestId('greeting')).toHaveClass('text-3xl');
   });
 
-  it('불러오는 동안에는 빈 화면 안내 대신 조용한 자리표시자를 보여준다', () => {
-    renderHome();
-    expect(screen.getByText(/불러오는 중이에요/)).toBeInTheDocument();
-    expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
-  });
-
-  it('카탈로그 조회가 실패하면 연결 문제 안내를 보여준다', async () => {
-    catalog.response = { data: null, error: { message: '네트워크 오류' } };
-    renderHome();
-    expect(await screen.findByText(/연결이 잘 안 돼요/)).toBeInTheDocument();
-    // 오류일 때는 학년·단계를 확인하라는 안내를 하지 않는다.
-    expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
-  });
-
-  it('조회는 됐지만 맞는 활동이 없으면 학년·단계 확인 안내를 보여준다', async () => {
-    catalog.response = { data: [], error: null };
-    renderHome();
-    expect(await screen.findByText(/아직 준비된 공부가 없어요/)).toBeInTheDocument();
-    expect(screen.queryByText(/연결이 잘 안 돼요/)).not.toBeInTheDocument();
-  });
-
-  it('맞는 활동이 있으면 활동 카드를 보여준다', async () => {
+  it('놀이터 넷만 내건다', async () => {
+    // 홈은 "어디로 갈까" 만 묻는다. 무엇을 할지는 놀이터 안에서 고른다.
     catalog.response = { data: [lessonRow()], error: null };
     renderHome();
-    expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
-    // 과목 이름은 카드에 적지 않는다 — 아이에게는 제목만 있으면 된다.
-    expect(screen.queryByText('수학')).not.toBeInTheDocument();
-    expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
+    const tiles = await screen.findAllByTestId('playground-tile');
+    expect(tiles).toHaveLength(4);
+    expect(tiles.map((t) => t.getAttribute('href'))).toEqual([
+      '/playground/hangul',
+      '/playground/math',
+      '/playground/english',
+      '/playground/science',
+    ]);
   });
 
-  it('config.hint 가 있으면 제목 밑에 예시를 보여준다', async () => {
-    catalog.response = { data: [lessonRow({ config: { hint: '3 + 2 = ?' } })], error: null };
-    const { container } = renderHome();
-    expect(await screen.findByText('3 + 2 = ?')).toBeInTheDocument();
-    // 카드 안 <p> 는 예시 한 줄뿐. 과학 놀이터와 Spell It 카드는 창고를 거치지
-    // 않고 늘 붙어 있으므로 셈에서 뺀다.
-    expect(container.querySelectorAll('a:not([data-testid="science-card"]):not([data-testid="spell-card"]) p')).toHaveLength(1);
-  });
-
-  it('config.hint 가 없으면 예시 줄 없이 제목만 보여준다', async () => {
-    catalog.response = { data: [lessonRow({ config: {} })], error: null };
-    const { container } = renderHome();
-    expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
-    // 카드에는 제목만 남는다 — 예시 자리에 빈 요소가 남지 않는다.
-    expect(container.querySelectorAll('a:not([data-testid="science-card"]):not([data-testid="spell-card"]) p')).toHaveLength(0);
-  });
-
-  it('과학 놀이터 카드는 창고와 상관없이 늘 있다', async () => {
-    // 과학은 내용이 앱 안에 들어 있어 창고의 활동 목록을 거치지 않는다.
-    catalog.response = { data: [], error: null };
-    renderHome();
-    expect(await screen.findByText('이번 주의 과학')).toBeInTheDocument();
-  });
-
-  it('활동을 놀이터로 나눠 담는다', async () => {
-    // 카드가 한 줄로 길게 이어지면 아이가 오늘 할 것을 찾기 어렵다.
+  it('활동 카드는 홈에 두지 않는다', async () => {
+    // 창고에 덧셈 놀이가 있어도 홈에는 나오지 않는다 — 수학 놀이터 안에서 만난다.
     catalog.response = { data: [lessonRow()], error: null };
     renderHome();
-    expect(await screen.findByText('과학 놀이터')).toBeInTheDocument();
-    expect(screen.getByText('수학 놀이터')).toBeInTheDocument();
+    await screen.findAllByTestId('playground-tile');
+    expect(screen.queryByText('덧셈 놀이')).not.toBeInTheDocument();
+    expect(screen.queryByText('이번 주에 배울 글자')).not.toBeInTheDocument();
   });
 });
