@@ -123,10 +123,10 @@ export function HomePage() {
         칸을 크게 둘로 나눈 것은 글씨를 못 읽는 아이 때문이다. 시윤이와 도윤이는
         그림을 보고 고르므로, 그림이 작아지면 소용이 없다.
       */}
-      <nav className="grid grid-cols-2 gap-4">
+      <nav className="grid grid-cols-2 gap-5 pb-4">
         {PLAYGROUNDS.map(({ key, title }) => (
           <Link key={key} to={`/playground/${key}`} data-testid="playground-tile">
-            <Card className="aspect-square overflow-hidden p-0 transition-transform hover:scale-[1.03] active:scale-95">
+            <Card className="tap-toy aspect-square overflow-hidden p-0">
               {/* 그림이 칸을 가득 채운다. 이름은 그림 안에 들어 있으므로 따로
                   적지 않는다 — 두 번 나오면 아이가 둘인 줄 안다. */}
               <PlaygroundIcon name={key} title={title} className="h-full w-full object-cover" />

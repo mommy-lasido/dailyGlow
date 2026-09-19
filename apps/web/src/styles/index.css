@@ -87,7 +87,43 @@
 /* 움직임을 불편해하는 사람에게는 움직이지 않는다. */
 @media (prefers-reduced-motion: reduce) {
   .animate-pop { animation: none; }
+  .tap-toy { transition: none; }
+  .tap-toy:active { transform: none; }
 }
+
+/*
+  키보드 자판처럼 생긴 칸 — 홈의 놀이터 그림.
+
+  그림 자체는 평평하다. 입체감은 **칸**이 낸다 — 아래쪽에 두툼한 굽을 두어
+  자판이 튀어나와 있는 것처럼 보이게 하고, 누르면 그 굽이 사라지면서 칸이
+  아래로 내려앉는다. 진짜 자판을 누르는 것과 같은 움직임이다.
+
+  손을 떼면 제자리보다 살짝 넘어섰다 돌아온다(끝의 곡선 0.34, 1.56). 눌렸다는
+  것이 눈에 보여야 아이가 한 번 더 누르지 않는다.
+
+  마우스를 올렸을 때의 움직임은 두지 않는다. 아이들은 태블릿으로 하고 어른은
+  컴퓨터로 보는데, 둘이 다르게 움직이면 같은 화면을 이야기할 때 말이 어긋난다.
+*/
+.tap-toy {
+  box-shadow:
+    0 8px 0 #d7e1ce,
+    0 12px 16px rgba(15, 23, 42, 0.14);
+  transition:
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tap-toy:active {
+  /* 굽의 높이(8px)만큼 내려앉으면서 쏙 작아진다 — 눌러서 오므라든 모양. */
+  transform: translateY(8px) scale(0.9);
+  box-shadow:
+    0 0 0 #d7e1ce,
+    0 3px 8px rgba(15, 23, 42, 0.16);
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out;
+}
+
 
 /*
   따라 쓰는 글자.
