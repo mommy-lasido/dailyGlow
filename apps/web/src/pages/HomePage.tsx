@@ -161,49 +161,93 @@ export function HomePage() {
         />
       ) : null}
 
-      <section className="flex flex-col gap-3">
-        {lessonsPending ? (
-          <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
-        ) : lessonsError ? (
-          <Card className="text-center text-lg text-slate-500">
-            지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.
-          </Card>
-        ) : activities.length === 0 ? (
-          <Card className="text-center text-lg text-slate-500">
-            아직 준비된 공부가 없어요. 설정에서 학년과 단계를 확인해 주세요.
-          </Card>
-        ) : (
-          activities.map((a) => (
-            <Link key={a.id} to={`/activity/${a.id}`}>
-              <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
-                <ActivityIcon
-                  id={a.iconId}
-                  className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
-                />
-                {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
-                <div className="min-w-0">
-                  <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
-                    {a.title}
-                  </h2>
-                  {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
-                      예를 보여준다. 제목보다 눈에 띄지 않게 흐리게. 없으면 아무것도 그리지 않는다. */}
-                  {a.hint ? (
-                    <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-                      {a.hint}
-                    </p>
-                  ) : null}
-                </div>
-              </Card>
-            </Link>
-          ))
-        )}
+      {lessonsPending ? (
+        <Card className="text-center text-lg text-slate-400">공부 목록을 불러오는 중이에요…</Card>
+      ) : lessonsError ? (
+        <Card className="text-center text-lg text-slate-500">
+          지금 연결이 잘 안 돼요. 잠시 뒤에 다시 열어봐 주세요.
+        </Card>
+      ) : (
+        /*
+          활동을 **놀이터 넷으로 나눈다.** 활동이 늘면서 카드가 한 줄로 길게
+          이어져, 아이가 오늘 할 것을 찾으려면 한참 내려야 했다.
 
-        <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
-        <ScienceCard isPreReader={isPreReader} done={scienceDone} />
-      </section>
+          카드를 접어 두지는 않는다. 시윤이와 도윤이는 글씨가 아니라 **그림을 보고**
+          고르므로, 한 겹 안으로 넣으면 그림이 보이지 않아 헤맨다. 머리글로 나누기만
+          한다.
+        */
+        PLAYGROUNDS.map(({ key, title, subjects }) => {
+          const mine = activities.filter((a) => subjects.includes(a.subjectSlug));
+          const extra =
+            key === 'english' ? (
+              <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
+            ) : key === 'science' ? (
+              <ScienceCard isPreReader={isPreReader} done={scienceDone} />
+            ) : null;
+
+          // 창고에서 온 활동도 없고 따로 붙는 카드도 없으면 머리글만 남으므로 그린다.
+          if (mine.length === 0 && !extra) return null;
+
+          return (
+            <section key={key} className="flex flex-col gap-3">
+              <h2 className="text-lg font-bold text-glow-600">{title}</h2>
+
+              {mine.map((a) => (
+                <Link key={a.id} to={`/activity/${a.id}`}>
+                  <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
+                    <ActivityIcon
+                      id={a.iconId}
+                      className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
+                    />
+                    {/* min-w-0 — 예시 줄이 길어도 카드 밖으로 밀려나지 않게. */}
+                    <div className="min-w-0">
+                      <h3
+                        className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}
+                      >
+                        {a.title}
+                      </h3>
+                      {/* config.hint 가 있는 카드(지금은 "낱말 읽기")만 제목 바로 밑에
+                          예를 보여준다. 없으면 아무것도 그리지 않는다. */}
+                      {a.hint ? (
+                        <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
+                          {a.hint}
+                        </p>
+                      ) : null}
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+
+              {extra}
+            </section>
+          );
+        })
+      )}
+
+      {!lessonsPending && !lessonsError && activities.length === 0 ? (
+        <Card className="text-center text-lg text-slate-500">
+          아직 준비된 공부가 없어요. 설정에서 학년과 단계를 확인해 주세요.
+        </Card>
+      ) : null}
     </div>
   );
 }
+
+/**
+ * 놀이터 넷. 홈 화면의 활동을 이 차례로 나눠 담는다.
+ *
+ * 이름은 영숙님이 정했다 — **"배움" 이 아니라 "놀이터"**. 아이가 "한글 배움 하자"
+ * 라고는 말하지 않지만 "놀이터 가자" 는 말이 된다. 짬나는 시간에 잠깐 들르는
+ * 자리라는 뜻이기도 하다.
+ *
+ * 차례는 날마다 하는 것(한글·수학)이 앞, 주에 몇 번 하는 것(영어·과학)이 뒤다.
+ */
+const PLAYGROUNDS: { key: string; title: string; subjects: string[] }[] = [
+  { key: 'hangul', title: '한글 놀이터', subjects: ['hangul', 'korean'] },
+  { key: 'math', title: '수학 놀이터', subjects: ['math'] },
+  { key: 'english', title: '영어 놀이터', subjects: ['english'] },
+  { key: 'science', title: '과학 놀이터', subjects: ['science'] },
+];
 
 /**
  * Spell It 카드 — 영어 철자 맞추기.
@@ -224,9 +268,9 @@ function SpellCard({ isPreReader, grade }: { isPreReader: boolean; grade: string
           Aa
         </span>
         <div className="min-w-0">
-          <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+          <h3 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
             Spell It
-          </h2>
+          </h3>
           <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
             Read the meaning, then build the word
           </p>
@@ -254,9 +298,11 @@ function ScienceCard({ isPreReader, done }: { isPreReader: boolean; done: boolea
           className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
         />
         <div className="min-w-0">
-          <h2 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
-            과학 놀이터
-          </h2>
+          {/* 머리글이 이미 "과학 놀이터" 이므로 카드는 그 안에서 무엇을 하는지
+              적는다. 같은 말이 두 번 나오면 아이가 두 개인 줄 안다. */}
+          <h3 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+            이번 주의 과학
+          </h3>
           {/* 다 보고 나면 줄을 아예 없앤다. "다 봤어요" 라고 적어 두면 할 일이
               남은 카드와 같은 모양이라, 아이가 또 눌러 볼 것이 있는 줄 안다. */}
           {done ? null : (

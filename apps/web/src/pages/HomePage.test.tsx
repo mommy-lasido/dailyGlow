@@ -215,6 +215,14 @@ describe('HomePage', () => {
     // 과학은 내용이 앱 안에 들어 있어 창고의 활동 목록을 거치지 않는다.
     catalog.response = { data: [], error: null };
     renderHome();
+    expect(await screen.findByText('이번 주의 과학')).toBeInTheDocument();
+  });
+
+  it('활동을 놀이터로 나눠 담는다', async () => {
+    // 카드가 한 줄로 길게 이어지면 아이가 오늘 할 것을 찾기 어렵다.
+    catalog.response = { data: [lessonRow()], error: null };
+    renderHome();
     expect(await screen.findByText('과학 놀이터')).toBeInTheDocument();
+    expect(screen.getByText('수학 놀이터')).toBeInTheDocument();
   });
 });
