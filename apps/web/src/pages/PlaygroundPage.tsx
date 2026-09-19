@@ -139,14 +139,11 @@ function SpellCard({ isPreReader, grade }: { isPreReader: boolean; grade: string
           id="spell"
           className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
         />
-        <div className="min-w-0">
-          <h3 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
-            Spell It
-          </h3>
-          <p className={`text-slate-500 ${isPreReader ? 'text-lg' : 'text-sm'}`}>
-            Read the meaning, then build the word
-          </p>
-        </div>
+        {/* 이름만 둔다. 무엇을 하는지는 들어가면 문제 위에 적혀 있고, 여기서
+            한 번 더 적으면 같은 말을 두 번 읽히는 셈이다. */}
+        <h3 className={`min-w-0 font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+          Spell It
+        </h3>
       </Card>
     </Link>
   );
