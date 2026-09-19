@@ -243,6 +243,7 @@ export const ACTIVITY_ART: Record<string, string> = {
   add_play: '/activity-art/add_play.png',
   grid_drill: '/activity-art/grid_drill.png',
   science: '/activity-art/science.png',
+  spell: '/activity-art/spell.png',
 };
 
 export const ACTIVITY_ICONS: Record<string, () => JSX.Element> = {

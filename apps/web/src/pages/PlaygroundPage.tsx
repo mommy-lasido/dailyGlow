@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@dailyglow/ui';
 import { ActivityIcon } from '@/components/ActivityIcon';
 import { PLAYGROUNDS } from '@/lib/playgrounds';
-import { PlaygroundIcon } from '@/components/PlaygroundIcon';
 import { fetchCatalog, scienceDoneThisWeek, selectActivities } from '@/lib/activities';
 import { stepForDay, weeklyFocus, type WeeklyFocus } from '@/lib/weekly';
 import { useProfile } from '@/stores/profile';
@@ -63,10 +62,9 @@ export function PlaygroundPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="flex items-center justify-center gap-3 text-2xl font-bold text-glow-600">
-        <PlaygroundIcon name={place.key} title={place.title} className="h-12 w-12 shrink-0" />
-        {place.title}
-      </h1>
+      {/* 머리글에는 그림을 넣지 않는다. 그림 안에 이름이 적혀 있어서 작게 줄이면
+          글씨가 뭉개지고, 같은 이름이 두 번 나온다. */}
+      <h1 className="text-center text-2xl font-bold text-glow-600">{place.title}</h1>
 
       {/* 이번 주의 글자는 한글 놀이터 안에 둔다. 오늘 할 것이라 맨 위에 온다. */}
       {place.key === 'hangul' && weekly ? (
@@ -137,9 +135,10 @@ function SpellCard({ isPreReader, grade }: { isPreReader: boolean; grade: string
   return (
     <Link to="/spell" data-testid="spell-card">
       <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
-        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-sky-50 text-4xl font-bold text-sky-600">
-          Aa
-        </span>
+        <ActivityIcon
+          id="spell"
+          className={`shrink-0 ${isPreReader ? 'h-24 w-24' : 'h-20 w-20'}`}
+        />
         <div className="min-w-0">
           <h3 className={`font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
             Spell It

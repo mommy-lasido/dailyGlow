@@ -126,13 +126,10 @@ export function HomePage() {
       <nav className="grid grid-cols-2 gap-4">
         {PLAYGROUNDS.map(({ key, title }) => (
           <Link key={key} to={`/playground/${key}`} data-testid="playground-tile">
-            <Card className="flex aspect-square flex-col items-center justify-center gap-3 transition-transform hover:scale-[1.03] active:scale-95">
-              <PlaygroundIcon name={key} title={title} className="h-24 w-24 shrink-0" />
-              <span
-                className={`font-bold text-glow-700 ${isPreReader ? 'text-2xl' : 'text-xl'}`}
-              >
-                {title}
-              </span>
+            <Card className="aspect-square overflow-hidden p-0 transition-transform hover:scale-[1.03] active:scale-95">
+              {/* 그림이 칸을 가득 채운다. 이름은 그림 안에 들어 있으므로 따로
+                  적지 않는다 — 두 번 나오면 아이가 둘인 줄 안다. */}
+              <PlaygroundIcon name={key} title={title} className="h-full w-full object-cover" />
             </Card>
           </Link>
         ))}
