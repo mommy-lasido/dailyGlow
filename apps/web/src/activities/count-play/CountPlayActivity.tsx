@@ -185,6 +185,19 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
     if (settled.phase === 'done') finish(settled);
   }
 
+  /**
+   * 하던 판을 놓고 단계 고르는 화면으로 돌아간다.
+   *
+   * 한 칸만 물러난다 — 묶음(무엇을 해볼까)은 그대로 두고 단계만 다시 고른다.
+   * 거기서 한 번 더 물러나면 묶음 고르기가 나온다.
+   */
+  function backToMenu() {
+    setQuiz(null);
+    setSetting(null);
+    setRetryMessage('');
+    setChosen(null);
+  }
+
   function goOn() {
     if (!quiz) return;
     const next = nextRound(quiz);
@@ -409,6 +422,13 @@ export function CountPlayActivity({ onFinish }: ActivityProps) {
           {retryMessage || (quiz.round === 1 ? `${left}개 남았어요` : '')}
         </p>
       </Card>
+
+      {/* 시작한 판에서 빠져나오는 길. 껍데기의 단추는 활동을 통째로 나가 버리므로,
+          다른 단계를 해보고 싶은 아이는 갈 곳이 없었다. 여기서는 **한 칸만**
+          물러난다 — 단계를 고르는 화면으로. */}
+      <Button variant="ghost" onClick={backToMenu}>
+        ← 다시 고르기
+      </Button>
     </div>
   );
 }

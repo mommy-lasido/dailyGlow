@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@dailyglow/ui';
+import { upFrom } from '@/lib/playgrounds';
+import type { LessonGateRow } from '@/lib/activities';
 import { useAuth } from '@/stores/auth';
 import { useProfile } from '@/stores/profile';
 import { OfflineBadge } from '@/components/OfflineBadge';
@@ -13,6 +16,11 @@ import { flushAttemptQueue, flushSessionQueue } from '@/lib/sync';
  * 넘기기 같은 곳)에는 빠져 있어 아이가 갇혔다. 활동이 늘 때마다 빠뜨릴 자리라,
  * 활동이 아니라 **앱 껍데기**가 들고 있게 한다.
  *
+ * 홈·놀이터·활동으로 세 겹이 되면서, 이 단추는 늘 홈이 아니라 **한 칸 위**로
+ * 간다. 활동에서는 그 활동이 사는 놀이터로, 놀이터에서는 홈으로. 늘 홈으로
+ * 보내면 수 세기를 마치고 더하기를 하려는 아이가 홈까지 나갔다가 수학 놀이터를
+ * 다시 찾아 들어와야 한다.
+ *
  * 한 걸음 뒤로 가는 단추를 여기에 하나 더 달았다가 걷어냈다. 화면마다 이미
  * 자기 자리로 돌아가는 단추가 있고(활동의 "다시 고르기", 과학의 "돌아가기",
  * 낱말·문장의 "앞으로"), 그것들은 **활동 안에서** 한 칸 물러선다. 껍데기에서
@@ -21,14 +29,26 @@ import { flushAttemptQueue, flushSessionQueue } from '@/lib/sync';
  */
 function HomeLink() {
   const { pathname } = useLocation();
+  const client = useQueryClient();
+
   // 홈·로그인·처음 설정에는 돌아갈 곳이 없거나 돌아가면 안 된다.
   // 설정에는 (비밀번호를 묻는 화면에도, 들어간 뒤에도) 이 단추 하나만 나온다.
   const hidden = ['/', '/login', '/onboarding'];
   if (hidden.includes(pathname)) return null;
 
+  // 활동 화면이라면 어느 과목인지 알아야 제 놀이터로 돌아갈 수 있다. 홈이나
+  // 놀이터가 이미 받아 둔 목록에서 찾는다 — 이 단추 때문에 따로 묻지 않는다.
+  const lessonId = pathname.startsWith('/activity/') ? pathname.slice('/activity/'.length) : null;
+  const lessons = client.getQueryData<LessonGateRow[]>(['activity-catalog']);
+  const subjectSlug = lessonId
+    ? (lessons?.find((l) => l.id === lessonId)?.subject_slug ?? null)
+    : null;
+
+  const up = upFrom(pathname, subjectSlug);
+
   return (
-    <Link to="/" className="mb-3 self-start print:hidden">
-      <Button variant="ghost">🏠 홈으로</Button>
+    <Link to={up.to} className="mb-3 self-start print:hidden">
+      <Button variant="ghost">{up.label}</Button>
     </Link>
   );
 }

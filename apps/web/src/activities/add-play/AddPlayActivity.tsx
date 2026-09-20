@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card } from '@dailyglow/ui';
+import { Button, Card } from '@dailyglow/ui';
 import { hasMenuArt, MenuIcon } from '@/components/MenuIcon';
 import { useProfile } from '@/stores/profile';
 import { spawnConfetti } from '@/lib/confetti';
@@ -73,6 +73,13 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
       next.phase === 'grading' && next.missed.length === 0 ? nextRound(next) : next;
     setQuiz(settled);
     if (settled.phase === 'done') finish(settled);
+  }
+
+  /** 하던 판을 놓고 무엇을 연습할지 고르는 화면으로 돌아간다. */
+  function backToMenu() {
+    setQuiz(null);
+    setSetting(null);
+    setRetryMessage('');
   }
 
   function goOn() {
@@ -196,6 +203,12 @@ export function AddPlayActivity({ onFinish }: ActivityProps) {
           {retryMessage || (quiz.round === 1 ? `${left}개 남았어요` : '')}
         </p>
       </Card>
+
+      {/* 하던 판을 놓고 다른 것을 고르러 가는 길. 껍데기의 단추는 활동을 통째로
+          나가 버리므로, 이것이 없으면 아이가 판에 갇힌다. */}
+      <Button variant="ghost" onClick={backToMenu}>
+        ← 다시 고르기
+      </Button>
     </div>
   );
 }

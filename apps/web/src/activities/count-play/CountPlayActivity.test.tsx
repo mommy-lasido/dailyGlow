@@ -356,4 +356,17 @@ describe('CountPlayActivity — 수의 순서', () => {
       expect(Math.abs(Number(b.getAttribute('data-value')) - answer)).toBeLessThanOrEqual(2);
     }
   });
+
+  it('하던 판에서 단계 고르기로 한 칸 물러날 수 있다', () => {
+    // 껍데기의 단추는 활동을 통째로 빠져나간다. 다른 단계를 해보고 싶은 아이는
+    // 갈 곳이 없어 판에 갇혔다.
+    renderActivity();
+    start();
+    expect(screen.getByTestId('question')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /다시 고르기/ }));
+
+    expect(screen.getByText('어디까지 해볼까?')).toBeInTheDocument();
+    expect(screen.queryByTestId('question')).not.toBeInTheDocument();
+  });
 });
