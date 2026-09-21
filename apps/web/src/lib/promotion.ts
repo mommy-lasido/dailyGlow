@@ -13,7 +13,8 @@
 import type { LessonGateRow } from '@/lib/activities';
 import { supabase } from '@/lib/supabase';
 import type { SubjectLevel } from '@/stores/profile';
-import { gradeOrdinal, type Grade } from '@dailyglow/utils';
+import { gradeOrdinal, hangulStage, type Grade } from '@dailyglow/utils';
+import { weeklyLetters } from '@/lib/weekly';
 
 /** 판정에 쓰는 한 판의 기록 */
 export interface SessionSummary {
@@ -100,6 +101,13 @@ export interface LevelSuggestion {
   toLevel: number;
   /** 올라가면 새로 열리는 활동 이름 (promote 일 때만) */
   unlocksTitle: string | null;
+  /**
+   * 올라가면 그 주에 배우게 될 글자 (한글만).
+   *
+   * 한글은 새로 열리는 활동이 없어도 올라간다. 그때 "무엇이 달라지는지" 를
+   * 말해 줄 것이 이것뿐이다 — 이번 주 글자가 ㅐ 에서 ㅔ 로 바뀐다.
+   */
+  nextLetters?: string[];
 }
 
 /**
@@ -109,6 +117,28 @@ export interface LevelSuggestion {
  * 만점처럼 보이는데, 이것을 단계 판단에 넣으면 쓰기만 몇 번 해도 한글 단계가
  * 올라가 버린다.
  */
+/**
+ * 단계를 올리자고 또 말하기까지 기다리는 날수.
+ *
+ * 한글은 **단계가 곧 그 주에 배우는 글자**다. 잘한다고 며칠 만에 또 올리면
+ * 같은 글자를 한 주 붙잡는다는 원칙이 무너진다 — 교재가 한 주에 글자 하나를
+ * 잡는 데는 까닭이 있고, 영숙님도 그 쪽을 골랐다.
+ *
+ * 내릴 때는 기다리지 않는다. 지금 버거운 아이를 한 주 더 버겁게 둘 이유가 없다.
+ */
+export const PROMOTE_COOLDOWN_DAYS = 7;
+
+/** 마지막으로 단계를 바꾼 지 아직 한 주가 안 지났는가. */
+export function tooSoonToPromote(
+  updatedAt: string | null | undefined,
+  now = new Date(),
+): boolean {
+  if (!updatedAt) return false;
+  const changed = new Date(updatedAt).getTime();
+  if (Number.isNaN(changed)) return false;
+  return now.getTime() - changed < PROMOTE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+}
+
 export function isScored(s: SessionSummary): boolean {
   return s.meta?.scored !== false;
 }
@@ -137,6 +167,7 @@ export function buildSuggestion(
   levels: Record<string, SubjectLevel>,
   sessions: SessionSummary[],
   grade: Grade | null,
+  now = new Date(),
 ): LevelSuggestion | null {
   const ord = grade ? gradeOrdinal(grade) : null;
   const gradeOk = (r: LessonGateRow) =>
@@ -167,11 +198,21 @@ export function buildSuggestion(
     const history = played.get(basis.id)!;
 
     // ── 올리기 ──
+    //
+    // 위 단계에 새로 열리는 활동이 있으면 그 단계로 올린다.
     const locked = inSubject
       .filter((r) => r.subject_level > level)
       .sort((a, b) => a.subject_level - b.subject_level);
     const nextUp = locked[0];
-    if (nextUp) {
+
+    // 새로 열릴 활동이 없어도 한글은 올라가야 한다. 한글은 **단계가 곧 배우는
+    // 글자**라서(22단계 = ㅐ, 23단계 = ㅔ), 활동이 다 열린 뒤에도 단계가 멈추면
+    // 아이는 몇 주째 같은 글자만 보게 된다. 시윤이가 실제로 그랬다.
+    const stageOnly =
+      !nextUp && basis.subject_slug === 'hangul' && hangulStage(level + 1) ? level + 1 : null;
+
+    const toLevel = nextUp?.subject_level ?? stageOnly;
+    if (toLevel !== null && toLevel !== undefined && !tooSoonToPromote(current?.updatedAt, now)) {
       const qualifying = history.filter(countsForPromotion);
       if (judgeLevel(qualifying) === 'promote') {
         return {
@@ -179,8 +220,10 @@ export function buildSuggestion(
           subjectId,
           subjectTitle: basis.subject_title,
           lessonTitle: basis.title,
-          toLevel: nextUp.subject_level,
-          unlocksTitle: nextUp.title,
+          toLevel,
+          unlocksTitle: nextUp?.title ?? null,
+          nextLetters:
+            basis.subject_slug === 'hangul' ? weeklyLetters(toLevel) : undefined,
         };
       }
     }

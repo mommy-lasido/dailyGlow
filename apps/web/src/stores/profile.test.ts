@@ -122,7 +122,7 @@ describe('useProfile 스토어', () => {
       await useProfile.getState().load('u1');
 
       expect(useProfile.getState().status).toBe('ready');
-      expect(useProfile.getState().levels).toEqual({ math: { level: 3, locked: true } });
+      expect(useProfile.getState().levels).toMatchObject({ math: { level: 3, locked: true } });
     });
 
     it('이미 프로필이 있으면 재조회 중 status 를 loading 으로 내리지 않는다', async () => {
@@ -216,7 +216,7 @@ describe('useProfile 스토어', () => {
       const res = await useProfile.getState().initializeSubjectLevels('learning');
 
       expect(res.error).toBeUndefined();
-      expect(useProfile.getState().levels).toEqual({
+      expect(useProfile.getState().levels).toMatchObject({
         'subj-hangul': { level: 4, locked: false },
         'subj-math': { level: 1, locked: false },
       });
@@ -232,7 +232,7 @@ describe('useProfile 스토어', () => {
 
       await useProfile.getState().initializeSubjectLevels('pre_reader');
 
-      expect(useProfile.getState().levels).toEqual({
+      expect(useProfile.getState().levels).toMatchObject({
         'subj-hangul': { level: 12, locked: true },
         'subj-math': { level: 1, locked: false },
       });
@@ -314,7 +314,9 @@ describe('useProfile 스토어', () => {
 
       await useProfile.getState().setSubjectLevel('math', 4);
 
-      expect(useProfile.getState().levels).toEqual({ math: { level: 4, locked: false } });
+      expect(useProfile.getState().levels).toMatchObject({ math: { level: 4, locked: false } });
+      // 바꾼 때를 남긴다 — 제안이 며칠 만에 또 뜨지 않게 하는 데 쓴다.
+      expect(useProfile.getState().levels.math?.updatedAt).toEqual(expect.any(String));
     });
   });
 });

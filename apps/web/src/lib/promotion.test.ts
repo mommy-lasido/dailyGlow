@@ -215,4 +215,74 @@ describe('buildSuggestion', () => {
     // 한글의 과목 순서가 앞서므로 한글이 먼저 나온다.
     expect(s?.subjectTitle).toBe('한글');
   });
+
+  // ── 한글: 단계가 곧 배우는 글자 ─────────────────────────
+
+  /** 22단계(ㅐ)에 있는 시윤이. 한글 활동은 14단계에서 다 열려 더 열릴 것이 없다. */
+  const HANGUL: LessonGateRow[] = [
+    lesson({
+      id: 'words',
+      title: '낱말 읽기',
+      subject_id: 'hangul',
+      subject_slug: 'hangul',
+      subject_title: '한글',
+      subject_level: 4,
+      max_grade: 6,
+      subject_sort_order: 1,
+    }),
+  ];
+  const hangulSessions = [
+    session(5, 5, { lessonId: 'words', meta: {} }),
+    session(5, 5, { lessonId: 'words', meta: {} }),
+    session(5, 5, { lessonId: 'words', meta: {} }),
+  ];
+
+  it('한글은 새로 열릴 활동이 없어도 다음 단계를 제안한다', () => {
+    // 한글은 단계가 곧 그 주에 배우는 글자다. 활동이 다 열린 뒤에 단계가 멈추면
+    // 아이는 몇 주째 같은 글자만 본다 — 시윤이가 실제로 ㅐ 에 몇 주 머물렀다.
+    const levels: Record<string, SubjectLevel> = { hangul: { level: 22, locked: false } };
+    const s = buildSuggestion(HANGUL, levels, hangulSessions, 'preschool');
+    expect(s?.kind).toBe('promote');
+    expect(s?.toLevel).toBe(23);
+    // 새로 열리는 활동은 없다. 올라가는 것은 배우는 글자뿐이다.
+    expect(s?.unlocksTitle).toBeNull();
+    // 무엇이 달라지는지 부모가 알 수 있게 다음 글자를 들려 보낸다.
+    expect(s?.nextLetters).toEqual(['ㅔ']);
+  });
+
+  it('단계를 바꾼 지 한 주가 안 됐으면 올리자고 하지 않는다', () => {
+    // 한 주에 글자 하나를 붙잡는 것이 원칙이다.
+    const now = new Date('2026-09-21T09:00:00Z');
+    const levels: Record<string, SubjectLevel> = {
+      hangul: { level: 22, locked: false, updatedAt: '2026-09-18T09:00:00Z' },
+    };
+    expect(buildSuggestion(HANGUL, levels, hangulSessions, 'preschool', now)).toBeNull();
+  });
+
+  it('한 주가 지나면 다시 올리자고 한다', () => {
+    const now = new Date('2026-09-21T09:00:00Z');
+    const levels: Record<string, SubjectLevel> = {
+      hangul: { level: 22, locked: false, updatedAt: '2026-09-13T09:00:00Z' },
+    };
+    expect(buildSuggestion(HANGUL, levels, hangulSessions, 'preschool', now)?.toLevel).toBe(23);
+  });
+
+  it('마지막 단계에서는 더 올리자고 하지 않는다', () => {
+    const levels: Record<string, SubjectLevel> = { hangul: { level: 35, locked: false } };
+    expect(buildSuggestion(HANGUL, levels, hangulSessions, 'preschool')).toBeNull();
+  });
+
+  it('내릴 때는 한 주를 기다리지 않는다', () => {
+    // 지금 버거운 아이를 한 주 더 버겁게 둘 이유가 없다.
+    const now = new Date('2026-09-21T09:00:00Z');
+    const levels: Record<string, SubjectLevel> = {
+      hangul: { level: 22, locked: false, updatedAt: '2026-09-20T09:00:00Z' },
+    };
+    const poor = [
+      session(1, 5, { lessonId: 'words', meta: {} }),
+      session(0, 5, { lessonId: 'words', meta: {} }),
+      session(2, 5, { lessonId: 'words', meta: {} }),
+    ];
+    expect(buildSuggestion(HANGUL, levels, poor, 'preschool', now)?.kind).toBe('demote');
+  });
 });

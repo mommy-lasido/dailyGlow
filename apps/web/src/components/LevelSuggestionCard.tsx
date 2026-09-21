@@ -68,6 +68,13 @@ export function LevelSuggestionCard({
                 {' '}
                 올리면 <b>{suggestion.unlocksTitle}</b>이 새로 열려요.
               </>
+            ) : suggestion.nextLetters && suggestion.nextLetters.length > 0 ? (
+              // 한글은 새로 열리는 활동이 없어도 올라간다. 달라지는 것은 그 주에
+              // 배우는 글자다 — 그것을 말해 주지 않으면 무엇을 승인하는지 알 수 없다.
+              <>
+                {' '}
+                올리면 이번 주 글자가 <b>{suggestion.nextLetters.join(', ')}</b> 로 바뀌어요.
+              </>
             ) : null}
           </>
         ) : (

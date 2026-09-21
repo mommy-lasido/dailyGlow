@@ -7,6 +7,12 @@ export type ProfileRow = Tables<'profiles'>;
 export interface SubjectLevel {
   level: number;
   locked: boolean;
+  /**
+   * 이 단계를 마지막으로 바꾼 때(ISO 문자열). 제안이 며칠 만에 또 뜨지 않도록
+   * 쓴다 — 한글은 한 주에 글자 하나를 붙잡는 것이 원칙이다. 예전 행에는 없을 수
+   * 있어 없는 것도 허용한다.
+   */
+  updatedAt?: string | null;
 }
 
 /**
@@ -117,7 +123,11 @@ export const useProfile = create<ProfileState>((set, get) => ({
 
     const levels: Record<string, SubjectLevel> = {};
     for (const row of levelRes.data ?? []) {
-      levels[row.subject_id] = { level: row.level, locked: row.locked };
+      levels[row.subject_id] = {
+        level: row.level,
+        locked: row.locked,
+        updatedAt: row.updated_at ?? null,
+      };
     }
 
     set({ profile: profileRes.data, levels, status: 'ready' });
@@ -169,7 +179,8 @@ export const useProfile = create<ProfileState>((set, get) => ({
     if (writeError) return { error: toKoreanError('과목 초기 레벨 저장', writeError.message) };
 
     const next = { ...get().levels };
-    for (const r of rows) next[r.subject_id] = { level: r.level, locked: r.locked };
+    for (const r of rows)
+      next[r.subject_id] = { level: r.level, locked: r.locked, updatedAt: r.updated_at };
     set({ levels: next });
     return {};
   },
@@ -181,6 +192,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
     const next: SubjectLevel = {
       level,
       locked: locked ?? get().levels[subjectId]?.locked ?? false,
+      updatedAt: new Date().toISOString(),
     };
 
     const { error } = await supabase.from('profile_subject_levels').upsert({
@@ -188,7 +200,7 @@ export const useProfile = create<ProfileState>((set, get) => ({
       subject_id: subjectId,
       level: next.level,
       locked: next.locked,
-      updated_at: new Date().toISOString(),
+      updated_at: next.updatedAt ?? new Date().toISOString(),
     });
 
     // 저장에 실패하면 로컬 상태를 갱신하지 않는다 — 저장 안 된 값을 화면에 보이지 않게.
