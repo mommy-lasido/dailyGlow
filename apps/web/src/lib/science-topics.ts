@@ -35,12 +35,16 @@ export const TOPICS: ScienceTopic[] = [
         body: '힘에는 두 가지 방향이 있어요. 미는 힘은 물건을 나에게서 멀어지게 해요. 그네를 밀면 그네가 나에게서 멀어지지요. 당기는 힘은 물건을 나에게 가까워지게 해요. 서랍을 당기면 서랍이 나에게 가까워져요.',
         // 미래엔 『물체를 미는 모습과 당기는 모습을 찾아볼까요』
         video: { id: 'fsWmF8n8wbA', seconds: 54 },
+        // 과학할고양 — 볼펜은 어떤 구조로 되어 있을까
+        videoExtra: { id: 'sMwpi7XOIeE', seconds: 817 },
       },
       {
         heading: '힘이 하는 네 가지 일',
         body: '첫째, 멈춰 있던 것을 움직이게 해요. 둘째, 움직이던 것을 멈추게 해요. 셋째, 가던 방향을 바꿔요. 굴러오는 공을 옆에서 치면 공이 다른 쪽으로 가지요. 넷째, 모양을 바꿔요. 찰흙을 누르면 납작해져요.',
         // 두클래스 — 밀고 당기는 힘이 하는 일
         video: { id: 'bpJgQztGeiE', seconds: 58 },
+        // 과학할고양 — 빨래집게가 물체를 집는 힘의 원리
+        videoExtra: { id: 'BjOjJvwgOuw', seconds: 841 },
       },
       {
         heading: '힘의 크기와 움직임의 관계',
@@ -187,6 +191,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '빛이 물체에 부딪혀 튕겨 나와 우리 눈에 들어오면 그 물체가 보여요. 그래서 깜깜한 방에서는 아무것도 안 보이는 거예요. 물체가 없어진 것이 아니라 눈에 들어올 빛이 없는 것이지요.',
         // EBS 클립뱅크 『눈의 인식 과정』
         video: { id: 'rlmIfIoyiSM', seconds: 79 },
+        // 과학할고양 — 우유는 왜 흰색일까
+        videoExtra: { id: 'T0hRUD0tQq8', seconds: 844 },
       },
     ],
     // 깨비키즈 『소리는 어떻게 들릴까?』
@@ -214,12 +220,16 @@ export const TOPICS: ScienceTopic[] = [
         video: { id: 'xYUpEgD225Q', seconds: 180 },
         // Peekaboo Kidz 『Parts Of A Plant』
         videoEn: { id: 'p3St51F4kE8', seconds: 194 },
+        // 과학할고양 — 휴지는 어떻게 만들어질까
+        videoExtra: { id: 'pwpAcphRD9w', seconds: 835 },
       },
       {
         heading: '잎의 생김새와 하는 일',
         body: '잎은 햇빛을 받아서 스스로 양분을 만들어요. 식물이 밥을 먹지 않고도 자라는 까닭이 여기 있어요. 잎이 넓적한 것도 햇빛을 한 줌이라도 더 받으려고 그런 거예요.',
         // 깨비키즈 『광합성 이야기』
         video: { id: 'mcDuLJRjtCU', seconds: 207 },
+        // 과학할고양 — 단풍잎이 붉게 물드는 까닭
+        videoExtra: { id: 'iNkyiGXOLwo', seconds: 779 },
       },
       {
         heading: '꽃이 하는 일과 씨가 생기는 과정',
@@ -290,30 +300,40 @@ export const TOPICS: ScienceTopic[] = [
         body: '둘레의 모든 물건은 무언가로 만들어져 있어요. 그 재료를 물질이라고 해요. 컵은 유리나 플라스틱으로, 옷은 실로, 책은 종이로 만들어졌지요. 같은 컵이라도 무엇으로 만들었느냐에 따라 깨지기도 하고 안 깨지기도 해요.',
         // 클래스로그 — 물체는 어떤 재료로 만들어졌을까
         video: { id: 'pKfKq0lHJAQ', seconds: 150 },
+        // 과학할고양 — 지우개
+        videoExtra: { id: '65lBfFoYkWA', seconds: 818 },
       },
       {
         heading: '고체의 성질',
         body: '돌, 나무, 얼음처럼 단단한 것을 고체라고 해요. 고체는 어디에 담아도 모양이 그대로예요. 블록을 상자에 넣든 손에 들든 블록 모양은 똑같지요.',
         // 1분 별책부록 — 고체의 성질
         video: { id: 'nnb6iN1kmps', seconds: 112 },
+        // 과학할고양 — 유리는 고체일까 액체일까
+        videoExtra: { id: '6isqYXfOxmg', seconds: 784 },
       },
       {
         heading: '액체의 성질',
         body: '물, 우유, 주스처럼 흐르는 것을 액체라고 해요. 액체는 담는 그릇에 따라 모양이 달라져요. 동그란 컵에 담으면 동그래지고 네모난 그릇에 담으면 네모가 돼요. 그런데 **양은 변하지 않아요.**',
         // 1분 별책부록 — 액체의 성질
         video: { id: 'Zpma4WLVkFg', seconds: 97 },
+        // 과학할고양 — 젤리가 말랑말랑한 까닭
+        videoExtra: { id: '3jP6bhvSqYE', seconds: 816 },
       },
       {
         heading: '기체의 성질',
         body: '공기처럼 눈에 보이지 않는 것을 기체라고 해요. 안 보인다고 없는 것이 아니에요. 풍선을 불면 빵빵해지는 것이 그 증거예요. 빈 컵을 거꾸로 물에 넣으면 물이 안 들어오는 것도 컵 속 공기가 자리를 차지하고 있기 때문이에요.',
         // 1분 별책부록 — 기체의 성질
         video: { id: '_cj7Eau-uHQ', seconds: 114 },
+        // 과학할고양 — 풍선 안에서 벌어지는 일
+        videoExtra: { id: '3fCXog_85So', seconds: 839 },
       },
       {
         heading: '물의 세 가지 상태',
         body: '물은 얼면 얼음이 되고, 끓이면 눈에 안 보이는 수증기가 돼요. 얼음도 물도 수증기도 모두 같은 물이에요. 물질이 다른 것으로 바뀐 게 아니라 모습만 바뀐 거예요.',
         // 2분공부 — 물의 세 가지 상태
         video: { id: 'fHA027P0m8w', seconds: 71 },
+        // 과학할고양 — 얼음
+        videoExtra: { id: 'tvpWrnlL7Mk', seconds: 806 },
       },
     ],
     // 클래스로그 『고체, 액체, 기체의 성질을 비교해 볼까요』
@@ -349,6 +369,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '새가 산딸기를 먹으면 씨는 소화되지 않고 똥과 함께 나와요. 그 자리에서 싹이 트지요. 식물은 달고 맛있는 열매를 만들어 동물을 부르고, 동물은 밥을 얻고, 씨는 멀리 가요. 서로 도움이 되는 셈이에요.',
         // EBS 녹색동물 — 새가 겨우살이 열매를 먹고 씨를 옮긴다
         video: { id: 'neXr1rl9su0', seconds: 497 },
+        // 과학할고양 — 수박에 숨은 과학
+        videoExtra: { id: 'AzonIp1Tg2E', seconds: 833 },
       },
       {
         heading: '스스로 터져 퍼지는 씨',
@@ -378,6 +400,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '산과 강은 늘 그대로인 것처럼 보이지요. 그런데 아주 천천히 바뀌고 있어요. 하루 이틀로는 알 수 없고, 몇백 년 몇천 년이 쌓여야 눈에 보일 만큼 달라져요.',
         // 클래스로그 — 바위가 부서져 흙이 되는 과정
         video: { id: 'zmiCiVFQYsA', seconds: 146 },
+        // 과학할고양 — 모래 알갱이가 만들어진 까닭
+        videoExtra: { id: 'WToGIJZHMxM', seconds: 799 },
       },
       {
         heading: '흐르는 물의 침식 작용',
@@ -451,6 +475,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '나침반 바늘이 늘 북쪽을 가리키는 까닭이 여기 있어요. 지구 자체가 커다란 자석이라서, 나침반 안의 작은 자석을 끌어당기는 거예요. 옛날 뱃사람들이 바다 한가운데서 길을 찾을 수 있었던 것도 이 덕분이에요.',
         // EBS 『최고다! 호기심딱지 — 나침반 속 자석 응원단』
         video: { id: 'M7APD13afJM', seconds: 747 },
+        // 과학할고양 — 나침반
+        videoExtra: { id: 'd4rAmX-7Xt0', seconds: 776 },
       },
     ],
     // 클래스로그 『자석에 붙는 물체에는 어떤 것이 있을까요』
@@ -586,6 +612,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '태풍, 폭설, 가뭄처럼 심한 날씨는 사람에게 큰 피해를 줘요. 막을 수는 없지만 미리 알면 준비할 수 있어요. 태풍이 온다고 하면 창문을 단단히 하고 밖에 나가지 않는 것처럼요. 일기예보가 중요한 까닭이 여기 있어요.',
         // EBS 『최고다! 호기심딱지 — 태풍은 왜 생겨요?』
         video: { id: 'wEX3yojXc60', seconds: 872 },
+        // 과학할고양 — 마스크가 먼지를 막아내는 원리
+        videoExtra: { id: 'mcNcyblO4v8', seconds: 773 },
       },
     ],
     // 클래스로그 『날씨가 우리 생활에 주는 영향 알아보기』
@@ -611,12 +639,16 @@ export const TOPICS: ScienceTopic[] = [
         body: '움직이는 것이 가진 운동 에너지, 높은 곳에 있는 것이 가진 위치 에너지, 그리고 빛 에너지, 소리 에너지, 열 에너지, 전기 에너지가 있어요. 모습은 달라도 모두 무언가를 일으킬 수 있는 힘이라는 점은 같아요.',
         // 아톰쌤 — 여섯 가지 에너지 형태
         video: { id: 'lIY38Rrjgd4', seconds: 303 },
+        // 과학할고양 — 껌종이를 은박지로 싸는 까닭(열 전도)
+        videoExtra: { id: '1_vVxJZpvA8', seconds: 839 },
       },
       {
         heading: '에너지의 전환',
         body: '에너지는 없어지거나 새로 생기지 않고 **모습만 바뀌어요.** 전기가 전구에서 빛으로 바뀌고, 음식이 우리 몸에서 움직임으로 바뀌지요. 미끄럼틀 위에 있던 위치 에너지는 내려오면서 운동 에너지로 바뀌어요.',
         // 참쌤스쿨 — 손을 비비면 따뜻해지는 까닭
         video: { id: 'SSK4JbcPhLg', seconds: 115 },
+        // 과학할고양 — 영수증이 열을 받아 검게 변하는 까닭
+        videoExtra: { id: '92gvUODBT5Y', seconds: 822 },
       },
       {
         heading: '부딪힘으로 옮겨 가는 에너지',
@@ -670,6 +702,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '전화, 라디오, 텔레비전, 인터넷은 모두 파동을 이용해요. 목소리를 전기 신호로 바꾸어 파동에 실어 멀리 보내고, 받는 쪽에서 다시 소리로 바꾸는 거예요. 멀리 있는 사람과 이야기할 수 있는 것도 파동 덕분이에요.',
         // YTN 궁금한S — 전파로 소식을 보내게 된 과정
         video: { id: 'Ozp4gaxil-8', seconds: 429 },
+        // 과학할고양 — 바코드와 QR코드에 숨은 과학
+        videoExtra: { id: 'C_aCFY_vZWg', seconds: 821 },
       },
     ],
     // 참쌤스쿨 『초능력 비주얼씽킹 과학 - 소리의 세기와 높낮이』
@@ -779,6 +813,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '설탕을 물에 넣고 저으면 눈에 보이지 않게 돼요. 이것을 용해라고 해요. 없어진 것이 아니라 아주 작은 알갱이로 나뉘어 물속에 고르게 퍼진 거예요. 그 물을 맛보면 여전히 달아요.',
         // 클래스로그 — 물에 녹는 것과 녹지 않는 것
         video: { id: 'ieLopc0vyDg', seconds: 236 },
+        // 과학할고양 — 소금
+        videoExtra: { id: 'BFWmBVMFPSE', seconds: 810 },
       },
       {
         heading: '용해될 때 무게의 변화',
@@ -791,12 +827,16 @@ export const TOPICS: ScienceTopic[] = [
         body: '소금과 모래를 섞어도 소금은 소금이고 모래는 모래예요. 이렇게 성질이 변하지 않은 채 섞인 것을 혼합물이라고 해요. 혼합물은 다시 갈라낼 수 있어요. 체로 거르거나, 자석으로 붙이거나, 물에 녹여 걸러 내면 돼요.',
         // 클래스로그 — 혼합물을 나누어 쓰는 일들
         video: { id: '25NDjPgygn8', seconds: 187 },
+        // 과학할고양 — 마요네즈는 무엇으로 만들어졌을까
+        videoExtra: { id: 'jHSNM7Lf8kY', seconds: 803 },
       },
       {
         heading: '화학 변화의 뜻',
         body: '나무가 타면 재와 연기가 돼요. 재는 아무리 애써도 다시 나무가 되지 않아요. 쇠가 녹슬거나 달걀이 익는 것도 마찬가지예요. 이렇게 원래와 다른 물질이 되는 변화를 화학 변화라고 해요. 되돌릴 수 없다는 점이 가장 큰 차이예요.',
         // 자유의 여신상 색이 변한 까닭
         video: { id: 'x4RyLWf5oyQ', seconds: 156 },
+        // 과학할고양 — 촛불이 끝까지 천천히 타는 까닭
+        videoExtra: { id: 'ano36HCwTkI', seconds: 814 },
       },
       {
         heading: '변해도 무게가 보존되는 까닭',
@@ -873,6 +913,8 @@ export const TOPICS: ScienceTopic[] = [
         body: '해가 바다와 강과 땅을 데우면 물이 눈에 보이지 않는 수증기가 되어 공기 속으로 올라가요. 빨래가 마르는 것도, 컵에 담아 둔 물이 며칠 뒤 줄어드는 것도 같은 일이에요. 식물의 잎에서도 물이 빠져나가요.',
         // 과학의숲 — 증발과 끓음의 같은 점과 다른 점
         video: { id: '1U9Eq3qq4sY', seconds: 108 },
+        // 과학할고양 — 팝콘의 과학
+        videoExtra: { id: 'E19UMWdd1PM', seconds: 815 },
       },
       {
         heading: '구름과 비가 만들어지는 과정',

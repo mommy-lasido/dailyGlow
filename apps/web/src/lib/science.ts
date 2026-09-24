@@ -89,6 +89,17 @@ export interface ScienceSection {
    */
   video?: ScienceVideo;
   videoEn?: ScienceVideo;
+  /**
+   * 그 주에 더 볼 수 있는 **긴 영상**. 지금은 EBS 키즈 〈과학할고양〉이다.
+   *
+   * 라윤이 아이패드에는 유튜브가 없어서, 이 앱이 아이가 영상을 볼 수 있는
+   * 유일한 자리다. 영숙님이 그 사정을 알려주며 "어차피 볼 거면 과학으로 된
+   * 것을 보는 게 낫겠다" 고 했다.
+   *
+   * 한 편이 13~14분이라 그 주의 짧은 영상 뒤에 둔다. 먼저 배우고, 더 보고
+   * 싶으면 이어서 보는 차례다.
+   */
+  videoExtra?: ScienceVideo;
 }
 
 export interface ScienceTopic {
@@ -240,6 +251,8 @@ export function lessonVideos(lesson: ScienceLesson): LessonVideo[] {
 
   if (section.video) out.push({ video: section.video, lang: 'ko', special: true });
   out.push({ video: topic.video, lang: 'ko', special: false });
+  // 긴 영상은 짧은 것들 뒤에 온다 — 먼저 배우고, 더 보고 싶으면 이어서 본다.
+  if (section.videoExtra) out.push({ video: section.videoExtra, lang: 'ko', special: false });
   if (section.videoEn) out.push({ video: section.videoEn, lang: 'en', special: true });
   if (topic.videoEn) out.push({ video: topic.videoEn, lang: 'en', special: false });
 

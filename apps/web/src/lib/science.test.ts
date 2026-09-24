@@ -110,6 +110,20 @@ describe('lessonVideos', () => {
     expect(ids).toContain(withOwn.topic.video.id);
   });
 
+  it('긴 영상은 짧은 영상들 뒤에 온다', () => {
+    // EBS 〈과학할고양〉은 한 편이 13분이다. 먼저 배우고, 더 보고 싶으면 이어서 본다.
+    const withExtra = SCIENCE_TOPICS.flatMap((t) =>
+      lessonsFrom(t.grade).filter((l) => l.section.videoExtra),
+    )[0]!;
+    const list = lessonVideos(withExtra);
+    const at = list.findIndex((v) => v.video.id === withExtra.section.videoExtra!.id);
+    expect(at).toBeGreaterThan(0);
+    expect(list[at]!.lang).toBe('ko');
+    // 한국어가 영어보다 앞이라는 차례는 그대로다.
+    const firstEn = list.findIndex((v) => v.lang === 'en');
+    if (firstEn !== -1) expect(at).toBeLessThan(firstEn);
+  });
+
   it('그 주에만 붙은 영상을 앞에 둔다', () => {
     // 그 주에 배우는 것에 가장 가까운 영상이다.
     const withOwn = lessonsFrom(0).find((l) => l.section.video)!;
