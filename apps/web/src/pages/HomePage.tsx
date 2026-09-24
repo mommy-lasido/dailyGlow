@@ -123,13 +123,32 @@ export function HomePage() {
         칸을 크게 둘로 나눈 것은 글씨를 못 읽는 아이 때문이다. 시윤이와 도윤이는
         그림을 보고 고르므로, 그림이 작아지면 소용이 없다.
       */}
-      <nav className="grid grid-cols-2 gap-5 pb-4">
-        {PLAYGROUNDS.map(({ key, title }) => (
+      {/*
+        놀이터 넷. 안의 활동 칸과 같은 가로 모양이지만 **세 가지가 다르다** —
+        연한 색이 깔려 있고, 그림이 더 크고, 오른쪽 끝에 들어간다는 표시가 있다.
+        영숙님이 "메뉴와 차별을 둘 수 있는 디자인 요소" 를 물어 이렇게 갈랐다.
+
+        그림은 아래쪽 글씨를 잘라 내고 쓴다. 이름은 칸에 큰 글씨로 따로 적으므로
+        그대로 두면 같은 말이 두 번 나온다.
+      */}
+      <nav className="flex flex-col gap-4 pb-4">
+        {PLAYGROUNDS.map(({ key, title, tint }) => (
           <Link key={key} to={`/playground/${key}`} data-testid="playground-tile">
-            <Card className="tap-toy aspect-square overflow-hidden p-0">
-              {/* 그림이 칸을 가득 채운다. 이름은 그림 안에 들어 있으므로 따로
-                  적지 않는다 — 두 번 나오면 아이가 둘인 줄 안다. */}
-              <PlaygroundIcon name={key} title={title} className="h-full w-full object-cover" />
+            <Card className={`tap-toy flex items-center gap-4 p-3 sm:p-4 ${tint}`}>
+              <span className="block h-24 w-[7.5rem] shrink-0 overflow-hidden rounded-2xl sm:h-28 sm:w-[8.75rem]">
+                <PlaygroundIcon name={key} title={title} className="w-full" />
+              </span>
+              {/* 굵게(bold)를 걸지 않는다 — Jua 는 굵기가 하나라, 굵게 하면
+                  기기가 억지로 살을 붙여 글자가 뭉개진다. */}
+              <h2
+                className={`font-title text-glow-700 ${isPreReader ? 'text-4xl' : 'text-3xl'}`}
+              >
+                {title}
+              </h2>
+              {/* 들어가는 문이라는 표시. 글씨를 못 읽는 아이도 이 방향을 안다. */}
+              <span aria-hidden className="ml-auto pr-2 text-4xl text-glow-400">
+                ›
+              </span>
             </Card>
           </Link>
         ))}

@@ -7,11 +7,25 @@
  *
  * 차례는 날마다 하는 것(한글·수학)이 앞, 주에 몇 번 하는 것(영어·과학)이 뒤다.
  */
-export const PLAYGROUNDS: { key: string; title: string; subjects: string[] }[] = [
-  { key: 'hangul', title: '한글 놀이터', subjects: ['hangul', 'korean'] },
-  { key: 'math', title: '수학 놀이터', subjects: ['math'] },
-  { key: 'english', title: '영어 놀이터', subjects: ['english'] },
-  { key: 'science', title: '과학 놀이터', subjects: ['science'] },
+export interface Playground {
+  key: string;
+  title: string;
+  subjects: string[];
+  /**
+   * 홈에서 이 놀이터 칸에 깔 연한 색.
+   *
+   * 놀이터 칸과 그 안의 활동 칸이 둘 다 옆으로 긴 모양이라, 색이 없으면 어느
+   * 것이 "들어가는 문" 인지 갈라 보이지 않는다. 영숙님이 만든 그림의 글씨 색을
+   * 그대로 따라간다 — 한글은 초록, 수학은 파랑, 영어는 주황, 과학은 보라.
+   */
+  tint: string;
+}
+
+export const PLAYGROUNDS: Playground[] = [
+  { key: 'hangul', title: '한글 놀이터', subjects: ['hangul', 'korean'], tint: 'bg-glow-50' },
+  { key: 'math', title: '수학 놀이터', subjects: ['math'], tint: 'bg-sky-50' },
+  { key: 'english', title: '영어 놀이터', subjects: ['english'], tint: 'bg-orange-50' },
+  { key: 'science', title: '과학 놀이터', subjects: ['science'], tint: 'bg-violet-50' },
 ];
 
 /**
