@@ -54,6 +54,7 @@ export function upFrom(
   const fixed: Record<string, string> = {
     '/weekly': 'hangul',
     '/spell': 'english',
+    '/phonics': 'english',
     '/science': 'science',
   };
   const key = fixed[pathname] ?? (subjectSlug ? playgroundKeyOf(subjectSlug) : null);

@@ -100,7 +100,10 @@ export function PlaygroundPage() {
       ))}
 
       {place.key === 'english' ? (
-        <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
+        <>
+          <PhonicsCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
+          <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
+        </>
       ) : null}
       {place.key === 'science' ? (
         <ScienceCard isPreReader={isPreReader} done={scienceDone} />
@@ -117,6 +120,33 @@ export function PlaygroundPage() {
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Listen & Find 카드 — 영어 파닉스.
+ *
+ * **아직 영어를 읽지 못하는 아이에게만 보인다.** 시윤이가 영어 놀이터에 들어가고
+ * 싶어 했는데 거기 있는 것이 라윤이의 Spell It 뿐이었다. 파닉스를 배우는 중인
+ * 아이에게는 낱말을 읽어야 하는 놀이 대신 **소리를 듣고 고르는 놀이**를 준다.
+ *
+ * 카드 글씨도 영어로 적는다. 영어 활동에는 한국어를 섞지 않기로 했다.
+ */
+function PhonicsCard({ isPreReader, grade }: { isPreReader: boolean; grade: string | null }) {
+  // 미취학·1학년까지만. 그 위는 Spell It 으로 간다.
+  if (grade && !['preschool', 'g1'].includes(grade)) return null;
+
+  return (
+    <Link to="/phonics" data-testid="phonics-card">
+      <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-glow-50 text-4xl">
+          🔊
+        </span>
+        <h3 className={`min-w-0 font-bold text-glow-700 ${isPreReader ? 'text-3xl' : 'text-2xl'}`}>
+          Listen and find
+        </h3>
+      </Card>
+    </Link>
   );
 }
 

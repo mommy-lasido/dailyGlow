@@ -86,3 +86,67 @@ export function speak(text: string): void {
     // 읽어주기는 보조 수단이다. 안 되더라도 문제 풀이를 막지 않는다.
   }
 }
+
+/**
+ * 영어 목소리 중 가장 자연스러운 것을 고른다.
+ *
+ * 파닉스는 **소리가 곧 문제**라, 기계 같은 목소리로는 아이가 무슨 소리인지
+ * 갈라낼 수 없다. 한국어와 같은 기준으로 고르되, 애플 기기에 기본으로 깔린
+ * 영어 목소리(Samantha) 를 마지막 차례에 둔다.
+ */
+const EN_VOICE_RANK = [
+  /google/i,
+  /premium|enhanced/i,
+  /natural/i,
+  /neural/i,
+  /samantha|ava|allison|karen/i,
+];
+
+export function pickEnglishVoice(
+  voices: SpeechSynthesisVoice[],
+): SpeechSynthesisVoice | null {
+  const english = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
+  if (english.length === 0) return null;
+
+  // 미국 영어를 먼저 본다. 영숙님이 영어는 미국 것으로 맞추기로 했다.
+  const us = english.filter((v) => v.lang.toLowerCase().replace('_', '-') === 'en-us');
+  const pool = us.length > 0 ? us : english;
+
+  for (const rank of EN_VOICE_RANK) {
+    const found = pool.find((r) => rank.test(r.name));
+    if (found) return found;
+  }
+  return pool[0]!;
+}
+
+let cachedEn: SpeechSynthesisVoice | null = null;
+let boundEn = false;
+
+function englishVoice(): SpeechSynthesisVoice | null {
+  if (cachedEn) return cachedEn;
+  cachedEn = pickEnglishVoice(window.speechSynthesis.getVoices());
+  if (!boundEn && 'onvoiceschanged' in window.speechSynthesis) {
+    boundEn = true;
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      cachedEn = pickEnglishVoice(window.speechSynthesis.getVoices());
+    });
+  }
+  return cachedEn;
+}
+
+/** 영어를 읽어준다. 파닉스에서는 이 소리가 곧 문제다. */
+export function speakEnglish(text: string): void {
+  if (!canSpeak()) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    const voice = englishVoice();
+    if (voice) utterance.voice = voice;
+    // 낱말 하나를 또렷이 듣는 것이 일이라 한국어보다 조금 더 느리게 읽는다.
+    utterance.rate = 0.8;
+    window.speechSynthesis.speak(utterance);
+  } catch {
+    // 소리가 안 나더라도 화면은 그대로 굴러간다.
+  }
+}

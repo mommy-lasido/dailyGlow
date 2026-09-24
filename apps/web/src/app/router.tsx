@@ -12,6 +12,7 @@ import { ActivityPage } from '@/pages/ActivityPage';
 import { WeeklyPage } from '@/pages/WeeklyPage';
 import { SciencePage } from '@/pages/SciencePage';
 import { SpellPage } from '@/pages/SpellPage';
+import { PhonicsPage } from '@/pages/PhonicsPage';
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +46,8 @@ export const router = createBrowserRouter([
               { path: 'science', element: <SciencePage /> },
               // 영어 철자 맞추기. 낱말이 앱 안에 들어 있어 창고를 거치지 않는다.
               { path: 'spell', element: <SpellPage /> },
+              // 영어 파닉스. 소리를 듣고 글자를 고른다.
+              { path: 'phonics', element: <PhonicsPage /> },
             ],
           },
         ],
