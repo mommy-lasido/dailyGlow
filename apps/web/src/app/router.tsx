@@ -13,6 +13,7 @@ import { WeeklyPage } from '@/pages/WeeklyPage';
 import { SciencePage } from '@/pages/SciencePage';
 import { SpellPage } from '@/pages/SpellPage';
 import { PhonicsPage } from '@/pages/PhonicsPage';
+import { WordProblemPage } from '@/pages/WordProblemPage';
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +49,8 @@ export const router = createBrowserRouter([
               { path: 'spell', element: <SpellPage /> },
               // 영어 파닉스. 소리를 듣고 글자를 고른다.
               { path: 'phonics', element: <PhonicsPage /> },
+              // 수학 문장제. 문제를 앱이 만들어 내므로 창고를 거치지 않는다.
+              { path: 'word-problem', element: <WordProblemPage /> },
             ],
           },
         ],

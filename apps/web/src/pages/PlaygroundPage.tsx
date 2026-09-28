@@ -105,6 +105,7 @@ export function PlaygroundPage() {
           <SpellCard isPreReader={isPreReader} grade={profile?.grade ?? null} />
         </>
       ) : null}
+      {place.key === 'math' ? <WordProblemCard grade={profile?.grade ?? null} /> : null}
       {place.key === 'science' ? (
         <ScienceCard isPreReader={isPreReader} done={scienceDone} />
       ) : null}
@@ -120,6 +121,30 @@ export function PlaygroundPage() {
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * 문장제 카드.
+ *
+ * **초등 2학년부터 보인다.** 지금 내는 문제가 곱셈·나눗셈·분수만큼을 쓰는
+ * 것이라 그 아래 아이에게는 낼 것이 없다. 시윤이 몫의 쉬운 문장제는 따로 만든다.
+ */
+function WordProblemCard({ grade }: { grade: string | null }) {
+  if (!grade || !/^g[2-9]/.test(grade)) return null;
+
+  return (
+    <Link to="/word-problem" data-testid="word-problem-card">
+      <Card className="flex items-center gap-4 transition-transform hover:scale-[1.02]">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-glow-50 text-4xl">
+          🔍
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-2xl font-bold text-glow-700">문장제</h3>
+          <p className="text-sm text-slate-500">묻는 것을 끝까지 읽어요</p>
+        </div>
+      </Card>
+    </Link>
   );
 }
 

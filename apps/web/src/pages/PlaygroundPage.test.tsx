@@ -128,14 +128,19 @@ describe('PlaygroundPage', () => {
     catalog.response = { data: [lessonRow({ config: { hint: '3 + 2 = ?' } })], error: null };
     const { container } = renderPlayground('math');
     expect(await screen.findByText('3 + 2 = ?')).toBeInTheDocument();
-    expect(container.querySelectorAll('a p')).toHaveLength(1);
+    // 문장제 카드는 창고를 거치지 않고 늘 붙어 있으므로 셈에서 뺀다.
+    expect(
+      container.querySelectorAll('a:not([data-testid="word-problem-card"]) p'),
+    ).toHaveLength(1);
   });
 
   it('config.hint 가 없으면 예시 줄 없이 제목만 보여준다', async () => {
     catalog.response = { data: [lessonRow({ config: {} })], error: null };
     const { container } = renderPlayground('math');
     expect(await screen.findByText('덧셈 놀이')).toBeInTheDocument();
-    expect(container.querySelectorAll('a p')).toHaveLength(0);
+    expect(
+      container.querySelectorAll('a:not([data-testid="word-problem-card"]) p'),
+    ).toHaveLength(0);
   });
 
   it('한글 놀이터에는 이번 주의 글자가 맨 위에 온다', async () => {

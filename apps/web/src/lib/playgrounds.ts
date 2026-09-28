@@ -55,6 +55,7 @@ export function upFrom(
     '/weekly': 'hangul',
     '/spell': 'english',
     '/phonics': 'english',
+    '/word-problem': 'math',
     '/science': 'science',
   };
   const key = fixed[pathname] ?? (subjectSlug ? playgroundKeyOf(subjectSlug) : null);
