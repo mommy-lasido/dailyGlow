@@ -178,4 +178,27 @@ describe('PlaygroundPage', () => {
     expect(screen.getByText('그런 놀이터는 없어요.')).toBeInTheDocument();
     expect(screen.getByText('홈으로 가기').closest('a')).toHaveAttribute('href', '/');
   });
+
+  it('아직 읽지 못하는 아이의 영어 놀이터도 빈 화면으로 두지 않는다', async () => {
+    // 시윤이가 그림을 누르면 아무것도 없는 화면이 나왔다. 한 번 그러면 다시
+    // 누르지 않는다. 할 것이 없으면 없다고 적어 주는 편이 낫다.
+    useProfile.setState({
+      profile: profile({ display_name: '시윤', grade: 'preschool' }),
+      levels: {},
+      status: 'ready',
+    });
+    catalog.response = { data: [], error: null };
+    renderPlayground('english');
+
+    expect(await screen.findByText(/아직 준비된 공부가 없어요/)).toBeInTheDocument();
+    expect(screen.queryByTestId('spell-card')).not.toBeInTheDocument();
+  });
+
+  it('초등학생의 영어 놀이터에는 안내 대신 철자 맞추기가 나온다', async () => {
+    catalog.response = { data: [], error: null };
+    renderPlayground('english');
+
+    expect(await screen.findByTestId('spell-card')).toBeInTheDocument();
+    expect(screen.queryByText(/아직 준비된 공부가 없어요/)).not.toBeInTheDocument();
+  });
 });

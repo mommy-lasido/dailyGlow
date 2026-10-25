@@ -60,6 +60,10 @@ export function PlaygroundPage() {
     place.subjects.includes(a.subjectSlug),
   );
 
+  // Spell It 은 창고를 거치지 않고 붙는 카드라 위 목록에 안 잡힌다.
+  // 이것이 있으면 영어 놀이터는 빈 자리가 아니다.
+  const hasSpell = Boolean(profile?.grade && /^g[1-9]/.test(profile.grade));
+
   return (
     <div className="flex flex-col gap-4">
       {/* 머리글에는 그림을 넣지 않는다. 그림 안에 이름이 적혀 있어서 작게 줄이면
@@ -110,11 +114,21 @@ export function PlaygroundPage() {
         <ScienceCard isPreReader={isPreReader} done={scienceDone} />
       ) : null}
 
-      {/* 한글 놀이터는 이번 주의 글자가 있으면 빈 자리가 아니다. */}
+      {/*
+        **빈 화면으로 두지 않는다.**
+
+        영어 놀이터를 이 자리에서 빼 두었더니, 아직 영어를 읽지 못하는 시윤이가
+        그림을 누르면 **아무것도 없는 화면**이 나왔다. 한 번 그러면 아이는 다시
+        누르지 않는다. 할 것이 없으면 없다고 적어 주는 편이 낫다.
+
+        한글 놀이터는 이번 주의 글자가 있으면 빈 자리가 아니고, 과학은 창고를
+        거치지 않는 카드가 늘 붙어 있어 비는 일이 없다.
+      */}
       {!isPending &&
       !isError &&
       activities.length === 0 &&
-      !['english', 'science'].includes(place.key) &&
+      place.key !== 'science' &&
+      !(place.key === 'english' && hasSpell) &&
       !(place.key === 'hangul' && weekly) ? (
         <Card className="text-center text-lg text-slate-500">
           아직 준비된 공부가 없어요. 설정에서 학년과 단계를 확인해 주세요.
