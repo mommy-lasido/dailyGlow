@@ -89,4 +89,28 @@ describe('PhonicsActivity', () => {
     fireEvent.click(screen.getAllByTestId('phonics-game')[0]!);
     expect(container.textContent ?? '').not.toMatch(/[가-힣]/);
   });
+
+  it('낱말을 그림으로 보여준다', () => {
+    // 뜻 모르는 소리를 듣고 글자를 고르는 것은 낱말 공부가 아니라 받아쓰기다.
+    renderActivity();
+    fireEvent.click(screen.getAllByTestId('phonics-game')[0]!);
+    expect(screen.getByTestId('phonics-pic').textContent).not.toBe('');
+  });
+
+  it('그림을 눌러도 다시 들린다', () => {
+    // 아이는 글씨보다 그림을 먼저 누른다.
+    renderActivity();
+    fireEvent.click(screen.getAllByTestId('phonics-game')[0]!);
+    speakEnglish.mockClear();
+    fireEvent.click(screen.getByTestId('phonics-pic'));
+    expect(speakEnglish).toHaveBeenCalledTimes(1);
+  });
+
+  it('맞히기 전에는 철자를 보여주지 않는다', () => {
+    // 그림은 뜻을 알려줄 뿐, 답을 알려주면 안 된다.
+    renderActivity();
+    fireEvent.click(screen.getAllByTestId('phonics-game')[0]!);
+    expect(screen.getByTestId('phonics-pic')).toBeInTheDocument();
+    expect(screen.queryByTestId('phonics-word')).not.toBeInTheDocument();
+  });
 });

@@ -18,6 +18,8 @@ export interface PhonicsProblem {
   word: string;
   /** 골라야 할 글자 */
   answer: string;
+  /** 낱말을 그림으로 보여준다 — 뜻을 알고 들어야 소리에 마음을 쓸 수 있다 */
+  pic: string;
   /** 보기 — 답이 섞여 있다 */
   choices: string[];
 }
@@ -54,6 +56,7 @@ export function makeProblem(
   return {
     word: item.word,
     answer: item.answer,
+    pic: item.pic,
     choices: makeChoices(game, item.answer, rand),
   };
 }

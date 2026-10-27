@@ -73,4 +73,22 @@ describe('낱말 목록', () => {
       expect(game.words.length).toBeGreaterThanOrEqual(PHONICS_PROBLEM_COUNT);
     }
   });
+
+  it('모든 낱말에 그림이 있다', () => {
+    // 그림이 없는 낱말이 하나라도 있으면 그 문제만 갑자기 어려워진다.
+    for (const game of PHONICS_GAMES) {
+      for (const w of game.words) {
+        expect(w.pic).not.toBe('');
+        expect(w.pic.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('같은 단계 안에서 그림이 겹치지 않는다', () => {
+    // 한 판에 같은 그림이 둘 나오면 아이가 어느 것을 듣고 있는지 헷갈린다.
+    for (const game of PHONICS_GAMES) {
+      const pics = game.words.map((w) => w.pic);
+      expect(new Set(pics).size).toBe(pics.length);
+    }
+  });
 });

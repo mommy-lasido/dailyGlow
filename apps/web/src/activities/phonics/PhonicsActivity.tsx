@@ -18,7 +18,12 @@ const SPEAK_DELAY_MS = 400;
  * 뿐이었다. 시윤이는 파닉스를 배우는 중이라 **글자를 보고 고르는 것이 아니라
  * 소리를 듣고 고르는 것**부터 한다 — 영숙님이 그렇게 정했다.
  *
- * **낱말을 화면에 적지 않는다.** 적어 두면 소리를 갈라 듣는 일을 건너뛰고 글자만
+ * **그림을 보여주고 소리를 들려준다.** 처음에는 소리만 들려주었는데 영숙님이
+ * "이건 좀 어려울 것 같다" 고 했다. 맞는 말이었다 — 뜻 모르는 소리를 듣고 글자를
+ * 고르는 것은 낱말 공부가 아니라 받아쓰기다. 그림이 있으면 아이는 그것이 무엇인지
+ * 알고 들으므로, 소리와 글자를 잇는 일에만 마음을 쓸 수 있다.
+ *
+ * **낱말의 철자는 적지 않는다.** 적어 두면 소리를 갈라 듣는 일을 건너뛰고 글자만
  * 보고 고른다. 맞힌 뒤에야 낱말이 나타난다.
  *
  * **단계는 다 펼쳐 둔다.** 영숙님이 "단계는 그냥 다 보이게 해주고 알아서 골라서
@@ -182,15 +187,26 @@ export function PhonicsActivity({ onFinish }: ActivityProps) {
       </div>
 
       <Card className="flex flex-col items-center gap-6 text-center">
-        {/* 소리가 문제다. 크게 두어 몇 번이고 다시 들을 수 있게 한다. */}
+        {/*
+          **그림을 먼저 보여준다.**
+
+          처음에는 소리만 들려주었는데, 뜻 모르는 소리를 듣고 글자를 고르는 것은
+          낱말 공부가 아니라 받아쓰기였다. 그림이 있으면 아이는 `cat` 이 무엇인지
+          알고 들으므로, 소리와 글자를 잇는 일에만 마음을 쓸 수 있다.
+
+          그림을 눌러도 다시 들린다 — 아이는 글씨보다 그림을 먼저 누른다.
+        */}
         <button
           type="button"
           data-testid="phonics-say"
           onClick={() => speakEnglish(problem.word)}
           aria-label="Listen again"
-          className="min-h-touch rounded-3xl bg-glow-50 px-12 py-6 text-6xl transition-transform active:scale-95"
+          className="min-h-touch flex flex-col items-center gap-2 rounded-3xl bg-glow-50 px-12 py-6 transition-transform active:scale-95"
         >
-          🔊
+          <span data-testid="phonics-pic" className="text-7xl leading-none">
+            {problem.pic}
+          </span>
+          <span className="text-3xl leading-none">🔊</span>
         </button>
 
         <p className="text-xl text-slate-600">{game.ask}</p>
