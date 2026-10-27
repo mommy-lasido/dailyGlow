@@ -12,15 +12,17 @@ import {
 } from './generate';
 
 describe('자료', () => {
-  it('세 권 모두와 두 권에 실린 것을 담는다', () => {
-    // 어느 표현을 넣을지는 교재 세 권의 목차가 정했다.
-    expect(sayingsOf('proverb')).toHaveLength(47);
-    expect(sayingsOf('idiom')).toHaveLength(57);
-    expect(SAYINGS.every((s) => s.books === 3 || s.books === 2)).toBe(true);
+  it('교재에서 고른 것만 담는다', () => {
+    // 어느 표현을 넣을지는 제가 고르지 않았다. 교재의 목차가 정했다.
+    // 세 권 조사분(속담 47 · 사자성어 57)에, 영숙님이 사 온 「뿌리깊은」
+    // 1단계에만 있던 것(속담 6 · 사자성어 11)을 더했다.
+    expect(sayingsOf('proverb')).toHaveLength(53);
+    expect(sayingsOf('idiom')).toHaveLength(68);
+    expect(SAYINGS.every((s) => [1, 2, 3].includes(s.books))).toBe(true);
   });
 
-  it('세 권에 실린 것이 먼저 온다', () => {
-    // books 숫자가 곧 난이도다. 나중에 단계를 나눌 때 쓴다.
+  it('흔한 것이 먼저 온다', () => {
+    // books 숫자가 곧 흔한 정도다. 나중에 단계를 나눌 때 쓴다.
     for (const kind of ['proverb', 'idiom'] as const) {
       const list = sayingsOf(kind);
       const firstTwo = list.findIndex((s) => s.books === 2);
